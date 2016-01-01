@@ -113,8 +113,8 @@ data class DiagnosticObject(
 data class DiagnosticArea(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "diagnostic_object") val diagnosticObject: String,
-    @Embedded(prefix = "last_") val lastLocation: Coordinates? = null,
     @ColumnInfo(name = "danger_class") val dangerClass: String,
+    @Embedded(prefix = "last_") val lastLocation: Coordinates? = null,
     @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
 )
 
@@ -157,7 +157,7 @@ data class DiagnosticPointWithHistory(
 @Dao
 interface DiagnosticAreaDao {
     @Transaction
-    @Query("SELECT * FROM diagnostic_objects")
+    @Query("SELECT * FROM diagnostic_objects ORDER BY name ASC")
     fun getAllObjects(): Flow<List<DiagnosticObjectWithAreas>>
 
     @Transaction
@@ -169,11 +169,11 @@ interface DiagnosticAreaDao {
     fun getPointById(id: String): DiagnosticPointWithHistory
 
     @Transaction
-    @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject")
+    @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject ORDER BY id ASC")
     fun getObjectAreas(diagnosticObject: String): Flow<List<DiagnosticAreaWithPoints>>
 
     @Transaction
-    @Query("SELECT * FROM diagnostic_points WHERE diagnostic_area = :diagnosticArea")
+    @Query("SELECT * FROM diagnostic_points WHERE diagnostic_area = :diagnosticArea ORDER BY id ASC")
     fun getAreaPoints(diagnosticArea: String): Flow<List<DiagnosticPointWithHistory>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -187,4 +187,7 @@ interface DiagnosticAreaDao {
 
     @Update
     fun updateArea(area: DiagnosticArea)
+
+    @Delete
+    fun deleteArea(area: DiagnosticArea)
 }

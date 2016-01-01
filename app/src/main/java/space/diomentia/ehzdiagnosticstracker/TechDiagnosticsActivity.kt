@@ -91,7 +91,7 @@ class TechDiagnosticsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
-        val pointId = AppState.CurrentDiagnosticSession.diagnosticPoint?.point?.id
+        val pointId = AppState.CurrentDiagnosticSession.diagnosticPoint?.id
         if (pointId == null) {
             setResult(RESULT_CANCELED)
             finish()
@@ -170,7 +170,7 @@ private fun Content() {
             ) {
                 Text(
                     "${stringResource(R.string.point)} ${
-                        AppState.CurrentDiagnosticSession.diagnosticPoint?.point?.id ?: stringResource(
+                        AppState.CurrentDiagnosticSession.diagnosticPoint?.id ?: stringResource(
                             R.string.unknown
                         )
                     }",
@@ -182,7 +182,7 @@ private fun Content() {
                         .padding(top = 24.dp)
                 )
                 Text(
-                    AppState.CurrentDiagnosticSession.diagnosticObject?.diagnosticObject?.name
+                    AppState.CurrentDiagnosticSession.diagnosticObject?.name
                         ?: stringResource(R.string.unknown),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
@@ -191,7 +191,7 @@ private fun Content() {
                 )
                 Text(
                     "${stringResource(R.string.area)} ${
-                        AppState.CurrentDiagnosticSession.diagnosticArea?.diagnosticArea?.id ?: stringResource(
+                        AppState.CurrentDiagnosticSession.diagnosticArea?.id ?: stringResource(
                             R.string.unknown
                         )
                     }",

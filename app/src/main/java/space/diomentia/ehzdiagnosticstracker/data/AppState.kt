@@ -134,9 +134,9 @@ object AppState {
 
     object CurrentDiagnosticSession {
         var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        var diagnosticObject by mutableStateOf<DiagnosticObjectWithAreas?>(null)
-        var diagnosticArea by mutableStateOf<DiagnosticAreaWithPoints?>(null)
-        var diagnosticPoint by mutableStateOf<DiagnosticPointWithHistory?>(null)
+        var diagnosticObject by mutableStateOf<DiagnosticObject?>(null)
+        var diagnosticArea by mutableStateOf<DiagnosticArea?>(null)
+        var diagnosticPoint by mutableStateOf<DiagnosticPoint?>(null)
         var reportType by mutableIntStateOf(0)
         var diagnosticType by mutableStateOf<Int?>(null)
         var location by mutableStateOf<Location?>(null)
@@ -153,12 +153,12 @@ object AppState {
         fun insertToDb(): Boolean {
             val reportDb = reportDb
             val reportConfig = reportConfig.value
-            val pointId = diagnosticPoint
+            val dPoint = diagnosticPoint
             val diagnosticType = diagnosticType
             val location = location
             val inspector = profileSession
             val data = data
-            if (pointId == null
+            if (dPoint == null
                 || diagnosticType == null
                 || location == null
                 || reportConfig == null
@@ -170,7 +170,7 @@ object AppState {
                 .map { it.id }
                 .toSet()
             val report = DiagnosticReport(
-                pointId.point.id,
+                dPoint.id,
                 dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
                 this@CurrentDiagnosticSession.reportType.toString(),
                 reportConfig.diagnosticTypes[diagnosticType].id,

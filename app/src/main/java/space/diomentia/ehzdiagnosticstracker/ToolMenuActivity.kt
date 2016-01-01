@@ -35,6 +35,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -51,6 +53,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
@@ -180,13 +183,13 @@ private fun AreaInfo(
         modifier = modifier
     ) {
         Text(
-            AppState.CurrentDiagnosticSession.diagnosticObject?.diagnosticObject?.name
+            AppState.CurrentDiagnosticSession.diagnosticObject?.name
                 ?: stringResource(R.string.unknown),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.diagnosticArea?.diagnosticArea?.id}",
+            "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.diagnosticArea?.id}",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
@@ -201,6 +204,12 @@ private fun ScanQrButton(
     val coroutineScope = LocalCoroutineScope.current
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
+    val areaPoints by AppState.CurrentDiagnosticSession.diagnosticArea?.let {
+        AppState.reportDb
+            ?.diagnosticAreaDao()
+            ?.getAreaPoints(it.id)
+            ?.collectAsStateWithLifecycle(emptyList())
+    } ?: remember { mutableStateOf(emptyList()) }
 
     val scanQrLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -214,7 +223,8 @@ private fun ScanQrButton(
             }
             return@rememberLauncherForActivityResult
         }
-        if (AppState.CurrentDiagnosticSession.diagnosticArea?.points?.find { it.id == id } == null) {
+        val foundPoint = areaPoints.find { it.point.id == id }
+        if (foundPoint == null) {
             coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
                 snackbarHostState.showSnackbar("Участок не принадлежит объекту")
@@ -222,9 +232,7 @@ private fun ScanQrButton(
             return@rememberLauncherForActivityResult
         }
         AppState.CurrentDiagnosticSession.reset()
-        AppState.CurrentDiagnosticSession.diagnosticPoint = AppState.reportDb
-            ?.diagnosticAreaDao()
-            ?.getPointById(id)
+        AppState.CurrentDiagnosticSession.diagnosticPoint = foundPoint.point
         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
         activity?.run {
             val intent = Intent(context, TechDiagnosticsActivity::class.java)

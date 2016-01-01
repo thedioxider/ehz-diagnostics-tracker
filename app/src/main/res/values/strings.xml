@@ -16,6 +16,7 @@
     <string name="diagnostic_object">Объект диагностирования</string>
     <string name="area">Участок</string>
     <string name="point">Точка</string>
+    <string name="id">Идентификатор</string>
     <string name="diagnostics_type">Вид коррозионного обследования</string>
     <string name="diagnostics_type_0">приёмочное (первичное)</string>
     <string name="diagnostics_type_1">периодическое комплексное</string>
@@ -78,6 +79,8 @@
     <string name="add_profile">Добавить профиль</string>
     <string name="name">Имя</string>
     <string name="input_name">Введите имя</string>
+    <string name="input_id">Введите идентификатор</string>
+    <string name="submit">Принять</string>
     <string name="password">Пароль</string>
     <string name="wrong_profile_input">Неверно введены данные</string>
     <string name="change_password">Изменить пароль</string>
