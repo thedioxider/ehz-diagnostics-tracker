@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationServices
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
@@ -91,7 +92,7 @@ class TechDiagnosticsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
-        val pointId = AppState.CurrentDiagnosticSession.diagnosticPoint?.id
+        val pointId = AppState.CurrentDiagnosticSession.diagnosticPoint
         if (pointId == null) {
             setResult(RESULT_CANCELED)
             finish()
@@ -119,6 +120,18 @@ private fun Content() {
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
     var state by LocalUiState.current
+    val diagnosticObject by AppState.CurrentDiagnosticSession.diagnosticObject?.let { id ->
+        AppState.reportDb
+            ?.diagnosticAreaDao()
+            ?.getObjectById(id)
+            ?.collectAsStateWithLifecycle(null)
+    } ?: remember { mutableStateOf(null) }
+    val diagnosticArea by AppState.CurrentDiagnosticSession.diagnosticArea?.let { id ->
+        AppState.reportDb
+            ?.diagnosticAreaDao()
+            ?.getAreaById(id)
+            ?.collectAsStateWithLifecycle(null)
+    } ?: remember { mutableStateOf(null) }
 
     if (AppState.CurrentDiagnosticSession.diagnosticPoint == null) activity?.finish()
     if (AppState.CurrentDiagnosticSession.diagnosticType == null) state = UiState.Configuration
@@ -170,7 +183,7 @@ private fun Content() {
             ) {
                 Text(
                     "${stringResource(R.string.point)} ${
-                        AppState.CurrentDiagnosticSession.diagnosticPoint?.id ?: stringResource(
+                        AppState.CurrentDiagnosticSession.diagnosticPoint ?: stringResource(
                             R.string.unknown
                         )
                     }",
@@ -182,8 +195,7 @@ private fun Content() {
                         .padding(top = 24.dp)
                 )
                 Text(
-                    AppState.CurrentDiagnosticSession.diagnosticObject?.name
-                        ?: stringResource(R.string.unknown),
+                    diagnosticObject?.diagnosticObject?.name ?: stringResource(R.string.unknown),
                     style = MaterialTheme.typography.titleMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -191,7 +203,7 @@ private fun Content() {
                 )
                 Text(
                     "${stringResource(R.string.area)} ${
-                        AppState.CurrentDiagnosticSession.diagnosticArea?.id ?: stringResource(
+                        diagnosticArea?.diagnosticArea?.id ?: stringResource(
                             R.string.unknown
                         )
                     }",

@@ -86,7 +86,7 @@ interface DiagnosticReportDao {
     @Query("SELECT diagnostic_point FROM diagnostic_reports")
     fun getPoints(): Flow<List<String>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertReport(report: DiagnosticReport): Long
 
     @Insert
@@ -161,12 +161,19 @@ interface DiagnosticAreaDao {
     fun getAllObjects(): Flow<List<DiagnosticObjectWithAreas>>
 
     @Transaction
+    @Query("SELECT * FROM diagnostic_objects WHERE id = :id")
+    fun getObjectById(id: String): Flow<DiagnosticObjectWithAreas>
+
+    @Transaction
     @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
-    fun getAreaById(id: String): DiagnosticAreaWithPoints
+    fun getAreaById(id: String): Flow<DiagnosticAreaWithPoints>
+
+    @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
+    fun getAreaByIdOnce(id: String): DiagnosticArea
 
     @Transaction
     @Query("SELECT * FROM diagnostic_points WHERE id = :id")
-    fun getPointById(id: String): DiagnosticPointWithHistory
+    fun getPointById(id: String): Flow<DiagnosticPointWithHistory>
 
     @Transaction
     @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject ORDER BY id ASC")
@@ -176,13 +183,13 @@ interface DiagnosticAreaDao {
     @Query("SELECT * FROM diagnostic_points WHERE diagnostic_area = :diagnosticArea ORDER BY id ASC")
     fun getAreaPoints(diagnosticArea: String): Flow<List<DiagnosticPointWithHistory>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertDiagnosticObject(diagnosticObject: DiagnosticObject)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertDiagnosticArea(diagnosticArea: DiagnosticArea)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertDiagnosticPoint(diagnosticPoint: DiagnosticPoint)
 
     @Update

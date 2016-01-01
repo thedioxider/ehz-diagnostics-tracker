@@ -35,6 +35,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.State
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,9 +55,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticAreaWithPoints
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObjectWithAreas
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
@@ -69,6 +74,11 @@ import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
 
+val LocalDiagnosticObject =
+    compositionLocalOf<State<DiagnosticObjectWithAreas?>> { mutableStateOf(null) }
+val LocalDiagnosticArea =
+    compositionLocalOf<State<DiagnosticAreaWithPoints?>> { mutableStateOf(null) }
+
 class ToolMenuActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,7 +91,19 @@ class ToolMenuActivity : ComponentActivity() {
 
             CompositionLocalProvider(
                 LocalCoroutineScope provides rememberCoroutineScope(),
-                LocalSnackbarHostState provides snackbarHostState
+                LocalSnackbarHostState provides snackbarHostState,
+                LocalDiagnosticObject provides (AppState.CurrentDiagnosticSession.diagnosticObject?.let {
+                    AppState.reportDb
+                        ?.diagnosticAreaDao()
+                        ?.getObjectById(it)
+                        ?.collectAsStateWithLifecycle(null)
+                } ?: remember { mutableStateOf(null) }),
+                LocalDiagnosticArea provides (AppState.CurrentDiagnosticSession.diagnosticArea?.let {
+                    AppState.reportDb
+                        ?.diagnosticAreaDao()
+                        ?.getAreaById(it)
+                        ?.collectAsStateWithLifecycle(null)
+                } ?: remember { mutableStateOf(null) })
             ) {
                 Content()
             }
@@ -178,18 +200,20 @@ private fun Content() {
 private fun AreaInfo(
     modifier: Modifier = Modifier
 ) {
+    val dObject by LocalDiagnosticObject.current
+    val dArea by LocalDiagnosticArea.current
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
         Text(
-            AppState.CurrentDiagnosticSession.diagnosticObject?.name
-                ?: stringResource(R.string.unknown),
+            dObject?.diagnosticObject?.name ?: stringResource(R.string.unknown),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.diagnosticArea?.id}",
+            "${stringResource(R.string.area)} ${dArea?.diagnosticArea?.id}",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
@@ -204,12 +228,7 @@ private fun ScanQrButton(
     val coroutineScope = LocalCoroutineScope.current
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val areaPoints by AppState.CurrentDiagnosticSession.diagnosticArea?.let {
-        AppState.reportDb
-            ?.diagnosticAreaDao()
-            ?.getAreaPoints(it.id)
-            ?.collectAsStateWithLifecycle(emptyList())
-    } ?: remember { mutableStateOf(emptyList()) }
+    val dArea by LocalDiagnosticArea.current
 
     val scanQrLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -223,7 +242,7 @@ private fun ScanQrButton(
             }
             return@rememberLauncherForActivityResult
         }
-        val foundPoint = areaPoints.find { it.point.id == id }
+        val foundPoint = dArea?.points?.find { it.id == id }
         if (foundPoint == null) {
             coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
@@ -232,7 +251,7 @@ private fun ScanQrButton(
             return@rememberLauncherForActivityResult
         }
         AppState.CurrentDiagnosticSession.reset()
-        AppState.CurrentDiagnosticSession.diagnosticPoint = foundPoint.point
+        AppState.CurrentDiagnosticSession.diagnosticPoint = foundPoint.id
         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
         activity?.run {
             val intent = Intent(context, TechDiagnosticsActivity::class.java)
@@ -373,6 +392,8 @@ private fun MenuActionButtonsRow(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val dArea by LocalDiagnosticArea.current
+    val areaLastLocation = dArea?.diagnosticArea?.lastLocation
     val rowHeight = 80.dp
 
     Row(
@@ -385,12 +406,21 @@ private fun MenuActionButtonsRow(
             .weight(1f)
         MenuActionButton(
             actionButtonModifier,
-            enabled = false,
+            enabled = areaLastLocation != null,
             buttonHeight = rowHeight,
-            description = stringResource(R.string.list_areas),
-            shortDescription = stringResource(R.string.list_areas_short),
+            description = stringResource(R.string.navigate_to_area),
+            shortDescription = stringResource(R.string.navigate_to_area_short),
             icon = painterResource(R.drawable.ic_explore)
-        ) {}
+        ) {
+            areaLastLocation?.let {
+                context.startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        "geo:${it.latitude},${it.altitude}".toUri()
+                    )
+                )
+            }
+        }
         MenuActionButton(
             actionButtonModifier,
             buttonHeight = rowHeight,

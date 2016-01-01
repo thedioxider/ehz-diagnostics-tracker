@@ -134,9 +134,9 @@ object AppState {
 
     object CurrentDiagnosticSession {
         var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        var diagnosticObject by mutableStateOf<DiagnosticObject?>(null)
-        var diagnosticArea by mutableStateOf<DiagnosticArea?>(null)
-        var diagnosticPoint by mutableStateOf<DiagnosticPoint?>(null)
+        var diagnosticObject by mutableStateOf<String?>(null)
+        var diagnosticArea by mutableStateOf<String?>(null)
+        var diagnosticPoint by mutableStateOf<String?>(null)
         var reportType by mutableIntStateOf(0)
         var diagnosticType by mutableStateOf<Int?>(null)
         var location by mutableStateOf<Location?>(null)
@@ -170,7 +170,7 @@ object AppState {
                 .map { it.id }
                 .toSet()
             val report = DiagnosticReport(
-                dPoint.id,
+                dPoint,
                 dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
                 this@CurrentDiagnosticSession.reportType.toString(),
                 reportConfig.diagnosticTypes[diagnosticType].id,
@@ -190,6 +190,19 @@ object AppState {
                 .toTypedArray()
             reportDb.diagnosticReportDao().insertData(*dataEntries)
             reset()
+            AppState.reportDb?.diagnosticAreaDao()?.run {
+                diagnosticArea?.let {
+                    val area = getAreaByIdOnce(it)
+                    updateArea(
+                        area.copy(
+                            lastLocation = Coordinates(
+                                latitude = location.latitude,
+                                altitude = location.altitude
+                            )
+                        )
+                    )
+                }
+            }
             return true
         }
     }

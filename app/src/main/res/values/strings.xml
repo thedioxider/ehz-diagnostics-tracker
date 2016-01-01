@@ -92,4 +92,6 @@
     <string name="profile_deleted">Профиль удалён</string>
     <string name="change_account">Сменить аккаунт</string>
     <string name="report_by">Отчёт составил</string>
+    <string name="navigate_to_area">Проложить маршрут к участку</string>
+    <string name="navigate_to_area_short">Проложить маршрут</string>
 </resources>

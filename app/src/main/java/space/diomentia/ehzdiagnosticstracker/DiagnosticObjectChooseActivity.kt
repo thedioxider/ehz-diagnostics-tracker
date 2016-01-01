@@ -138,25 +138,25 @@ private fun Content() {
             val selectedObjectAreas by AppState.CurrentDiagnosticSession.diagnosticObject?.let {
                 AppState.reportDb
                     ?.diagnosticAreaDao()
-                    ?.getObjectAreas(it.id)
+                    ?.getObjectAreas(it)
                     ?.collectAsStateWithLifecycle(emptyList())
             } ?: remember { mutableStateOf(emptyList()) }
             FullscreenLazyColumn(innerPadding) {
                 items(diagnosticObjects) { diagnosticObject ->
                     AnimatedVisibility(
                         AppState.CurrentDiagnosticSession.diagnosticObject == null
-                                || AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject
+                                || AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject.id
                     ) {
                         DiagnosticObjectItem(
                             diagnosticObject.diagnosticObject.name,
-                            onBack = if (AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject) { ->
+                            onBack = if (AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject.id) { ->
                                 AppState.CurrentDiagnosticSession.diagnosticObject = null
                             } else null,
                             onClick = if (AppState.CurrentDiagnosticSession.diagnosticObject == null) { ->
                                 AppState.CurrentDiagnosticSession.diagnosticObject =
-                                    diagnosticObject.diagnosticObject
+                                    diagnosticObject.diagnosticObject.id
                             } else null,
-                            onNew = if (AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject
+                            onNew = if (AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject.id
                                 && AppState.adminSession
                             ) { ->
                                 addAreaRequest = diagnosticObject.diagnosticObject
@@ -177,10 +177,8 @@ private fun Content() {
                                 }
                             }
                         ) {
-                            AppState.CurrentDiagnosticSession.diagnosticArea = AppState.reportDb
-                                ?.diagnosticAreaDao()
-                                ?.getAreaById(area.diagnosticArea.id)
-                                ?.diagnosticArea
+                            AppState.CurrentDiagnosticSession.diagnosticArea =
+                                area.diagnosticArea.id
                             activity?.run {
                                 startActivity(Intent(this, ToolMenuActivity::class.java))
                                 finish()
