@@ -1,6 +1,8 @@
 package space.diomentia.ehzdiagnosticstracker
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -28,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
@@ -84,6 +87,7 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         val coroutineScope = rememberCoroutineScope()
         val snackbarHostState = LocalSnackbarHostState.current
+
         val scanQrLauncher = rememberLauncherForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
@@ -94,6 +98,18 @@ class MainActivity : ComponentActivity() {
                     snackbarHostState.showSnackbar(data)
                 }
             }
+        }
+        val launchScanQr = {
+            val intent = Intent(
+                this@MainActivity,
+                ScanIdActivity::class.java
+            )
+            scanQrLauncher.launch(intent)
+        }
+        val cameraPermissionLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) {
+            launchScanQr()
         }
 
         PtmOutlinedButton(
@@ -111,11 +127,15 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) {
-                    val intent = Intent(
-                        this@MainActivity,
-                        ScanIdActivity::class.java
-                    )
-                    scanQrLauncher.launch(intent)
+                    if (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    } else {
+                        launchScanQr()
+                    }
                 }
                 .then(modifier)
         ) {
