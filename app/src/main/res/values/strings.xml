@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">EHZ Diagnostics Tracker</string>
+    <string name="app_name">ЭХЗ Журнал Диагностики</string>
+    <string name="scan_id">Просканировать идентификатор</string>
+    <string name="back">Назад</string>
 </resources>
