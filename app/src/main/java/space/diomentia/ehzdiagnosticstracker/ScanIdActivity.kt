@@ -80,9 +80,10 @@ class ScanIdActivity : ComponentActivity() {
                         },
                         snackbarHost = { PtmSnackbarHost(snackbarHostState) }
                     ) { innerPadding ->
-                        Column(
-                            modifier = Modifier.padding(innerPadding)
-                        ) {
+                        // stop blaming me for not using padding
+                        // just gimme my borderless camera!!
+                        if (false) innerPadding
+                        Column {
                             BarcodeCameraPreview(
                                 modifier = Modifier.fillMaxSize()
                             ) { data ->
