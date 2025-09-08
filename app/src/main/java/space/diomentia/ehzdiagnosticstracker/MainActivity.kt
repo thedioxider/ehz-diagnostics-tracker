@@ -3,7 +3,9 @@ package space.diomentia.ehzdiagnosticstracker
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,10 +20,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -33,7 +37,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
@@ -61,40 +64,66 @@ class MainActivity : ComponentActivity() {
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            PtmOutlinedButton(
-                                roundedCorners = true,
+                            ScanQrButton(
                                 modifier = Modifier
                                     .size(200.dp)
                                     .aspectRatio(1f)
-                                    .combinedClickable(
-                                        enabled = true,
-                                        onClickLabel = stringResource(R.string.scan_id),
-                                        onLongClick = {
-                                            coroutineScope.launch {
-                                                snackbarHostState.currentSnackbarData?.dismiss()
-                                                snackbarHostState.showSnackbar(
-                                                    context.getString(R.string.scan_id)
-                                                )
-                                            }
-                                        }
-                                    ) {
-                                        val intent = Intent(
-                                            this@MainActivity,
-                                            ScanIdActivity::class.java
-                                        )
-                                        startActivity(intent)
-                                    }
-                            ) {
-                                Icon(
-                                    Icons.Default.QrCode,
-                                    contentDescription = stringResource(R.string.scan_id),
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
+                            )
                         }
                     }
                 }
             }
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    fun ScanQrButton(
+        modifier: Modifier = Modifier
+    ) {
+        val context = LocalContext.current
+        val coroutineScope = rememberCoroutineScope()
+        val snackbarHostState = LocalSnackbarHostState.current
+        val scanQrLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
+            if (data != null) {
+                coroutineScope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(data)
+                }
+            }
+        }
+
+        PtmOutlinedButton(
+            roundedCorners = true,
+            modifier = Modifier
+                .combinedClickable(
+                    enabled = true,
+                    onClickLabel = stringResource(R.string.scan_id),
+                    onLongClick = {
+                        coroutineScope.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.scan_id)
+                            )
+                        }
+                    }
+                ) {
+                    val intent = Intent(
+                        this@MainActivity,
+                        ScanIdActivity::class.java
+                    )
+                    scanQrLauncher.launch(intent)
+                }
+                .then(modifier)
+        ) {
+            Icon(
+                Icons.Default.QrCode,
+                contentDescription = stringResource(R.string.scan_id),
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
