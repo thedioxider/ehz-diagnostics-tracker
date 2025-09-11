@@ -11,6 +11,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,9 +69,7 @@ class MainActivity : ComponentActivity() {
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             ScanQrButton(
-                                modifier = Modifier
-                                    .size(200.dp)
-                                    .aspectRatio(1f)
+                                modifier = Modifier.size(200.dp)
                             )
                         }
                     }
@@ -112,38 +111,42 @@ class MainActivity : ComponentActivity() {
             launchScanQr()
         }
 
-        PtmOutlinedButton(
-            roundedCorners = true,
-            modifier = Modifier
-                .combinedClickable(
-                    enabled = true,
-                    onClickLabel = stringResource(R.string.scan_id),
-                    onLongClick = {
-                        coroutineScope.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(
-                                context.getString(R.string.scan_id)
-                            )
+        Box(
+            modifier = modifier
+        ) {
+            PtmOutlinedButton(
+                roundedCorners = true,
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .combinedClickable(
+                        enabled = true,
+                        onClickLabel = stringResource(R.string.scan_id),
+                        onLongClick = {
+                            coroutineScope.launch {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                snackbarHostState.showSnackbar(
+                                    context.getString(R.string.scan_id)
+                                )
+                            }
+                        }
+                    ) {
+                        if (ActivityCompat.checkSelfPermission(
+                                context,
+                                Manifest.permission.CAMERA
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                        } else {
+                            launchScanQr()
                         }
                     }
-                ) {
-                    if (ActivityCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.CAMERA
-                        ) != PackageManager.PERMISSION_GRANTED
-                    ) {
-                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                    } else {
-                        launchScanQr()
-                    }
-                }
-                .then(modifier)
-        ) {
-            Icon(
-                Icons.Default.QrCode,
-                contentDescription = stringResource(R.string.scan_id),
-                modifier = Modifier.fillMaxSize()
-            )
+            ) {
+                Icon(
+                    Icons.Default.QrCode,
+                    contentDescription = stringResource(R.string.scan_id),
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }

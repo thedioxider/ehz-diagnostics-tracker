@@ -24,19 +24,71 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-val slanted = GenericShape { size, _ ->
-    moveTo(0f, 0f)
-    lineTo(size.width + size.height / 3f, 0f)
-    lineTo(size.width, size.height)
-    lineTo(0f, size.height)
+private fun slanted(size: Size, offset: Offset = Offset(0f, 0f)): Path {
+    val o = offset
+    return Path().apply {
+        moveTo(o.x, o.y)
+        lineTo(o.x + size.width + size.height / 3f, o.y)
+        lineTo(o.x + size.width, o.y + size.height)
+        lineTo(o.x, o.y + size.height)
+    }
 }
-val backSlanted = GenericShape { size, _ ->
-    moveTo(size.width, 0f)
-    lineTo(size.width, size.height)
-    lineTo(-size.height / 3f, size.height)
-    lineTo(0f, 0f)
+
+private val slantedShape = GenericShape { size, _ -> addPath(slanted(size)) }
+
+@Composable
+private fun Modifier.slantedBorder(width: Dp, color: Color): Modifier {
+    val w = with(LocalDensity.current) { width.toPx() }
+    return Modifier
+        .drawWithCache {
+            onDrawBehind {
+                drawPath(
+                    slanted(
+                        this.size.let { Size(it.width + w, it.height + w) },
+                        Offset(0f, -w)
+                    ),
+                    color
+                )
+            }
+        }
+}
+
+private fun backSlanted(size: Size, offset: Offset = Offset(0f, 0f)): Path {
+    val o = offset
+    return Path().apply {
+        moveTo(o.x + size.width, o.y)
+        lineTo(o.x + size.width, o.y + size.height)
+        lineTo(o.x - size.height / 3f, o.y + size.height)
+        lineTo(o.x, o.y)
+    }
+}
+
+private val backSlantedShape = GenericShape { size, _ -> addPath(backSlanted(size)) }
+
+@Composable
+private fun Modifier.backSlantedBorder(width: Dp, color: Color): Modifier {
+    val w = with(LocalDensity.current) { width.toPx() }
+    return Modifier
+        .drawWithCache {
+            onDrawBehind {
+                drawPath(
+                    backSlanted(
+                        this.size.let { Size(it.width + w, it.height + w) },
+                        Offset(0f, -w)
+                    ),
+                    color
+                )
+            }
+        }
 }
 
 @Composable
@@ -56,10 +108,10 @@ fun PtmTopBar(
     ) {
         if (title != null) {
             Surface(
-                modifier = Modifier.defaultMinSize(minHeight = currentHeight),
-                shape = slanted,
+                shape = slantedShape,
                 color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.defaultMinSize(minHeight = currentHeight)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.Start,
@@ -100,10 +152,12 @@ fun PtmBottomBar(
     ) {
         if (navigation != null) {
             Surface(
-                modifier = Modifier.defaultMinSize(minHeight = currentHeight),
-                shape = slanted,
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                shape = slantedShape,
+                color = MaterialTheme.colorScheme.onPrimary,
+                contentColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .defaultMinSize(minHeight = currentHeight)
+                    .slantedBorder(8.dp, MaterialTheme.colorScheme.primary)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.Start,
@@ -124,10 +178,12 @@ fun PtmBottomBar(
         Spacer(Modifier.weight(1f))
         if (actions != null) {
             Surface(
-                modifier = Modifier.defaultMinSize(minHeight = currentHeight),
-                shape = backSlanted,
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                shape = backSlantedShape,
+                color = MaterialTheme.colorScheme.onPrimary,
+                contentColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .defaultMinSize(minHeight = currentHeight)
+                    .backSlantedBorder(8.dp, MaterialTheme.colorScheme.primary)
             ) {
                 Box(
                     modifier = Modifier
