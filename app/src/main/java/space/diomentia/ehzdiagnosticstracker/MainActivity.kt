@@ -28,11 +28,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
+import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
@@ -49,8 +51,6 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalSnackbarHostState provides snackbarHostState
             ) {
-                val context = baseContext
-                val coroutineScope = rememberCoroutineScope()
                 PtmTheme {
                     Scaffold(
                         modifier = Modifier.fillMaxSize(),
@@ -65,9 +65,14 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .padding(innerPadding)
                                 .fillMaxSize(),
-                            verticalArrangement = Arrangement.Center,
+                            verticalArrangement = Arrangement.SpaceEvenly,
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            Text(
+                                "Id: ${AppState.currentDiagnosticArea.id ?: "Not found"}",
+                                modifier = Modifier
+                                    .alpha(if (AppState.currentDiagnosticArea.id == null) 0f else 1f)
+                            )
                             ScanQrButton(
                                 modifier = Modifier.size(200.dp)
                             )
@@ -91,10 +96,17 @@ class MainActivity : ComponentActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
             val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
-            if (data != null) {
+            val id = data?.toIntOrNull()
+            if (id != null) {
+                AppState.currentDiagnosticArea.id = id
                 coroutineScope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(data)
+                    snackbarHostState.showSnackbar("Id found: ${id}")
+                }
+            } else {
+                coroutineScope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar("Id not found...")
                 }
             }
         }
