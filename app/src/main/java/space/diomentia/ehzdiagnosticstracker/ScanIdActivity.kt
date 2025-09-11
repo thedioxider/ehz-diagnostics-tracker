@@ -103,63 +103,64 @@ class ScanIdActivity : ComponentActivity() {
             }
         }
     }
+}
 
-    @Composable
-    fun BarcodeCameraPreview(
-        modifier: Modifier = Modifier,
-        barcodeListener: (data: String) -> Unit
-    ) {
-        val context = LocalContext.current
-        val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
-        val lifecycleOwner = LocalLifecycleOwner.current
-        var preview by remember { mutableStateOf<Preview?>(null) }
 
-        AndroidView(
-            modifier = modifier,
-            factory = { androidViewContext ->
-                PreviewView(androidViewContext).apply {
-                    // some configurations of layout since it is not compose element
-                    scaleType = PreviewView.ScaleType.FILL_CENTER
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT
-                    )
-                    implementationMode = PreviewView.ImplementationMode.PERFORMANCE
-                }
-            },
-            update = { previewView ->
-                val cameraSelector = CameraSelector.Builder()
-                    .requireLensFacing(CameraSelector.LENS_FACING_BACK)
-                    .build()
-                val cameraExecutor = Executors.newSingleThreadExecutor()
-                val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+@Composable
+private fun BarcodeCameraPreview(
+    modifier: Modifier = Modifier,
+    barcodeListener: (data: String) -> Unit
+) {
+    val context = LocalContext.current
+    val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var preview by remember { mutableStateOf<Preview?>(null) }
 
-                cameraProviderFuture.addListener({
-                    preview = Preview.Builder().build().also {
-                        it.surfaceProvider = previewView.surfaceProvider
-                    }
-                    val cameraProvider = cameraProviderFuture.get()
-                    val imageAnalysis = ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER)
-                        .build()
-                        .also {
-                            it.setAnalyzer(cameraExecutor, BarcodeAnalyzer { data ->
-                                barcodeListener(data)
-                            })
-                        }
-                    try {
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageAnalysis
-                        )
-                    } catch (e: Exception) {
-                        Log.e("ScanId", "failed camera preview: ${e.localizedMessage}")
-                    }
-                }, mainExecutor)
+    AndroidView(
+        modifier = modifier,
+        factory = { androidViewContext ->
+            PreviewView(androidViewContext).apply {
+                // some configurations of layout since it is not compose element
+                scaleType = PreviewView.ScaleType.FILL_CENTER
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                )
+                implementationMode = PreviewView.ImplementationMode.PERFORMANCE
             }
-        )
-    }
+        },
+        update = { previewView ->
+            val cameraSelector = CameraSelector.Builder()
+                .requireLensFacing(CameraSelector.LENS_FACING_BACK)
+                .build()
+            val cameraExecutor = Executors.newSingleThreadExecutor()
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+
+            cameraProviderFuture.addListener({
+                preview = Preview.Builder().build().also {
+                    it.surfaceProvider = previewView.surfaceProvider
+                }
+                val cameraProvider = cameraProviderFuture.get()
+                val imageAnalysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_BLOCK_PRODUCER)
+                    .build()
+                    .also {
+                        it.setAnalyzer(cameraExecutor, BarcodeAnalyzer { data ->
+                            barcodeListener(data)
+                        })
+                    }
+                try {
+                    cameraProvider.unbindAll()
+                    cameraProvider.bindToLifecycle(
+                        lifecycleOwner,
+                        cameraSelector,
+                        preview,
+                        imageAnalysis
+                    )
+                } catch (e: Exception) {
+                    Log.e("ScanId", "failed camera preview: ${e.localizedMessage}")
+                }
+            }, mainExecutor)
+        }
+    )
 }

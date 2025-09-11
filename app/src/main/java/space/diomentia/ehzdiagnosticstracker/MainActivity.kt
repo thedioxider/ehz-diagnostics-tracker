@@ -82,83 +82,90 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
 
-    @OptIn(ExperimentalFoundationApi::class)
-    @Composable
-    fun ScanQrButton(
-        modifier: Modifier = Modifier
-    ) {
-        val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
-        val snackbarHostState = LocalSnackbarHostState.current
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ScanQrButton(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = LocalSnackbarHostState.current
 
-        val scanQrLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
-            val id = data?.toIntOrNull()
-            if (id != null) {
-                AppState.currentDiagnosticArea.id = id
-                coroutineScope.launch {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar("Id found: ${id}")
-                }
-            } else {
-                coroutineScope.launch {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar("Id not found...")
-                }
+    val scanQrLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
+        val id = data?.toIntOrNull()
+        if (id != null) {
+            AppState.currentDiagnosticArea.id = id
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar("Id found: ${id}")
             }
-        }
-        val launchScanQr = {
-            val intent = Intent(
-                this@MainActivity,
-                ScanIdActivity::class.java
-            )
-            scanQrLauncher.launch(intent)
-        }
-        val cameraPermissionLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) {
-            launchScanQr()
-        }
-
-        Box(
-            modifier = modifier
-        ) {
-            PtmOutlinedButton(
-                roundedCorners = true,
-                modifier = Modifier
-                    .aspectRatio(1f)
-                    .combinedClickable(
-                        enabled = true,
-                        onClickLabel = stringResource(R.string.scan_id),
-                        onLongClick = {
-                            coroutineScope.launch {
-                                snackbarHostState.currentSnackbarData?.dismiss()
-                                snackbarHostState.showSnackbar(
-                                    context.getString(R.string.scan_id)
-                                )
-                            }
-                        }
-                    ) {
-                        if (ActivityCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.CAMERA
-                            ) != PackageManager.PERMISSION_GRANTED
-                        ) {
-                            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                        } else {
-                            launchScanQr()
-                        }
-                    }
-            ) {
-                Icon(
-                    Icons.Default.QrCode,
-                    contentDescription = stringResource(R.string.scan_id),
-                    modifier = Modifier.fillMaxSize()
-                )
+        } else {
+            coroutineScope.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar("Id not found...")
             }
         }
     }
+    val launchScanQr = {
+        val intent = Intent(
+            context,
+            ScanIdActivity::class.java
+        )
+        scanQrLauncher.launch(intent)
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        launchScanQr()
+    }
+
+    Box(
+        modifier = modifier
+    ) {
+        PtmOutlinedButton(
+            roundedCorners = true,
+            modifier = Modifier
+                .aspectRatio(1f)
+                .combinedClickable(
+                    enabled = true,
+                    onClickLabel = stringResource(R.string.scan_id),
+                    onLongClick = {
+                        coroutineScope.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.scan_id)
+                            )
+                        }
+                    }
+                ) {
+                    if (ActivityCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    } else {
+                        launchScanQr()
+                    }
+                }
+        ) {
+            Icon(
+                Icons.Default.QrCode,
+                contentDescription = stringResource(R.string.scan_id),
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+private fun AreaListButton(
+    modifier: Modifier = Modifier
+) {
+
 }
