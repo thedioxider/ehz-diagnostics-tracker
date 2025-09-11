@@ -48,7 +48,7 @@ private val slantedShape = GenericShape { size, _ -> addPath(slanted(size)) }
 @Composable
 private fun Modifier.slantedBorder(width: Dp, color: Color): Modifier {
     val w = with(LocalDensity.current) { width.toPx() }
-    return Modifier
+    return this
         .drawWithCache {
             onDrawBehind {
                 drawPath(
@@ -77,7 +77,7 @@ private val backSlantedShape = GenericShape { size, _ -> addPath(backSlanted(siz
 @Composable
 private fun Modifier.backSlantedBorder(width: Dp, color: Color): Modifier {
     val w = with(LocalDensity.current) { width.toPx() }
-    return Modifier
+    return this
         .drawWithCache {
             onDrawBehind {
                 drawPath(
