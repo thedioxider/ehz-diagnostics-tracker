@@ -83,7 +83,7 @@ private fun Modifier.backSlantedBorder(width: Dp, color: Color): Modifier {
                 drawPath(
                     backSlanted(
                         this.size.let { Size(it.width + w, it.height + w) },
-                        Offset(0f, -w)
+                        Offset(-w, -w)
                     ),
                     color
                 )
@@ -187,7 +187,7 @@ fun PtmBottomBar(
             ) {
                 Box(
                     modifier = Modifier
-                        .windowInsetsPadding(WindowInsets.statusBars)
+                        .windowInsetsPadding(WindowInsets.navigationBars)
                         .padding(8.dp)
                         .height(IntrinsicSize.Min)
                 ) {
