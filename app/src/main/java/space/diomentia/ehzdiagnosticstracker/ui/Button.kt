@@ -4,9 +4,11 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -19,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import space.diomentia.ehzdiagnosticstracker.ui.theme.blue_oxford
@@ -87,4 +90,25 @@ fun PtmFilledButton(
     ) {
         content()
     }
+}
+
+@Composable
+fun ActionButton(
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    label: String? = null,
+    action: () -> Unit
+) {
+    Icon(
+        icon,
+        contentDescription = label,
+        modifier = Modifier
+            .size(48.dp)
+            .padding(4.dp)
+            .clickableWithLabel(
+                label = label,
+                action = action
+            )
+            .then(modifier)
+    )
 }

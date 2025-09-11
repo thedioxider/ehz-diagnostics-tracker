@@ -15,11 +15,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -34,7 +31,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -42,6 +38,7 @@ import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.ScanIdActivity.Companion.QR_DATA
 import space.diomentia.ehzdiagnosticstracker.data.BarcodeAnalyzer
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
@@ -79,19 +76,14 @@ private fun Content() {
             bottomBar = {
                 PtmBottomBar(
                     navigation = {
-                        IconButton(onClick = {
+                        ActionButton(
+                            icon = Icons.AutoMirrored.Default.ArrowBack,
+                            label = stringResource(R.string.back)
+                        ) {
                             activity?.run {
                                 setResult(RESULT_CANCELED)
                                 finish()
                             }
-                        }) {
-                            Icon(
-                                Icons.AutoMirrored.Default.ArrowBack,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(4.dp),
-                                contentDescription = stringResource(R.string.back)
-                            )
                         }
                     }
                 )

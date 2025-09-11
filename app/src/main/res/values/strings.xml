@@ -2,4 +2,11 @@
     <string name="app_name">ЭХЗ Журнал Диагностики</string>
     <string name="scan_id">Просканировать идентификатор</string>
     <string name="back">Назад</string>
+    <string name="list_areas">Перечень участков технического диагностирования</string>
+    <string name="list_areas_short">Перечень участков</string>
+    <string name="contractor_info">Сведения о заказчике</string>
+    <string name="diagnostics_organization_info">Сведения об организации, проводившей техническое диагностирование</string>
+    <string name="diagnostics_organization_info_short">Сведения об организации</string>
+    <string name="customer_info">Сведения о заказчике</string>
+    <string name="diagnostics_history">История диагностирования</string>
 </resources>

@@ -65,7 +65,7 @@ fun getWindowSize(): Size {
 fun Modifier.clickableWithLabel(
     enabled: Boolean = true,
     urgent: Boolean = false,
-    label: String,
+    label: String? = null,
     action: () -> Unit
 ): Modifier {
     val coroutineScope = rememberCoroutineScope()
@@ -75,13 +75,15 @@ fun Modifier.clickableWithLabel(
             enabled = enabled,
             onClickLabel = label,
             onLongClick = {
-                coroutineScope.launch {
-                    if (urgent) {
-                        snackbarHostState.currentSnackbarData?.dismiss()
-                        snackbarHostState.showSnackbar(label)
-                    } else {
-                        if (snackbarHostState.currentSnackbarData == null) {
+                if (!label.isNullOrEmpty()) {
+                    coroutineScope.launch {
+                        if (urgent) {
+                            snackbarHostState.currentSnackbarData?.dismiss()
                             snackbarHostState.showSnackbar(label)
+                        } else {
+                            if (snackbarHostState.currentSnackbarData == null) {
+                                snackbarHostState.showSnackbar(label)
+                            }
                         }
                     }
                 }
