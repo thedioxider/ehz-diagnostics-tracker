@@ -8,7 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +39,7 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
@@ -133,22 +133,12 @@ private fun ScanQrButton(
     }
 
     Box(modifier = modifier) {
-    Box(modifier = modifier) {
         PtmOutlinedButton(
             roundedCorners = true,
             modifier = Modifier
                 .aspectRatio(1f)
-                .combinedClickable(
-                    enabled = true,
-                    onClickLabel = stringResource(R.string.scan_id),
-                    onLongClick = {
-                        coroutineScope.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(
-                                context.getString(R.string.scan_id)
-                            )
-                        }
-                    }
+                .clickableWithLabel(
+                    label = stringResource(R.string.scan_id)
                 ) {
                     if (ActivityCompat.checkSelfPermission(
                             context,
