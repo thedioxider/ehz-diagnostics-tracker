@@ -1,14 +1,16 @@
 package space.diomentia.ehzdiagnosticstracker
 
+import android.app.Activity.RESULT_CANCELED
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Column
@@ -29,12 +31,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.launch
+import space.diomentia.ehzdiagnosticstracker.ScanIdActivity.Companion.QR_DATA
 import space.diomentia.ehzdiagnosticstracker.data.BarcodeAnalyzer
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -42,6 +47,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.util.concurrent.Executors
+import androidx.camera.core.Preview as CameraPreview
 
 class ScanIdActivity : ComponentActivity() {
     companion object {
@@ -56,48 +62,59 @@ class ScanIdActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalSnackbarHostState provides snackbarHostState
             ) {
-                val context = baseContext
-                val coroutineScope = rememberCoroutineScope()
-                PtmTheme {
-                    Scaffold(
-                        bottomBar = {
-                            PtmBottomBar(
-                                navigation = {
-                                    IconButton(onClick = {
-                                        setResult(RESULT_CANCELED)
-                                        finish()
-                                    }) {
-                                        Icon(
-                                            Icons.AutoMirrored.Default.ArrowBack,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(4.dp),
-                                            contentDescription = stringResource(R.string.back)
-                                        )
-                                    }
-                                }
-                            )
-                        },
-                        snackbarHost = { PtmSnackbarHost(snackbarHostState) }
-                    ) { innerPadding ->
-                        // stop blaming me for not using padding
-                        // just gimme my borderless camera!!
-                        if (false) innerPadding
-                        Column {
-                            BarcodeCameraPreview(
-                                modifier = Modifier.fillMaxSize()
-                            ) { data ->
-                                coroutineScope.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(data)
-                                }
-                                val intent = Intent().also {
-                                    it.putExtra(QR_DATA, data)
-                                }
-                                setResult(RESULT_OK, intent)
+                Content()
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun Content() {
+    val coroutineScope = rememberCoroutineScope()
+    val activity = LocalActivity.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    PtmTheme {
+        Scaffold(
+            bottomBar = {
+                PtmBottomBar(
+                    navigation = {
+                        IconButton(onClick = {
+                            activity?.run {
+                                setResult(RESULT_CANCELED)
                                 finish()
                             }
+                        }) {
+                            Icon(
+                                Icons.AutoMirrored.Default.ArrowBack,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(4.dp),
+                                contentDescription = stringResource(R.string.back)
+                            )
                         }
+                    }
+                )
+            },
+            snackbarHost = { PtmSnackbarHost(snackbarHostState) }
+        ) { innerPadding ->
+            // stop blaming me for not using padding
+            // just gimme my borderless camera!!
+            if (false) innerPadding
+            Column {
+                BarcodeCameraPreview(
+                    modifier = Modifier.fillMaxSize()
+                ) { data ->
+                    coroutineScope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(data)
+                    }
+                    val intent = Intent().also {
+                        it.putExtra(QR_DATA, data)
+                    }
+                    activity?.run {
+                        setResult(RESULT_OK, intent)
+                        finish()
                     }
                 }
             }
@@ -105,16 +122,19 @@ class ScanIdActivity : ComponentActivity() {
     }
 }
 
-
 @Composable
 private fun BarcodeCameraPreview(
     modifier: Modifier = Modifier,
     barcodeListener: (data: String) -> Unit
 ) {
+    if (LocalInspectionMode.current) {
+        return
+    }
+
     val context = LocalContext.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
-    var preview by remember { mutableStateOf<Preview?>(null) }
+    var preview by remember { mutableStateOf<CameraPreview?>(null) }
 
     AndroidView(
         modifier = modifier,
@@ -137,7 +157,7 @@ private fun BarcodeCameraPreview(
             val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
 
             cameraProviderFuture.addListener({
-                preview = Preview.Builder().build().also {
+                preview = CameraPreview.Builder().build().also {
                     it.surfaceProvider = previewView.surfaceProvider
                 }
                 val cameraProvider = cameraProviderFuture.get()
