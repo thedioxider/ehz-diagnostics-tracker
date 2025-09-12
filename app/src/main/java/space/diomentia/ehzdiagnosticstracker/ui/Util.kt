@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Indication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -66,28 +67,42 @@ fun Modifier.clickableWithLabel(
     enabled: Boolean = true,
     urgent: Boolean = false,
     label: String? = null,
+    interactionSource: MutableInteractionSource? = null,
+    indication: Indication? = null,
     action: () -> Unit
 ): Modifier {
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = LocalSnackbarHostState.current
+    val longClickAction = {
+        if (!label.isNullOrEmpty()) {
+            coroutineScope.launch {
+                if (urgent) {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(label)
+                } else {
+                    if (snackbarHostState.currentSnackbarData == null) {
+                        snackbarHostState.showSnackbar(label)
+                    }
+                }
+            }
+        }
+    }
+    if (interactionSource != null) {
+        return this
+            .combinedClickable(
+                enabled = enabled,
+                onClickLabel = label,
+                onLongClick = longClickAction,
+                onClick = action,
+                interactionSource = interactionSource,
+                indication = indication
+            )
+    }
     return this
         .combinedClickable(
             enabled = enabled,
             onClickLabel = label,
-            onLongClick = {
-                if (!label.isNullOrEmpty()) {
-                    coroutineScope.launch {
-                        if (urgent) {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(label)
-                        } else {
-                            if (snackbarHostState.currentSnackbarData == null) {
-                                snackbarHostState.showSnackbar(label)
-                            }
-                        }
-                    }
-                }
-            },
+            onLongClick = longClickAction,
             onClick = action
         )
 }
