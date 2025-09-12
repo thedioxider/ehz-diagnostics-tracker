@@ -1,6 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker
 
 import android.Manifest
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -139,6 +140,7 @@ private fun ScanQrButton(
     val scanQrLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        if (result.resultCode != RESULT_OK) return@rememberLauncherForActivityResult
         val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
         val id = data?.toIntOrNull()
         if (id != null) {
