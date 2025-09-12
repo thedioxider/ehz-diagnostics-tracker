@@ -41,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -118,7 +119,7 @@ private fun Content() {
                     ContinueEditingButton(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 32.dp)
+                            .padding(top = 16.dp)
                     )
                 }
                 MenuActionButtonsRow(
@@ -201,16 +202,25 @@ private fun ScanQrButton(
 private fun ContinueEditingButton(
     modifier: Modifier = Modifier
 ) {
+    val activity = LocalActivity.current
     val interactionSource = remember { MutableInteractionSource() }
+    val isVisible = AppState.CurrentDiagnosticSession.id != null
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
         modifier = Modifier
             .then(modifier)
+            .alpha(if (isVisible) 1f else 0f)
             .clickableWithLabel(
+                enabled = isVisible,
                 label = stringResource(R.string.continue_editing),
                 interactionSource = interactionSource
-            ) { }
+            ) {
+                activity?.run {
+                    val intent = Intent(activity, TechDiagnosticsActivity::class.java)
+                    startActivity(intent)
+                }
+            }
             .padding(12.dp)
     ) {
         Icon(
@@ -251,8 +261,9 @@ private fun MenuActionButton(
             roundedCorners = true,
             modifier = Modifier
                 .let { if (buttonHeight != null) it.height(buttonHeight) else it }
-                .aspectRatio(1f)
+                .padding(horizontal = 6.dp)
                 .weight(1f, fill = false)
+                .aspectRatio(1f)
                 .clickableWithLabel(
                     label = description,
                     action = action
