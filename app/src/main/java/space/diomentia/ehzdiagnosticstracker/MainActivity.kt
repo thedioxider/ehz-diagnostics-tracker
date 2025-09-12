@@ -8,6 +8,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
@@ -29,12 +32,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -103,14 +107,18 @@ private fun Content() {
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    "Id: ${AppState.currentDiagnosticArea.id ?: "Not found"}",
-                    modifier = Modifier
-                        .alpha(if (AppState.currentDiagnosticArea.id == null) 0f else 1f)
-                )
-                ScanQrButton(
-                    modifier = Modifier.size(200.dp)
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    ScanQrButton(
+                        modifier = Modifier.size(200.dp)
+                    )
+                    ContinueEditingButton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 32.dp)
+                    )
+                }
                 MenuActionButtonsRow(
                     Modifier
                         .fillMaxWidth()
@@ -184,6 +192,42 @@ private fun ScanQrButton(
                 modifier = Modifier.fillMaxSize()
             )
         }
+    }
+}
+
+@Composable
+private fun ContinueEditingButton(
+    modifier: Modifier = Modifier
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier
+            .then(modifier)
+            .clickableWithLabel(
+                label = stringResource(R.string.continue_editing),
+                interactionSource = interactionSource
+            ) { }
+            .padding(12.dp)
+    ) {
+        Icon(
+            Icons.Outlined.Edit,
+            contentDescription = stringResource(R.string.continue_editing),
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .indication(
+                    interactionSource = interactionSource,
+                    indication = ripple(bounded = false)
+                )
+                .size(24.dp)
+        )
+        Text(
+            stringResource(R.string.continue_editing_short).lowercase(),
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 

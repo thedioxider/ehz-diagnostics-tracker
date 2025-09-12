@@ -9,4 +9,6 @@
     <string name="diagnostics_organization_info_short">Сведения об организации</string>
     <string name="customer_info">Сведения о заказчике</string>
     <string name="diagnostics_history">История диагностирования</string>
+    <string name="continue_editing">Продолжить заполнение последней диагностики</string>
+    <string name="continue_editing_short">Продолжить заполнение</string>
 </resources>
