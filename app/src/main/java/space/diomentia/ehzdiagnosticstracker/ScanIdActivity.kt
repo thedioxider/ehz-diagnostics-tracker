@@ -16,9 +16,10 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -41,6 +42,7 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
+import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.util.concurrent.Executors
@@ -73,11 +75,16 @@ private fun Content() {
     val snackbarHostState = LocalSnackbarHostState.current
     PtmTheme {
         Scaffold(
+            topBar = {
+                PtmTopBar(
+                    title = { Text(stringResource(R.string.scanning)) }
+                )
+            },
             bottomBar = {
                 PtmBottomBar(
                     navigation = {
                         ActionButton(
-                            icon = Icons.AutoMirrored.Default.ArrowBack,
+                            icon = Icons.AutoMirrored.Outlined.ArrowBack,
                             label = stringResource(R.string.back)
                         ) {
                             activity?.run {
@@ -101,10 +108,10 @@ private fun Content() {
                         snackbarHostState.currentSnackbarData?.dismiss()
                         snackbarHostState.showSnackbar(data)
                     }
-                    val intent = Intent().also {
-                        it.putExtra(QR_DATA, data)
-                    }
                     activity?.run {
+                        val intent = Intent().also {
+                            it.putExtra(QR_DATA, data)
+                        }
                         setResult(RESULT_OK, intent)
                         finish()
                     }

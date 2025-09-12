@@ -11,4 +11,5 @@
     <string name="diagnostics_history">История диагностирования</string>
     <string name="continue_editing">Продолжить заполнение последней диагностики</string>
     <string name="continue_editing_short">Продолжить заполнение</string>
+    <string name="scanning">Сканирование...</string>
 </resources>
