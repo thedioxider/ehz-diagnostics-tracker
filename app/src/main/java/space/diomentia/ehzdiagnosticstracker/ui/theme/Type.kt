@@ -6,7 +6,6 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
 import space.diomentia.ehzdiagnosticstracker.R
 
 @OptIn(ExperimentalTextApi::class)
@@ -112,46 +111,49 @@ val PtmTypography = Typography(
     bodyLarge = defaultTypo.bodyLarge.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.Normal,
-        letterSpacing = 0.5.sp
     ),
     bodyMedium = defaultTypo.bodyMedium.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.Normal,
-        letterSpacing = 0.2.sp
+    ),
+    bodySmall = defaultTypo.bodySmall.copy(
+        fontFamily = MontserratFF,
+        fontWeight = FontWeight.Thin
     ),
     titleLarge = defaultTypo.titleLarge.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = 0.sp
     ),
     titleMedium = defaultTypo.titleMedium.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = 0.sp
+    ),
+    titleSmall = defaultTypo.titleSmall.copy(
+        fontFamily = MontserratFF,
+        fontWeight = FontWeight.Bold
+    ),
+    headlineLarge = defaultTypo.headlineLarge.copy(
+        fontFamily = MontserratFF,
+        fontWeight = FontWeight.ExtraBold
     ),
     headlineMedium = defaultTypo.headlineMedium.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.ExtraBold,
-        letterSpacing = 0.sp
     ),
     headlineSmall = defaultTypo.headlineSmall.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.Bold,
-        letterSpacing = 0.sp
     ),
-    labelSmall = defaultTypo.labelSmall.copy(
+    labelLarge = defaultTypo.labelLarge.copy(
         fontFamily = MontserratFF,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.5.sp
+        fontWeight = FontWeight.Bold,
     ),
     labelMedium = defaultTypo.labelMedium.copy(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.Bold,
-        letterSpacing = 0.5.sp
     ),
-    labelLarge = defaultTypo.labelLarge.copy(
+    labelSmall = defaultTypo.labelSmall.copy(
         fontFamily = MontserratFF,
-        fontWeight = FontWeight.ExtraBold,
-        letterSpacing = 0.sp
-    )
+        fontWeight = FontWeight.SemiBold,
+    ),
 )
