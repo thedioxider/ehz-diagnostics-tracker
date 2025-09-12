@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -135,6 +136,7 @@ private fun ScanQrButton(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
 
     val scanQrLauncher = rememberLauncherForActivityResult(
@@ -144,23 +146,20 @@ private fun ScanQrButton(
         val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
         val id = data?.toIntOrNull()
         if (id != null) {
-            AppState.currentDiagnosticArea.id = id
-            coroutineScope.launch {
-                snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar("Id found: ${id}")
+            AppState.CurrentDiagnosticArea.id = id
+            activity?.run {
+                val intent = Intent(context, TechDiagnosticsActivity::class.java)
+                startActivity(intent)
             }
         } else {
             coroutineScope.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar("Id not found...")
+                snackbarHostState.showSnackbar(context.getString(R.string.qr_no_id))
             }
         }
     }
     val launchScanQr = {
-        val intent = Intent(
-            context,
-            ScanIdActivity::class.java
-        )
+        val intent = Intent(context, ScanIdActivity::class.java)
         scanQrLauncher.launch(intent)
     }
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
