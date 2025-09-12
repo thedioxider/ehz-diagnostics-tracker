@@ -8,8 +8,14 @@ import androidx.compose.runtime.setValue
 
 @Stable
 object AppState {
-    object CurrentDiagnosticArea {
+    object CurrentDiagnosticSession {
         var id by mutableStateOf<Int?>(null)
         var corrosionDiagnosticsType by mutableIntStateOf(0)
+        var worksContentsType by mutableStateOf<Int?>(null)
+
+        fun reset() {
+            id = null
+            worksContentsType = null
+        }
     }
 }

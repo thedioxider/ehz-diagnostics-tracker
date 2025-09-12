@@ -28,4 +28,32 @@
         <item>@string/corrosion_diagnostics_type_4</item>
     </string-array>
     <string name="qr_no_id">QR-код не содержит информации об участке</string>
+    <string name="works_contents">Состав работ</string>
+    <string name="works_contents_tech_evaluation">Оценка технического состояния</string>
+    <string name="works_contents_tech_evaluation_0">УКЗ (Установка Катодной Защиты)</string>
+    <string name="works_contents_tech_evaluation_1">УДЗ (Установка Дренажной Защиты)</string>
+    <string name="works_contents_tech_evaluation_2">УПЗ (Установка Протекторной Защиты)</string>
+    <string name="works_contents_tech_evaluation_3">ВЭИ (Вставка Электроизолирующая)</string>
+    <string name="works_contents_tech_evaluation_4">КИП (Контрольно-Измерительный Пункт)</string>
+    <string name="works_contents_tech_evaluation_5">переходы, оборудованные защитными кожухами</string>
+    <string name="works_contents_tech_evaluation_6">БДР (БСЗ)</string>
+    <string name="works_contents_7">Контроль защищенности трубопровода</string>
+    <string name="works_contents_8">Оценка состояния Защитного Покрытия (ЗП)</string>
+    <string name="works_contents_9">Контроль негативного влияния на сторонние сооружения</string>
+    <string name="works_contents_10">Обследование коррозионного состояния сооружения в шурфах</string>
+    <string-array name="works_contents_tech_evaluation_list">
+        <item>@string/works_contents_tech_evaluation_0</item>
+        <item>@string/works_contents_tech_evaluation_1</item>
+        <item>@string/works_contents_tech_evaluation_2</item>
+        <item>@string/works_contents_tech_evaluation_3</item>
+        <item>@string/works_contents_tech_evaluation_4</item>
+        <item>@string/works_contents_tech_evaluation_5</item>
+        <item>@string/works_contents_tech_evaluation_6</item>
+    </string-array>
+    <string-array name="works_contents_list">
+        <item>@string/works_contents_7</item>
+        <item>@string/works_contents_8</item>
+        <item>@string/works_contents_9</item>
+        <item>@string/works_contents_10</item>
+    </string-array>
 </resources>

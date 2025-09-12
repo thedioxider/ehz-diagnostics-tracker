@@ -122,15 +122,15 @@ val PtmTypography = Typography(
     ),
     titleLarge = defaultTypo.titleLarge.copy(
         fontFamily = MontserratFF,
-        fontWeight = FontWeight.ExtraBold,
+        fontWeight = FontWeight.Bold,
     ),
     titleMedium = defaultTypo.titleMedium.copy(
         fontFamily = MontserratFF,
-        fontWeight = FontWeight.ExtraBold,
+        fontWeight = FontWeight.Bold,
     ),
     titleSmall = defaultTypo.titleSmall.copy(
         fontFamily = MontserratFF,
-        fontWeight = FontWeight.Bold
+        fontWeight = FontWeight.SemiBold
     ),
     headlineLarge = defaultTypo.headlineLarge.copy(
         fontFamily = MontserratFF,

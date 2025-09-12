@@ -5,31 +5,46 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.RadioButtonChecked
+import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -43,14 +58,12 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
-private val LocalAreaId = staticCompositionLocalOf { 16360 }
-
 class TechDiagnosticsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
-        val areaId = AppState.CurrentDiagnosticArea.id
+        val areaId = AppState.CurrentDiagnosticSession.id
         if (areaId == null) {
             setResult(RESULT_CANCELED)
             finish()
@@ -58,8 +71,7 @@ class TechDiagnosticsActivity : ComponentActivity() {
         }
         setContent {
             CompositionLocalProvider(
-                LocalSnackbarHostState provides snackbarHostState,
-                LocalAreaId provides areaId
+                LocalSnackbarHostState provides snackbarHostState
             ) {
                 Content()
             }
@@ -102,17 +114,23 @@ private fun Content() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(
+                        start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                        end = innerPadding.calculateEndPadding(LocalLayoutDirection.current)
+                    )
+                    .verticalScroll(rememberScrollState())
             ) {
+                Spacer(Modifier.height(innerPadding.calculateTopPadding()))
+
                 Text(
-                    "${stringResource(R.string.area)} ${LocalAreaId.current}",
+                    "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.id}",
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 16.dp)
-                        .padding(8.dp)
+                        .padding(vertical = 24.dp, horizontal = 12.dp)
                 )
+
                 Text(
                     stringResource(R.string.corrosion_diagnostics_type),
                     textAlign = TextAlign.Start,
@@ -123,8 +141,19 @@ private fun Content() {
                         .padding(top = 8.dp)
                 )
                 CorrosionTypeSelector(
+                    modifier = Modifier.padding(8.dp)
+                )
+
+                WorksContentsList(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .padding(8.dp)
+                )
+
+                Spacer(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(innerPadding.calculateBottomPadding() + 16.dp)
                 )
             }
         }
@@ -144,7 +173,7 @@ private fun CorrosionTypeSelector(
         modifier = modifier
     ) {
         TextField(
-            value = options[AppState.CurrentDiagnosticArea.corrosionDiagnosticsType],
+            value = options[AppState.CurrentDiagnosticSession.corrosionDiagnosticsType],
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
@@ -158,9 +187,109 @@ private fun CorrosionTypeSelector(
                 DropdownMenuItem(
                     text = { Text(option) },
                     onClick = {
-                        AppState.CurrentDiagnosticArea.corrosionDiagnosticsType = i
+                        AppState.CurrentDiagnosticSession.corrosionDiagnosticsType = i
                         expanded = false
                     }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WorksContentsList(
+    modifier: Modifier = Modifier
+) {
+    val activity = LocalActivity.current
+    val worksContentsTechEvaluationOptions =
+        stringArrayResource(R.array.works_contents_tech_evaluation_list)
+    val worksContentsOptions = stringArrayResource(R.array.works_contents_list)
+    val chooseOption = { type: Int ->
+        AppState.CurrentDiagnosticSession.worksContentsType = type
+        activity?.run {
+            // TODO: Diagnostics Activity
+        }
+    }
+
+    Column(
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top,
+        modifier = modifier
+    ) {
+        Text(
+            stringResource(R.string.works_contents),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(8.dp)
+        )
+        Text(
+            "${stringResource(R.string.works_contents_tech_evaluation)}:",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .padding(start = 16.dp)
+                .padding(vertical = 4.dp, horizontal = 8.dp)
+        )
+        worksContentsTechEvaluationOptions.forEachIndexed { i, option ->
+            val interactionSource = remember { MutableInteractionSource() }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) { chooseOption(i) }
+                    .padding(start = 48.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    if (AppState.CurrentDiagnosticSession.worksContentsType == i)
+                        Icons.Outlined.RadioButtonChecked
+                    else
+                        Icons.Outlined.RadioButtonUnchecked,
+                    contentDescription = stringResource(R.string.works_contents),
+                    modifier = Modifier
+                        .height(18.dp)
+                        .indication(interactionSource, ripple(bounded = false))
+                )
+                Text(
+                    option,
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier
+                        .weight(1f, fill = true)
+                        .padding(horizontal = 12.dp)
+                )
+            }
+        }
+        worksContentsOptions.forEachIndexed { i, option ->
+            val interactionSource = remember { MutableInteractionSource() }
+            val mType = worksContentsTechEvaluationOptions.size + i
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null
+                    ) { chooseOption(mType) }
+                    .padding(start = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Icon(
+                    if (AppState.CurrentDiagnosticSession.worksContentsType == mType)
+                        Icons.Outlined.RadioButtonChecked
+                    else
+                        Icons.Outlined.RadioButtonUnchecked,
+                    contentDescription = stringResource(R.string.works_contents),
+                    modifier = Modifier
+                        .height(18.dp)
+                        .indication(interactionSource, ripple(bounded = false))
+                )
+                Text(
+                    option,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .weight(1f, fill = true)
+                        .padding(horizontal = 12.dp)
                 )
             }
         }

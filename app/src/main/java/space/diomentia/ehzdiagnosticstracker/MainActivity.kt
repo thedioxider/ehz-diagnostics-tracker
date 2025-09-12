@@ -146,7 +146,8 @@ private fun ScanQrButton(
         val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
         val id = data?.toIntOrNull()
         if (id != null) {
-            AppState.CurrentDiagnosticArea.id = id
+            AppState.CurrentDiagnosticSession.reset()
+            AppState.CurrentDiagnosticSession.id = id
             activity?.run {
                 val intent = Intent(context, TechDiagnosticsActivity::class.java)
                 startActivity(intent)
