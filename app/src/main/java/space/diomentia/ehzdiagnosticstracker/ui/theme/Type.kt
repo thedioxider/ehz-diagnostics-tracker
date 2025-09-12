@@ -156,4 +156,13 @@ val PtmTypography = Typography(
         fontFamily = MontserratFF,
         fontWeight = FontWeight.SemiBold,
     ),
+    displayLarge = defaultTypo.displayLarge.copy(
+        fontFamily = MontserratFF
+    ),
+    displayMedium = defaultTypo.displayMedium.copy(
+        fontFamily = MontserratFF
+    ),
+    displaySmall = defaultTypo.displaySmall.copy(
+        fontFamily = MontserratFF
+    )
 )
