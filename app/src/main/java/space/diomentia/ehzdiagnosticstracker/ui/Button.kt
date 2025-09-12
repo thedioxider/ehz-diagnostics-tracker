@@ -106,13 +106,13 @@ fun ActionButton(
         contentDescription = label,
         modifier = Modifier
             .size(48.dp)
-            .padding(4.dp)
             .clickableWithLabel(
                 label = label,
                 action = action,
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = false)
             )
+            .padding(4.dp)
             .then(modifier)
     )
 }
