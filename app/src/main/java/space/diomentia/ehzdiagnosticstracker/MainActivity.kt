@@ -255,13 +255,14 @@ private fun MenuActionButton(
     Column(
         verticalArrangement = Arrangement.SpaceBetween,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+        modifier = Modifier
+            .then(modifier)
+            .padding(horizontal = 6.dp)
     ) {
         PtmOutlinedButton(
             roundedCorners = true,
             modifier = Modifier
                 .let { if (buttonHeight != null) it.height(buttonHeight) else it }
-                .padding(horizontal = 6.dp)
                 .weight(1f, fill = false)
                 .aspectRatio(1f)
                 .clickableWithLabel(
