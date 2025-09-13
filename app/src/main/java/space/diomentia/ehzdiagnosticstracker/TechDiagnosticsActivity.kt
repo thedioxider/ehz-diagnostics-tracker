@@ -49,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -63,6 +64,8 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 private enum class State {
     Configuration,
@@ -77,7 +80,7 @@ private enum class State {
     }
 }
 
-private val LocalState = compositionLocalOf<MutableState<State>> { error("no local state") }
+private val LocalState = compositionLocalOf<MutableState<State>> { mutableStateOf(State.Editor) }
 
 class TechDiagnosticsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,7 +158,16 @@ private fun Content() {
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp, horizontal = 12.dp)
+                        .padding(horizontal = 12.dp)
+                        .padding(top = 24.dp)
+                )
+                Text(
+                    AppState.CurrentDiagnosticSession.dateTime
+                        .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier
+                        .alpha(.5f)
+                        .padding(top = 8.dp, bottom = 16.dp)
                 )
 
                 AnimatedVisibility(LocalState.current.value == State.Configuration) {
@@ -242,6 +254,7 @@ private fun WorksContentsList(
     val worksContentsOptions = stringArrayResource(R.array.works_contents_list)
     val chooseOption = { type: Int ->
         AppState.CurrentDiagnosticSession.worksContentsType = type
+        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
         state = State.Editor
     }
 
@@ -330,7 +343,6 @@ private fun WorksContentsList(
     }
 }
 
-@Preview
 @Composable
 private fun ApplyButton(
     modifier: Modifier = Modifier
@@ -345,7 +357,10 @@ private fun ApplyButton(
             enabled = enabled,
             onClick = {
                 state = when (state) {
-                    State.Configuration -> State.Editor
+                    State.Configuration -> {
+                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
+                        State.Editor
+                    }
                     State.Editor -> State.Configuration
                 }
             },
