@@ -56,4 +56,6 @@
         <item>@string/works_contents_9</item>
         <item>@string/works_contents_10</item>
     </string-array>
+    <string name="apply">Готово</string>
+    <string name="edit_report_type">Изменить тип отчёта</string>
 </resources>
