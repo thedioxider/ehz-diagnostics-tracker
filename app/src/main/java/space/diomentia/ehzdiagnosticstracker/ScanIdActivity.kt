@@ -67,7 +67,7 @@ private fun Content() {
         Scaffold(
             topBar = {
                 PtmTopBar(
-                    title = { Text(stringResource(R.string.scanning)) }
+                    title = { Text("${stringResource(R.string.scanning)}...") }
                 )
             },
             bottomBar = {
@@ -89,6 +89,7 @@ private fun Content() {
         ) { innerPadding ->
             // stop blaming me for not using padding
             // just gimme my borderless camera!!
+            @Suppress("UNUSED_EXPRESSION")
             if (false) innerPadding
             Column {
                 BarcodeCameraPreview(

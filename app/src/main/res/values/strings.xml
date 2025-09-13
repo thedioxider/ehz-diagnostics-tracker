@@ -12,7 +12,7 @@
     <string name="continue_editing">Продолжить заполнение последней диагностики</string>
     <string name="continue_editing_short">Продолжить заполнение</string>
     <string name="technical_diagnostics">Техническое диагностирование</string>
-    <string name="scanning">Сканирование...</string>
+    <string name="scanning">Сканирование</string>
     <string name="area">Участок</string>
     <string name="corrosion_diagnostics_type">Вид коррозионного обследования</string>
     <string name="corrosion_diagnostics_type_0">приёмочное (первичное)</string>
