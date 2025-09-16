@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ripple
@@ -84,6 +86,30 @@ fun PtmFilledButton(
         disabledContentColor = MaterialTheme.colorScheme.onPrimary
     )
     FilledTonalButton(
+        onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = RectangleShape,
+        colors = colors
+    ) {
+        content()
+    }
+}
+
+@Composable
+fun PtmFilledIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    val colors = IconButtonColors(
+        containerColor = MaterialTheme.colorScheme.primary,
+        disabledContainerColor = blue_oxford,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        disabledContentColor = MaterialTheme.colorScheme.onPrimary
+    )
+    FilledTonalIconButton(
         onClick,
         modifier = modifier,
         enabled = enabled,

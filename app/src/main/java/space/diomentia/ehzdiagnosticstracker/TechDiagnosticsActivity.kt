@@ -56,8 +56,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.location.LocationServices
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ReportEditor
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
@@ -100,7 +103,8 @@ class TechDiagnosticsActivity : ComponentActivity() {
                     mutableStateOf(
                         if (State.canOpenEditor()) State.Editor else State.Configuration
                     )
-                }
+                },
+                LocalLocationProvider provides LocationServices.getFusedLocationProviderClient(this)
             ) {
                 Content()
             }
@@ -148,6 +152,7 @@ private fun Content() {
                         start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
                         end = innerPadding.calculateEndPadding(LocalLayoutDirection.current)
                     )
+                    .padding(horizontal = 12.dp)
                     .verticalScroll(rememberScrollState())
             ) {
                 Spacer(Modifier.height(innerPadding.calculateTopPadding()))
@@ -158,45 +163,31 @@ private fun Content() {
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp)
                         .padding(top = 24.dp)
                 )
                 Text(
                     AppState.CurrentDiagnosticSession.dateTime
                         .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier
                         .alpha(.5f)
                         .padding(top = 8.dp, bottom = 16.dp)
                 )
 
                 AnimatedVisibility(LocalState.current.value == State.Configuration) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            stringResource(R.string.corrosion_diagnostics_type),
-                            textAlign = TextAlign.Start,
-                            style = MaterialTheme.typography.labelLarge,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp)
-                                .padding(top = 8.dp)
-                        )
-                        CorrosionTypeSelector(
-                            modifier = Modifier.padding(8.dp)
-                        )
-
-                        WorksContentsList(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                        )
-                    }
+                    ReportConfiguration(Modifier.fillMaxWidth())
                 }
 
                 ApplyButton()
+
+                AnimatedVisibility(LocalState.current.value == State.Editor)
+                {
+                    ReportEditor(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                    )
+                }
 
                 Spacer(
                     Modifier
@@ -266,14 +257,14 @@ private fun WorksContentsList(
         Text(
             stringResource(R.string.works_contents),
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(vertical = 8.dp)
         )
         Text(
             "${stringResource(R.string.works_contents_tech_evaluation)}:",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .padding(start = 16.dp)
-                .padding(vertical = 4.dp, horizontal = 8.dp)
+                .padding(vertical = 4.dp)
         )
         worksContentsTechEvaluationOptions.forEachIndexed { i, option ->
             val interactionSource = remember { MutableInteractionSource() }
@@ -286,7 +277,7 @@ private fun WorksContentsList(
                         indication = null
                     ) { chooseOption(i) }
                     .padding(start = 48.dp)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(vertical = 8.dp)
             ) {
                 Icon(
                     if (AppState.CurrentDiagnosticSession.worksContentsType == i)
@@ -319,7 +310,7 @@ private fun WorksContentsList(
                         indication = null
                     ) { chooseOption(mType) }
                     .padding(start = 16.dp)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(vertical = 12.dp)
             ) {
                 Icon(
                     if (AppState.CurrentDiagnosticSession.worksContentsType == mType)
@@ -344,6 +335,34 @@ private fun WorksContentsList(
 }
 
 @Composable
+private fun ReportConfiguration(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Text(
+            stringResource(R.string.corrosion_diagnostics_type),
+            textAlign = TextAlign.Start,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        )
+        CorrosionTypeSelector(
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        WorksContentsList(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
+    }
+}
+
+@Composable
 private fun ApplyButton(
     modifier: Modifier = Modifier
 ) {
@@ -361,6 +380,7 @@ private fun ApplyButton(
                         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
                         State.Editor
                     }
+
                     State.Editor -> State.Configuration
                 }
             },
