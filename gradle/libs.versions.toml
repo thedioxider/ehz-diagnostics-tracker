@@ -13,6 +13,8 @@ materialIconsExtended = "1.7.8"
 cameraX = "1.5.0-rc01"
 barcodeScanning = "17.3.0"
 playServicesLocation = "21.3.0"
+kaml = "0.83.0"
+serialization = "2.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -38,9 +40,11 @@ androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", 
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraX" }
 barcode-scanning = { group = "com.google.mlkit", name = "barcode-scanning", version.ref = "barcodeScanning" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+kaml = { group = "com.charleskorn.kaml", name = "kaml", version.ref = "kaml" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "serialization" }
 

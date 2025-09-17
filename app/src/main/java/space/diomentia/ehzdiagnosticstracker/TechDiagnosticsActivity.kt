@@ -60,13 +60,17 @@ import com.google.android.gms.location.LocationServices
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.REPORT_CONFIG_FILENAME
+import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.data.ReportEditor
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
+import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -83,7 +87,8 @@ private enum class State {
     }
 }
 
-private val LocalState = compositionLocalOf<MutableState<State>> { mutableStateOf(State.Editor) }
+private val LocalState =
+    compositionLocalOf<MutableState<State>> { mutableStateOf(State.Editor) }
 
 class TechDiagnosticsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,6 +101,13 @@ class TechDiagnosticsActivity : ComponentActivity() {
             finish()
             return
         }
+        File(dataDir, REPORT_CONFIG_FILENAME).let {
+            if (!it.isFile) {
+                return@let
+            }
+            AppState.reportConfig = ReportConfig.parseYaml(it.readText())
+        }
+
         setContent {
             CompositionLocalProvider(
                 LocalSnackbarHostState provides snackbarHostState,
@@ -116,10 +128,10 @@ class TechDiagnosticsActivity : ComponentActivity() {
 @Composable
 private fun Content() {
     val activity = LocalActivity.current
+    val snackbarHostState = LocalSnackbarHostState.current
 
     PtmTheme {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
             topBar = {
                 PtmTopBar(
                     title = {
@@ -141,7 +153,9 @@ private fun Content() {
                         }
                     }
                 )
-            }
+            },
+            snackbarHost = { PtmSnackbarHost(snackbarHostState) },
+            modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             Column(
                 verticalArrangement = Arrangement.Top,
@@ -239,15 +253,20 @@ private fun CorrosionTypeSelector(
 private fun WorksContentsList(
     modifier: Modifier = Modifier
 ) {
-    var state by LocalState.current
-    val worksContentsTechEvaluationOptions =
-        stringArrayResource(R.array.works_contents_tech_evaluation_list)
-    val worksContentsOptions = stringArrayResource(R.array.works_contents_list)
-    val chooseOption = { type: Int ->
-        AppState.CurrentDiagnosticSession.worksContentsType = type
-        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
-        state = State.Editor
+    val reportConfig = AppState.reportConfig
+    if (reportConfig == null) {
+        Text(
+            stringResource(R.string.no_report_configuration),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
+        return
     }
+
+    var state by LocalState.current
 
     Column(
         horizontalAlignment = Alignment.Start,
@@ -259,14 +278,8 @@ private fun WorksContentsList(
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(vertical = 8.dp)
         )
-        Text(
-            "${stringResource(R.string.works_contents_tech_evaluation)}:",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .padding(vertical = 4.dp)
-        )
-        worksContentsTechEvaluationOptions.forEachIndexed { i, option ->
+
+        reportConfig.classes.forEachIndexed { i, rClass ->
             val interactionSource = remember { MutableInteractionSource() }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -275,9 +288,13 @@ private fun WorksContentsList(
                     .clickable(
                         interactionSource = interactionSource,
                         indication = null
-                    ) { chooseOption(i) }
-                    .padding(start = 48.dp)
-                    .padding(vertical = 8.dp)
+                    ) {
+                        AppState.CurrentDiagnosticSession.worksContentsType = i
+                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
+                        state = State.Editor
+                    }
+                    .padding(start = 16.dp)
+                    .padding(vertical = 12.dp)
             ) {
                 Icon(
                     if (AppState.CurrentDiagnosticSession.worksContentsType == i)
@@ -290,40 +307,7 @@ private fun WorksContentsList(
                         .indication(interactionSource, ripple(bounded = false))
                 )
                 Text(
-                    option,
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier
-                        .weight(1f, fill = true)
-                        .padding(horizontal = 12.dp)
-                )
-            }
-        }
-        worksContentsOptions.forEachIndexed { i, option ->
-            val interactionSource = remember { MutableInteractionSource() }
-            val mType = worksContentsTechEvaluationOptions.size + i
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null
-                    ) { chooseOption(mType) }
-                    .padding(start = 16.dp)
-                    .padding(vertical = 12.dp)
-            ) {
-                Icon(
-                    if (AppState.CurrentDiagnosticSession.worksContentsType == mType)
-                        Icons.Outlined.RadioButtonChecked
-                    else
-                        Icons.Outlined.RadioButtonUnchecked,
-                    contentDescription = stringResource(R.string.works_contents),
-                    modifier = Modifier
-                        .height(18.dp)
-                        .indication(interactionSource, ripple(bounded = false))
-                )
-                Text(
-                    option,
+                    rClass.name,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
                         .weight(1f, fill = true)

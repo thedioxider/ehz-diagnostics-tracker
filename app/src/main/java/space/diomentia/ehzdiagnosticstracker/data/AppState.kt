@@ -8,8 +8,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import java.time.LocalDateTime
 
+const val REPORT_CONFIG_FILENAME = "report.conf"
+
 @Stable
 object AppState {
+    var reportConfig: ReportConfig? = null
+
     object CurrentDiagnosticSession {
         var id by mutableStateOf<Int?>(null)
         var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
