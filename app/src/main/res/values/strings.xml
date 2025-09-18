@@ -36,4 +36,6 @@
     <string name="something_wrong">Что-то пошло не так…</string>
     <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
     <string name="input_value">Введите значение</string>
+    <string name="import_report_config">Пожалуйста, выберите файл с конфигурацией отчётов</string>
+    <string name="choose_file">Выбрать файл</string>
 </resources>

@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FileOpen
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Person
@@ -54,14 +55,19 @@ import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.REPORT_CONFIG_FILENAME
+import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
+import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,6 +87,7 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 private fun Content() {
+    val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
 
     PtmTheme {
@@ -103,28 +110,36 @@ private fun Content() {
             },
             snackbarHost = { PtmSnackbarHost(snackbarHostState) }
         ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            if (AppState.reportConfig != null || remember { AppState.loadReportConfig(context) }) {
                 Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    ScanQrButton(
-                        modifier = Modifier.size(200.dp)
-                    )
-                    ContinueEditingButton(
-                        modifier = Modifier
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        ScanQrButton(
+                            modifier = Modifier.size(200.dp)
+                        )
+                        ContinueEditingButton(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 16.dp)
+                        )
+                    }
+                    MenuActionButtonsRow(
+                        Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp)
                     )
                 }
-                MenuActionButtonsRow(
+            } else {
+                RequestConfigScreen(
                     Modifier
-                        .fillMaxWidth()
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 )
             }
         }
@@ -278,12 +293,10 @@ private fun MenuActionButton(
         }
         Text(
             shortDescription,
-            fontWeight = FontWeight.SemiBold,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.labelMedium,
             modifier = Modifier
                 .padding(8.dp)
-            // .width(IntrinsicSize.Min)
         )
     }
 }
@@ -321,5 +334,54 @@ private fun MenuActionButtonsRow(
             shortDescription = stringResource(R.string.diagnostics_organization_info_short),
             icon = Icons.Outlined.Business
         ) {}
+    }
+}
+
+@Composable
+private fun RequestConfigScreen(
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val configChooserLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) {
+        it ?: return@rememberLauncherForActivityResult
+        context.contentResolver.openInputStream(it)?.use { iStream ->
+            val bytes = iStream.readBytes()
+            FileOutputStream(File(context.dataDir, REPORT_CONFIG_FILENAME)).use { oStream ->
+                oStream.write(bytes)
+            }
+            AppState.reportConfig = ReportConfig.parseYaml(String(bytes))
+        }
+    }
+
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Text(
+            stringResource(R.string.import_report_config),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(6.dp)
+        )
+        PtmFilledButton(
+            onClick = {
+                configChooserLauncher.launch(arrayOf("application/*"))
+            },
+            modifier = Modifier.padding(6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.FileOpen,
+                    contentDescription = stringResource(R.string.import_report_config),
+                    modifier = Modifier.padding(end = 6.dp)
+                )
+                Text(stringResource(R.string.choose_file))
+            }
+        }
     }
 }

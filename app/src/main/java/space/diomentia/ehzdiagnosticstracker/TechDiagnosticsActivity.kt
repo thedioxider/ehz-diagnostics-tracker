@@ -50,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -61,7 +62,6 @@ import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
-import space.diomentia.ehzdiagnosticstracker.data.REPORT_CONFIG_FILENAME
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.data.ReportEditor
 import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
@@ -73,7 +73,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -91,7 +90,7 @@ private enum class State {
 }
 
 private val LocalState =
-    compositionLocalOf<MutableState<State>> { mutableStateOf(State.Editor) }
+    compositionLocalOf<MutableState<State>> { mutableStateOf(State.Configuration) }
 
 class TechDiagnosticsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,12 +102,6 @@ class TechDiagnosticsActivity : ComponentActivity() {
             setResult(RESULT_CANCELED)
             finish()
             return
-        }
-        File(dataDir, REPORT_CONFIG_FILENAME).let {
-            if (!it.isFile) {
-                return@let
-            }
-            AppState.reportConfig = ReportConfig.parseYaml(it.readText())
         }
 
         setContent {
@@ -255,6 +248,7 @@ private fun CorrosionTypeSelector(
 private fun WorksContentsList(
     modifier: Modifier = Modifier
 ) {
+    if (AppState.reportConfig == null) AppState.loadReportConfig(LocalContext.current)
     val reportConfig = AppState.reportConfig
     if (reportConfig == null) {
         Text(
@@ -424,6 +418,7 @@ private fun ContentPreview() {
         )
     )
     AppState.CurrentDiagnosticSession.reportType = 0
+    LocalState.current.value = State.Editor
 
     PtmTheme {
         Content()
