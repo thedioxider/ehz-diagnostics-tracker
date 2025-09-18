@@ -210,7 +210,7 @@ private fun Content() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CorrosionTypeSelector(
+private fun DiagnosticsTypeSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -245,7 +245,7 @@ private fun CorrosionTypeSelector(
 }
 
 @Composable
-private fun WorksContentsList(
+private fun ReportTypesList(
     modifier: Modifier = Modifier
 ) {
     if (AppState.reportConfig == null) AppState.loadReportConfig(LocalContext.current)
@@ -330,11 +330,11 @@ private fun ReportConfiguration(
                 .fillMaxWidth()
                 .padding(top = 8.dp)
         )
-        CorrosionTypeSelector(
+        DiagnosticsTypeSelector(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        WorksContentsList(
+        ReportTypesList(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
