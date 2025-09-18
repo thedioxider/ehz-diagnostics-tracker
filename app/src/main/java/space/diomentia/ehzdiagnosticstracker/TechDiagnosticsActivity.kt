@@ -60,9 +60,12 @@ import com.google.android.gms.location.LocationServices
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.REPORT_CONFIG_FILENAME
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.data.ReportEditor
+import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
+import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
@@ -81,7 +84,7 @@ private enum class State {
     companion object {
         fun canOpenEditor(): Boolean {
             return with(AppState.CurrentDiagnosticSession) {
-                id != null && worksContentsType != null
+                id != null && reportType != null
             }
         }
     }
@@ -124,7 +127,6 @@ class TechDiagnosticsActivity : ComponentActivity() {
     }
 }
 
-@Preview
 @Composable
 private fun Content() {
     val activity = LocalActivity.current
@@ -219,14 +221,14 @@ private fun CorrosionTypeSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val options = stringArrayResource(R.array.corrosion_diagnostics_types)
+    val options = stringArrayResource(R.array.diagnostics_types)
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
         modifier = modifier
     ) {
         TextField(
-            value = options[AppState.CurrentDiagnosticSession.corrosionDiagnosticsType],
+            value = options[AppState.CurrentDiagnosticSession.diagnosticsType],
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
@@ -240,7 +242,7 @@ private fun CorrosionTypeSelector(
                 DropdownMenuItem(
                     text = { Text(option) },
                     onClick = {
-                        AppState.CurrentDiagnosticSession.corrosionDiagnosticsType = i
+                        AppState.CurrentDiagnosticSession.diagnosticsType = i
                         expanded = false
                     }
                 )
@@ -279,7 +281,7 @@ private fun WorksContentsList(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        reportConfig.classes.forEachIndexed { i, rClass ->
+        reportConfig.reportTypes.forEachIndexed { i, rClass ->
             val interactionSource = remember { MutableInteractionSource() }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -289,7 +291,7 @@ private fun WorksContentsList(
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        AppState.CurrentDiagnosticSession.worksContentsType = i
+                        AppState.CurrentDiagnosticSession.reportType = i
                         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
                         state = State.Editor
                     }
@@ -297,7 +299,7 @@ private fun WorksContentsList(
                     .padding(vertical = 12.dp)
             ) {
                 Icon(
-                    if (AppState.CurrentDiagnosticSession.worksContentsType == i)
+                    if (AppState.CurrentDiagnosticSession.reportType == i)
                         Icons.Outlined.RadioButtonChecked
                     else
                         Icons.Outlined.RadioButtonUnchecked,
@@ -327,7 +329,7 @@ private fun ReportConfiguration(
         modifier = modifier
     ) {
         Text(
-            stringResource(R.string.corrosion_diagnostics_type),
+            stringResource(R.string.diagnostics_type),
             textAlign = TextAlign.Start,
             style = MaterialTheme.typography.titleSmall,
             modifier = Modifier
@@ -393,5 +395,37 @@ private fun ApplyButton(
                 )
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun ContentPreview() {
+    AppState.reportConfig = ReportConfig(
+        listOf(
+            ReportType(
+                "foo0",
+                "Test", listOf(
+                    ReportParameter(
+                        "bar0",
+                        "Very long and wordy parameter name with like lots of words in it " +
+                                "and that's why it doesn't even fit the screen",
+                        ParameterType.Bool
+                    ),
+                    ReportParameter(
+                        "bar1",
+                        "Some other parameter",
+                        ParameterType.Decimal,
+                        "kV"
+                    )
+                )
+            )
+        )
+    )
+    AppState.CurrentDiagnosticSession.reportType = 0
+
+    PtmTheme {
+        Content()
     }
 }

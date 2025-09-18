@@ -1,6 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
 import android.location.Location
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -17,15 +18,17 @@ object AppState {
     object CurrentDiagnosticSession {
         var id by mutableStateOf<Int?>(null)
         var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        var corrosionDiagnosticsType by mutableIntStateOf(0)
-        var worksContentsType by mutableStateOf<Int?>(null)
+        var diagnosticsType by mutableIntStateOf(0)
+        var reportType by mutableStateOf<Int?>(null)
         var location by mutableStateOf<Location?>(null)
+        var data = mutableMapOf<String, MutableState<*>>()
 
         fun reset() {
             id = null
             dateTime = LocalDateTime.now()
-            worksContentsType = null
+            reportType = null
             location = null
+            data.clear()
         }
     }
 }

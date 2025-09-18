@@ -14,18 +14,18 @@
     <string name="technical_diagnostics">Техническое диагностирование</string>
     <string name="scanning">Сканирование</string>
     <string name="area">Участок</string>
-    <string name="corrosion_diagnostics_type">Вид коррозионного обследования</string>
-    <string name="corrosion_diagnostics_type_0">приёмочное (первичное)</string>
-    <string name="corrosion_diagnostics_type_1">периодическое комплексное</string>
-    <string name="corrosion_diagnostics_type_2">детальное комплексное</string>
-    <string name="corrosion_diagnostics_type_3">специальное комплексное</string>
-    <string name="corrosion_diagnostics_type_4">инспекционно-техническое</string>
-    <string-array name="corrosion_diagnostics_types">
-        <item>@string/corrosion_diagnostics_type_0</item>
-        <item>@string/corrosion_diagnostics_type_1</item>
-        <item>@string/corrosion_diagnostics_type_2</item>
-        <item>@string/corrosion_diagnostics_type_3</item>
-        <item>@string/corrosion_diagnostics_type_4</item>
+    <string name="diagnostics_type">Вид коррозионного обследования</string>
+    <string name="diagnostics_type_0">приёмочное (первичное)</string>
+    <string name="diagnostics_type_1">периодическое комплексное</string>
+    <string name="diagnostics_type_2">детальное комплексное</string>
+    <string name="diagnostics_type_3">специальное комплексное</string>
+    <string name="diagnostics_type_4">инспекционно-техническое</string>
+    <string-array name="diagnostics_types">
+        <item>@string/diagnostics_type_0</item>
+        <item>@string/diagnostics_type_1</item>
+        <item>@string/diagnostics_type_2</item>
+        <item>@string/diagnostics_type_3</item>
+        <item>@string/diagnostics_type_4</item>
     </string-array>
     <string name="qr_no_id">QR-код не содержит информации об участке</string>
     <string name="works_contents">Состав работ</string>
@@ -35,4 +35,5 @@
     <string name="unknown">неизвестно</string>
     <string name="something_wrong">Что-то пошло не так…</string>
     <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
+    <string name="input_value">Введите значение</string>
 </resources>
