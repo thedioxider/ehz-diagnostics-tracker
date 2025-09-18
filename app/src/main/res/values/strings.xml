@@ -12,48 +12,30 @@
     <string name="continue_editing">Продолжить заполнение последней диагностики</string>
     <string name="continue_editing_short">Продолжить заполнение</string>
     <string name="technical_diagnostics">Техническое диагностирование</string>
-    <string name="scanning">Сканирование...</string>
+    <string name="scanning">Сканирование</string>
     <string name="area">Участок</string>
-    <string name="corrosion_diagnostics_type">Вид коррозионного обследования</string>
-    <string name="corrosion_diagnostics_type_0">приёмочное (первичное)</string>
-    <string name="corrosion_diagnostics_type_1">периодическое комплексное</string>
-    <string name="corrosion_diagnostics_type_2">детальное комплексное</string>
-    <string name="corrosion_diagnostics_type_3">специальное комплексное</string>
-    <string name="corrosion_diagnostics_type_4">инспекционно-техническое</string>
-    <string-array name="corrosion_diagnostics_types">
-        <item>@string/corrosion_diagnostics_type_0</item>
-        <item>@string/corrosion_diagnostics_type_1</item>
-        <item>@string/corrosion_diagnostics_type_2</item>
-        <item>@string/corrosion_diagnostics_type_3</item>
-        <item>@string/corrosion_diagnostics_type_4</item>
+    <string name="diagnostics_type">Вид коррозионного обследования</string>
+    <string name="diagnostics_type_0">приёмочное (первичное)</string>
+    <string name="diagnostics_type_1">периодическое комплексное</string>
+    <string name="diagnostics_type_2">детальное комплексное</string>
+    <string name="diagnostics_type_3">специальное комплексное</string>
+    <string name="diagnostics_type_4">инспекционно-техническое</string>
+    <string-array name="diagnostics_types">
+        <item>@string/diagnostics_type_0</item>
+        <item>@string/diagnostics_type_1</item>
+        <item>@string/diagnostics_type_2</item>
+        <item>@string/diagnostics_type_3</item>
+        <item>@string/diagnostics_type_4</item>
     </string-array>
     <string name="qr_no_id">QR-код не содержит информации об участке</string>
     <string name="works_contents">Состав работ</string>
-    <string name="works_contents_tech_evaluation">Оценка технического состояния</string>
-    <string name="works_contents_tech_evaluation_0">УКЗ (Установка Катодной Защиты)</string>
-    <string name="works_contents_tech_evaluation_1">УДЗ (Установка Дренажной Защиты)</string>
-    <string name="works_contents_tech_evaluation_2">УПЗ (Установка Протекторной Защиты)</string>
-    <string name="works_contents_tech_evaluation_3">ВЭИ (Вставка Электроизолирующая)</string>
-    <string name="works_contents_tech_evaluation_4">КИП (Контрольно-Измерительный Пункт)</string>
-    <string name="works_contents_tech_evaluation_5">переходы, оборудованные защитными кожухами</string>
-    <string name="works_contents_tech_evaluation_6">БДР (БСЗ)</string>
-    <string name="works_contents_7">Контроль защищенности трубопровода</string>
-    <string name="works_contents_8">Оценка состояния Защитного Покрытия (ЗП)</string>
-    <string name="works_contents_9">Контроль негативного влияния на сторонние сооружения</string>
-    <string name="works_contents_10">Обследование коррозионного состояния сооружения в шурфах</string>
-    <string-array name="works_contents_tech_evaluation_list">
-        <item>@string/works_contents_tech_evaluation_0</item>
-        <item>@string/works_contents_tech_evaluation_1</item>
-        <item>@string/works_contents_tech_evaluation_2</item>
-        <item>@string/works_contents_tech_evaluation_3</item>
-        <item>@string/works_contents_tech_evaluation_4</item>
-        <item>@string/works_contents_tech_evaluation_5</item>
-        <item>@string/works_contents_tech_evaluation_6</item>
-    </string-array>
-    <string-array name="works_contents_list">
-        <item>@string/works_contents_7</item>
-        <item>@string/works_contents_8</item>
-        <item>@string/works_contents_9</item>
-        <item>@string/works_contents_10</item>
-    </string-array>
+    <string name="apply">Готово</string>
+    <string name="edit_report_type">Изменить тип отчёта</string>
+    <string name="location">Местоположение</string>
+    <string name="unknown">неизвестно</string>
+    <string name="something_wrong">Что-то пошло не так…</string>
+    <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
+    <string name="input_value">Введите значение</string>
+    <string name="import_report_config">Пожалуйста, выберите файл с конфигурацией отчётов</string>
+    <string name="choose_file">Выбрать файл</string>
 </resources>

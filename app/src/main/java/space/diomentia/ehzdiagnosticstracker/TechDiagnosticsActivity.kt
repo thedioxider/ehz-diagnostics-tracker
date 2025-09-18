@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,8 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.RadioButtonChecked
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -38,25 +38,58 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.google.android.gms.location.LocationServices
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ParameterType
+import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
+import space.diomentia.ehzdiagnosticstracker.data.ReportEditor
+import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
+import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
+import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
+import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+private enum class State {
+    Configuration,
+    Editor;
+
+    companion object {
+        fun canOpenEditor(): Boolean {
+            return with(AppState.CurrentDiagnosticSession) {
+                id != null && reportType != null
+            }
+        }
+    }
+}
+
+private val LocalState =
+    compositionLocalOf<MutableState<State>> { mutableStateOf(State.Configuration) }
 
 class TechDiagnosticsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,9 +102,16 @@ class TechDiagnosticsActivity : ComponentActivity() {
             finish()
             return
         }
+
         setContent {
             CompositionLocalProvider(
-                LocalSnackbarHostState provides snackbarHostState
+                LocalSnackbarHostState provides snackbarHostState,
+                LocalState provides remember {
+                    mutableStateOf(
+                        if (State.canOpenEditor()) State.Editor else State.Configuration
+                    )
+                },
+                LocalLocationProvider provides LocationServices.getFusedLocationProviderClient(this)
             ) {
                 Content()
             }
@@ -79,14 +119,13 @@ class TechDiagnosticsActivity : ComponentActivity() {
     }
 }
 
-@Preview
 @Composable
 private fun Content() {
     val activity = LocalActivity.current
+    val snackbarHostState = LocalSnackbarHostState.current
 
     PtmTheme {
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
             topBar = {
                 PtmTopBar(
                     title = {
@@ -98,7 +137,7 @@ private fun Content() {
                 PtmBottomBar(
                     navigation = {
                         ActionButton(
-                            icon = Icons.AutoMirrored.Outlined.ArrowBack,
+                            icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
                             activity?.run {
@@ -108,16 +147,20 @@ private fun Content() {
                         }
                     }
                 )
-            }
+            },
+            snackbarHost = { PtmSnackbarHost(snackbarHostState) },
+            modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
             Column(
+                verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .padding(
                         start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
                         end = innerPadding.calculateEndPadding(LocalLayoutDirection.current)
                     )
+                    .padding(horizontal = 12.dp)
                     .verticalScroll(rememberScrollState())
             ) {
                 Spacer(Modifier.height(innerPadding.calculateTopPadding()))
@@ -128,27 +171,31 @@ private fun Content() {
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 24.dp, horizontal = 12.dp)
+                        .padding(top = 24.dp)
                 )
-
                 Text(
-                    stringResource(R.string.corrosion_diagnostics_type),
-                    textAlign = TextAlign.Start,
-                    style = MaterialTheme.typography.labelLarge,
+                    AppState.CurrentDiagnosticSession.dateTime
+                        .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+                    style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp)
-                        .padding(top = 8.dp)
-                )
-                CorrosionTypeSelector(
-                    modifier = Modifier.padding(8.dp)
+                        .alpha(.5f)
+                        .padding(top = 8.dp, bottom = 16.dp)
                 )
 
-                WorksContentsList(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                )
+                AnimatedVisibility(LocalState.current.value == State.Configuration) {
+                    ReportConfiguration(Modifier.fillMaxWidth())
+                }
+
+                ApplyButton()
+
+                AnimatedVisibility(LocalState.current.value == State.Editor)
+                {
+                    ReportEditor(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                    )
+                }
 
                 Spacer(
                     Modifier
@@ -162,18 +209,18 @@ private fun Content() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CorrosionTypeSelector(
+private fun DiagnosticsTypeSelector(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val options = stringArrayResource(R.array.corrosion_diagnostics_types)
+    val options = stringArrayResource(R.array.diagnostics_types)
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
         modifier = modifier
     ) {
         TextField(
-            value = options[AppState.CurrentDiagnosticSession.corrosionDiagnosticsType],
+            value = options[AppState.CurrentDiagnosticSession.diagnosticsType],
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
@@ -187,7 +234,7 @@ private fun CorrosionTypeSelector(
                 DropdownMenuItem(
                     text = { Text(option) },
                     onClick = {
-                        AppState.CurrentDiagnosticSession.corrosionDiagnosticsType = i
+                        AppState.CurrentDiagnosticSession.diagnosticsType = i
                         expanded = false
                     }
                 )
@@ -197,19 +244,24 @@ private fun CorrosionTypeSelector(
 }
 
 @Composable
-private fun WorksContentsList(
+private fun ReportTypesList(
     modifier: Modifier = Modifier
 ) {
-    val activity = LocalActivity.current
-    val worksContentsTechEvaluationOptions =
-        stringArrayResource(R.array.works_contents_tech_evaluation_list)
-    val worksContentsOptions = stringArrayResource(R.array.works_contents_list)
-    val chooseOption = { type: Int ->
-        AppState.CurrentDiagnosticSession.worksContentsType = type
-        activity?.run {
-            // TODO: Diagnostics Activity
-        }
+    if (AppState.reportConfig == null) AppState.loadReportConfig(LocalContext.current)
+    val reportConfig = AppState.reportConfig
+    if (reportConfig == null) {
+        Text(
+            stringResource(R.string.no_report_configuration),
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
+        return
     }
+
+    var state by LocalState.current
 
     Column(
         horizontalAlignment = Alignment.Start,
@@ -219,16 +271,10 @@ private fun WorksContentsList(
         Text(
             stringResource(R.string.works_contents),
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.padding(8.dp)
+            modifier = Modifier.padding(vertical = 8.dp)
         )
-        Text(
-            "${stringResource(R.string.works_contents_tech_evaluation)}:",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .padding(vertical = 4.dp, horizontal = 8.dp)
-        )
-        worksContentsTechEvaluationOptions.forEachIndexed { i, option ->
+
+        reportConfig.reportTypes.forEachIndexed { i, rClass ->
             val interactionSource = remember { MutableInteractionSource() }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -237,55 +283,26 @@ private fun WorksContentsList(
                     .clickable(
                         interactionSource = interactionSource,
                         indication = null
-                    ) { chooseOption(i) }
-                    .padding(start = 48.dp)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Icon(
-                    if (AppState.CurrentDiagnosticSession.worksContentsType == i)
-                        Icons.Outlined.RadioButtonChecked
-                    else
-                        Icons.Outlined.RadioButtonUnchecked,
-                    contentDescription = stringResource(R.string.works_contents),
-                    modifier = Modifier
-                        .height(18.dp)
-                        .indication(interactionSource, ripple(bounded = false))
-                )
-                Text(
-                    option,
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier
-                        .weight(1f, fill = true)
-                        .padding(horizontal = 12.dp)
-                )
-            }
-        }
-        worksContentsOptions.forEachIndexed { i, option ->
-            val interactionSource = remember { MutableInteractionSource() }
-            val mType = worksContentsTechEvaluationOptions.size + i
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null
-                    ) { chooseOption(mType) }
+                    ) {
+                        AppState.CurrentDiagnosticSession.reportType = i
+                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
+                        state = State.Editor
+                    }
                     .padding(start = 16.dp)
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(vertical = 12.dp)
             ) {
                 Icon(
-                    if (AppState.CurrentDiagnosticSession.worksContentsType == mType)
-                        Icons.Outlined.RadioButtonChecked
+                    if (AppState.CurrentDiagnosticSession.reportType == i)
+                        painterResource(R.drawable.ic_radio_button_checked)
                     else
-                        Icons.Outlined.RadioButtonUnchecked,
+                        painterResource(R.drawable.ic_radio_button_unchecked),
                     contentDescription = stringResource(R.string.works_contents),
                     modifier = Modifier
                         .height(18.dp)
                         .indication(interactionSource, ripple(bounded = false))
                 )
                 Text(
-                    option,
+                    rClass.name,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier
                         .weight(1f, fill = true)
@@ -293,5 +310,116 @@ private fun WorksContentsList(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ReportConfiguration(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Text(
+            stringResource(R.string.diagnostics_type),
+            textAlign = TextAlign.Start,
+            style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        )
+        DiagnosticsTypeSelector(
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+
+        ReportTypesList(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
+    }
+}
+
+@Composable
+private fun ApplyButton(
+    modifier: Modifier = Modifier
+) {
+    var state by LocalState.current
+    val enabled = when (state) {
+        State.Configuration -> State.canOpenEditor()
+        State.Editor -> true
+    }
+    PtmTheme {
+        PtmFilledButton(
+            enabled = enabled,
+            onClick = {
+                state = when (state) {
+                    State.Configuration -> {
+                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
+                        State.Editor
+                    }
+
+                    State.Editor -> State.Configuration
+                }
+            },
+            modifier = modifier
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    when (state) {
+                        State.Configuration -> painterResource(R.drawable.ic_done_outline)
+                        State.Editor -> rememberVectorPainter(Icons.Outlined.Settings)
+                    },
+                    contentDescription = stringResource(R.string.apply),
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .height(18.dp)
+                )
+                Text(
+                    when (state) {
+                        State.Configuration -> stringResource(R.string.apply)
+                        State.Editor -> stringResource(R.string.edit_report_type)
+                    },
+                    modifier = Modifier
+                        .padding(4.dp)
+                )
+            }
+        }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun ContentPreview() {
+    AppState.reportConfig = ReportConfig(
+        listOf(
+            ReportType(
+                "foo0",
+                "Test", listOf(
+                    ReportParameter(
+                        "bar0",
+                        "Very long and wordy parameter name with like lots of words in it " +
+                                "and that's why it doesn't even fit the screen",
+                        ParameterType.Bool
+                    ),
+                    ReportParameter(
+                        "bar1",
+                        "Some other parameter",
+                        ParameterType.Decimal,
+                        "kV"
+                    )
+                )
+            )
+        )
+    )
+    AppState.CurrentDiagnosticSession.reportType = 0
+    LocalState.current.value = State.Editor
+
+    PtmTheme {
+        Content()
     }
 }

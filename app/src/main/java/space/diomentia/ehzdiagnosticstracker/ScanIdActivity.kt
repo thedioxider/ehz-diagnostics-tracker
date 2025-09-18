@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
@@ -67,14 +68,14 @@ private fun Content() {
         Scaffold(
             topBar = {
                 PtmTopBar(
-                    title = { Text(stringResource(R.string.scanning)) }
+                    title = { Text("${stringResource(R.string.scanning)}...") }
                 )
             },
             bottomBar = {
                 PtmBottomBar(
                     navigation = {
                         ActionButton(
-                            icon = Icons.AutoMirrored.Outlined.ArrowBack,
+                            icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
                             activity?.run {
@@ -89,6 +90,7 @@ private fun Content() {
         ) { innerPadding ->
             // stop blaming me for not using padding
             // just gimme my borderless camera!!
+            @Suppress("UNUSED_EXPRESSION")
             if (false) innerPadding
             Column {
                 BarcodeCameraPreview(

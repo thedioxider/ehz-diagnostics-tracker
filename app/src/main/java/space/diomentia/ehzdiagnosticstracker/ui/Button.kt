@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ripple
@@ -23,7 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import space.diomentia.ehzdiagnosticstracker.ui.theme.blue_oxford
@@ -95,8 +97,32 @@ fun PtmFilledButton(
 }
 
 @Composable
+fun PtmFilledIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    val colors = IconButtonColors(
+        containerColor = MaterialTheme.colorScheme.primary,
+        disabledContainerColor = blue_oxford,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        disabledContentColor = MaterialTheme.colorScheme.onPrimary
+    )
+    FilledTonalIconButton(
+        onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = RectangleShape,
+        colors = colors
+    ) {
+        content()
+    }
+}
+
+@Composable
 fun ActionButton(
-    icon: ImageVector,
+    icon: Painter,
     modifier: Modifier = Modifier,
     label: String? = null,
     action: () -> Unit
