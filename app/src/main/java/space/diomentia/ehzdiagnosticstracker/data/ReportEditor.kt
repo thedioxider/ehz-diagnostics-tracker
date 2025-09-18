@@ -43,10 +43,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import com.google.android.gms.location.CurrentLocationRequest
+import com.google.android.gms.location.Granularity
+import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 @Composable
@@ -111,6 +115,7 @@ private fun LocationField(
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {}
+    var isSyncingLocation = AtomicBoolean(false)
     val syncLocation = syncLocation@{
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -128,9 +133,18 @@ private fun LocationField(
             )
             return@syncLocation
         }
-        locationProvider?.lastLocation
+        if (!isSyncingLocation.compareAndSet(false, true)) {
+            return@syncLocation
+        }
+        val currentLocationRequest = CurrentLocationRequest.Builder()
+            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+            .setGranularity(Granularity.GRANULARITY_FINE)
+            .setMaxUpdateAgeMillis(30000L)
+            .build()
+        locationProvider?.getCurrentLocation(currentLocationRequest, null)
             ?.addOnSuccessListener {
                 AppState.CurrentDiagnosticSession.location = it
+                isSyncingLocation.set(false)
             }
             ?.addOnFailureListener {
                 coroutineScope.launch {
@@ -143,6 +157,7 @@ private fun LocationField(
                         }"
                     )
                 }
+                isSyncingLocation.set(false)
             }
     }
     LaunchedEffect(Unit) {
