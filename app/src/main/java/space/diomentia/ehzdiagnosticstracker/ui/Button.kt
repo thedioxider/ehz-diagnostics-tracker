@@ -25,7 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import space.diomentia.ehzdiagnosticstracker.ui.theme.blue_oxford
@@ -122,7 +122,7 @@ fun PtmFilledIconButton(
 
 @Composable
 fun ActionButton(
-    icon: ImageVector,
+    icon: Painter,
     modifier: Modifier = Modifier,
     label: String? = null,
     action: () -> Unit

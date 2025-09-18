@@ -23,13 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.FileOpen
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -43,8 +37,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -102,7 +98,7 @@ private fun Content() {
                 PtmBottomBar(
                     actions = {
                         ActionButton(
-                            icon = Icons.Outlined.History,
+                            icon = painterResource(R.drawable.ic_history),
                             label = stringResource(R.string.diagnostics_history)
                         ) {}
                     }
@@ -205,7 +201,7 @@ private fun ScanQrButton(
                 }
         ) {
             Icon(
-                Icons.Outlined.QrCode,
+                painterResource(R.drawable.ic_qr_code),
                 contentDescription = stringResource(R.string.scan_id),
                 modifier = Modifier.fillMaxSize()
             )
@@ -239,7 +235,7 @@ private fun ContinueEditingButton(
             .padding(12.dp)
     ) {
         Icon(
-            Icons.Outlined.Edit,
+            rememberVectorPainter(Icons.Outlined.Edit),
             contentDescription = stringResource(R.string.continue_editing),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier
@@ -264,7 +260,7 @@ private fun MenuActionButton(
     buttonHeight: Dp? = null,
     description: String,
     shortDescription: String = description,
-    icon: ImageVector,
+    icon: Painter,
     action: () -> Unit
 ) {
     Column(
@@ -319,20 +315,20 @@ private fun MenuActionButtonsRow(
             buttonHeight = rowHeight,
             description = stringResource(R.string.list_areas),
             shortDescription = stringResource(R.string.list_areas_short),
-            icon = Icons.Outlined.LocationOn
+            icon = painterResource(R.drawable.ic_explore)
         ) {}
         MenuActionButton(
             actionButtonModifier,
             buttonHeight = rowHeight,
             description = stringResource(R.string.customer_info),
-            icon = Icons.Outlined.Person
+            icon = painterResource(R.drawable.ic_person)
         ) {}
         MenuActionButton(
             actionButtonModifier,
             buttonHeight = rowHeight,
             description = stringResource(R.string.diagnostics_organization_info),
             shortDescription = stringResource(R.string.diagnostics_organization_info_short),
-            icon = Icons.Outlined.Business
+            icon = painterResource(R.drawable.ic_domain)
         ) {}
     }
 }
@@ -376,7 +372,7 @@ private fun RequestConfigScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    Icons.Outlined.FileOpen,
+                    painterResource(R.drawable.ic_file_open),
                     contentDescription = stringResource(R.string.import_report_config),
                     modifier = Modifier.padding(end = 6.dp)
                 )
