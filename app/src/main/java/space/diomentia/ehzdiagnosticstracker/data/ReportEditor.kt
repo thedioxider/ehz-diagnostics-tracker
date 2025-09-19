@@ -98,7 +98,7 @@ fun ReportEditor(
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                 )
-            } ?: error("missing report config")
+            }
         }
     }
 }
@@ -139,7 +139,7 @@ private fun LocationField(
         val currentLocationRequest = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setGranularity(Granularity.GRANULARITY_FINE)
-            .setMaxUpdateAgeMillis(30000L)
+            .setMaxUpdateAgeMillis(15000L)
             .build()
         locationProvider?.getCurrentLocation(currentLocationRequest, null)
             ?.addOnSuccessListener {

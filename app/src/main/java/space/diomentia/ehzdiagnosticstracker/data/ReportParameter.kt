@@ -25,7 +25,7 @@ data class ReportParameter(
 data class ReportType(
     val id: String,
     val name: String,
-    val parameters: List<ReportParameter>
+    val parameters: List<ReportParameter>?
 )
 
 @Serializable
