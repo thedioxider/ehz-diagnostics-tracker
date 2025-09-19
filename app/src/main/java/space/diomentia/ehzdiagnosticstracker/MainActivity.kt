@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -80,7 +81,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Preview
 @Composable
 private fun Content() {
     val context = LocalContext.current
@@ -101,6 +101,13 @@ private fun Content() {
                             icon = painterResource(R.drawable.ic_history),
                             label = stringResource(R.string.diagnostics_history)
                         ) {}
+                        ActionButton(
+                            icon = rememberVectorPainter(Icons.Outlined.Settings),
+                            label = stringResource(R.string.settings)
+                        ) {
+                            val intent = Intent(context, SettingsActivity::class.java)
+                            context.startActivity(intent)
+                        }
                     }
                 )
             },
@@ -379,5 +386,16 @@ private fun RequestConfigScreen(
                 Text(stringResource(R.string.choose_file))
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun ContentPreview() {
+    AppState.reportConfig = ReportConfig(listOf())
+
+    PtmTheme {
+        Content()
     }
 }

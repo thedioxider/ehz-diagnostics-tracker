@@ -138,7 +138,7 @@ fun ActionButton(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(bounded = false)
             )
-            .padding(4.dp)
+            .padding(6.dp)
             .then(modifier)
     )
 }

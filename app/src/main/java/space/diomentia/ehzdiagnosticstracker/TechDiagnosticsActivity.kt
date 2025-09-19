@@ -156,12 +156,12 @@ private fun Content() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(
                         start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
                         end = innerPadding.calculateEndPadding(LocalLayoutDirection.current)
                     )
                     .padding(horizontal = 12.dp)
-                    .verticalScroll(rememberScrollState())
             ) {
                 Spacer(Modifier.height(innerPadding.calculateTopPadding()))
 

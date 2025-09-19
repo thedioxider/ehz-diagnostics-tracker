@@ -38,4 +38,7 @@
     <string name="input_value">Введите значение</string>
     <string name="import_report_config">Пожалуйста, выберите файл с конфигурацией отчётов</string>
     <string name="choose_file">Выбрать файл</string>
+    <string name="report_configuration">Конфигурация отчётов</string>
+    <string name="report_configuration_description">Выберете файл с конфигурацией типов отчётов и параметров для каждого из них</string>
+    <string name="settings">Настройки</string>
 </resources>

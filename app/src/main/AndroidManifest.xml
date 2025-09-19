@@ -35,6 +35,7 @@
         </activity>
         <activity android:name=".ScanIdActivity" />
         <activity android:name=".TechDiagnosticsActivity" />
+        <activity android:name="space.diomentia.ehzdiagnosticstracker.SettingsActivity" />
     </application>
 
 </manifest>
