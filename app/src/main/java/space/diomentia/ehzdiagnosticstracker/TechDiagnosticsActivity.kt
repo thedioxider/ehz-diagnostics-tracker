@@ -69,6 +69,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ReportEditor
+import space.diomentia.ehzdiagnosticstracker.ui.RequestConfigScreen
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
@@ -150,6 +151,21 @@ private fun Content() {
             snackbarHost = { PtmSnackbarHost(snackbarHostState) },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
+            if (AppState.reportConfig.value == null) {
+                val configChooserLauncher =
+                    AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
+                        AppState.reportConfig.value = it
+                    }
+                RequestConfigScreen(
+                    label = stringResource(R.string.import_report_config),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    configChooserLauncher.launch(arrayOf("application/*"))
+                }
+                return@Scaffold
+            }
             Column(
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally,

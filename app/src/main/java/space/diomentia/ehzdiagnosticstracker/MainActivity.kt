@@ -55,7 +55,6 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
-import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
@@ -111,36 +110,28 @@ private fun Content() {
             },
             snackbarHost = { PtmSnackbarHost(snackbarHostState) }
         ) { innerPadding ->
-            if (AppState.reportConfig.value != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        ScanQrButton(
-                            modifier = Modifier.size(200.dp)
-                        )
-                        ContinueEditingButton(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 16.dp)
-                        )
-                    }
-                    MenuActionButtonsRow(
-                        Modifier
+                    ScanQrButton(
+                        modifier = Modifier.size(200.dp)
+                    )
+                    ContinueEditingButton(
+                        modifier = Modifier
                             .fillMaxWidth()
+                            .padding(top = 16.dp)
                     )
                 }
-            } else {
-                RequestConfigScreen(
+                MenuActionButtonsRow(
                     Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
+                        .fillMaxWidth()
                 )
             }
         }
@@ -335,46 +326,6 @@ private fun MenuActionButtonsRow(
             shortDescription = stringResource(R.string.diagnostics_organization_info_short),
             icon = painterResource(R.drawable.ic_domain)
         ) {}
-    }
-}
-
-@Composable
-private fun RequestConfigScreen(
-    modifier: Modifier = Modifier
-) {
-    val configChooserLauncher =
-        AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
-            AppState.reportConfig.value = it
-        }
-
-    Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        Text(
-            stringResource(R.string.import_report_config),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(6.dp)
-        )
-        PtmFilledButton(
-            onClick = {
-                configChooserLauncher.launch(arrayOf("application/*"))
-            },
-            modifier = Modifier.padding(6.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    painterResource(R.drawable.ic_file_open),
-                    contentDescription = stringResource(R.string.import_report_config),
-                    modifier = Modifier.padding(end = 6.dp)
-                )
-                Text(stringResource(R.string.choose_file))
-            }
-        }
     }
 }
 
