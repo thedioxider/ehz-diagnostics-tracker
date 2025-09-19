@@ -87,9 +87,10 @@ object AppState {
             it ?: return@rememberLauncherForActivityResult
             context.contentResolver.openInputStream(it)?.use { iStream ->
                 try {
-                    onResult(Yaml.default.decodeFromString<T>(String(iStream.readBytes())))
+                    val bytes = iStream.readBytes()
+                    onResult(Yaml.default.decodeFromString<T>(String(bytes)))
                     FileOutputStream(File(context.dataDir, filename)).use { oStream ->
-                        iStream.copyTo(oStream)
+                        oStream.write(bytes)
                     }
                 } catch (e: Exception) {
                     when (e) {
@@ -100,6 +101,8 @@ object AppState {
                                     "${context.getString(R.string.something_wrong)}:\n${e.message}"
                                 )
                             }
+
+                        else -> throw e
                     }
                 }
             }
