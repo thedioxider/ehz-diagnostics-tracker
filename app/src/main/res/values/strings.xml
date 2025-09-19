@@ -8,6 +8,7 @@
     <string name="diagnostics_organization_info">Сведения об организации, проводившей техническое диагностирование</string>
     <string name="diagnostics_organization_info_short">Сведения об организации</string>
     <string name="customer_info">Сведения о заказчике</string>
+    <string name="customer_info_description">Выберете файл с информацией о заказчике</string>
     <string name="diagnostics_history">История диагностирования</string>
     <string name="continue_editing">Продолжить заполнение последней диагностики</string>
     <string name="continue_editing_short">Продолжить заполнение</string>
@@ -33,7 +34,7 @@
     <string name="edit_report_type">Изменить тип отчёта</string>
     <string name="location">Местоположение</string>
     <string name="unknown">неизвестно</string>
-    <string name="something_wrong">Что-то пошло не так…</string>
+    <string name="something_wrong">Что-то пошло не так</string>
     <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
     <string name="input_value">Введите значение</string>
     <string name="import_report_config">Пожалуйста, выберите файл с конфигурацией отчётов</string>

@@ -1,4 +1,4 @@
-package space.diomentia.ehzdiagnosticstracker.data
+package space.diomentia.ehzdiagnosticstracker.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -48,7 +48,13 @@ import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
-import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
+import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
+import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ParameterType
+import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
+import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
+import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -79,7 +85,7 @@ fun ReportEditor(
                     .padding(start = 32.dp, end = 16.dp)
             )
 
-            AppState.reportConfig?.reportTypes[AppState.CurrentDiagnosticSession.reportType
+            AppState.reportConfig.value?.reportTypes[AppState.CurrentDiagnosticSession.reportType
                 ?: error("report type is not chosen")]?.parameters?.forEachIndexed { i, parameter ->
                 val value = remember {
                     AppState.CurrentDiagnosticSession.data[parameter.id] ?: when (parameter.type) {
@@ -154,7 +160,7 @@ private fun LocationField(
                             context.getString(
                                 R.string.something_wrong
                             )
-                        }"
+                        }..."
                     )
                 }
                 isSyncingLocation.set(false)
@@ -315,7 +321,7 @@ private fun ReportField(
 @Preview(showBackground = true)
 @Composable
 private fun ReportEditorPreview() {
-    AppState.reportConfig = ReportConfig(
+    AppState.reportConfig.value = ReportConfig(
         listOf(
             ReportType(
                 "foo0",

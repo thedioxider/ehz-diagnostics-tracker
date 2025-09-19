@@ -48,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
@@ -62,7 +61,6 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
-import space.diomentia.ehzdiagnosticstracker.data.ReportEditor
 import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
 import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -70,6 +68,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.ReportEditor
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
@@ -247,8 +246,7 @@ private fun DiagnosticsTypeSelector(
 private fun ReportTypesList(
     modifier: Modifier = Modifier
 ) {
-    if (AppState.reportConfig == null) AppState.loadReportConfig(LocalContext.current)
-    val reportConfig = AppState.reportConfig
+    val reportConfig = AppState.reportConfig.value
     if (reportConfig == null) {
         Text(
             stringResource(R.string.no_report_configuration),
@@ -395,7 +393,7 @@ private fun ApplyButton(
 @Preview(showBackground = true)
 @Composable
 private fun ContentPreview() {
-    AppState.reportConfig = ReportConfig(
+    AppState.reportConfig.value = ReportConfig(
         listOf(
             ReportType(
                 "foo0",

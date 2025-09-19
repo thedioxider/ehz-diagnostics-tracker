@@ -4,9 +4,7 @@ import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,6 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -38,15 +37,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.CustomerInfo
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
-import space.diomentia.ehzdiagnosticstracker.data.REPORT_CONFIG_FILENAME
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -54,8 +52,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.io.File
-import java.io.FileOutputStream
 
 class SettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,26 +69,20 @@ class SettingsActivity : ComponentActivity() {
     }
 }
 
-@Preview
 @Composable
 private fun Content() {
-    val context = LocalContext.current
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
     val layoutDirection = LocalLayoutDirection.current
 
-    val configChooserLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) {
-        it ?: return@rememberLauncherForActivityResult
-        context.contentResolver.openInputStream(it)?.use { iStream ->
-            val bytes = iStream.readBytes()
-            FileOutputStream(File(context.dataDir, REPORT_CONFIG_FILENAME)).use { oStream ->
-                oStream.write(bytes)
-            }
-            AppState.reportConfig = ReportConfig.parseYaml(String(bytes))
+    val reportConfigChooser =
+        AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
+            AppState.reportConfig.value = it
         }
-    }
+    val customerInfoChooser =
+        AppState.localYamlConfigCopyLauncher<CustomerInfo>(AppState.CUSTOMER_INFO_FILENAME) {
+            AppState.customerInfo.value = it
+        }
 
     PtmTheme {
         Scaffold(
@@ -131,7 +121,15 @@ private fun Content() {
                     secondaryLabel = stringResource(R.string.report_configuration_description),
                     icon = painterResource(R.drawable.ic_file_open)
                 ) {
-                    configChooserLauncher.launch(arrayOf("application/*"))
+                    reportConfigChooser.launch(arrayOf("application/*"))
+                }
+                OptionsDivider()
+                SettingsOption(
+                    label = stringResource(R.string.customer_info),
+                    secondaryLabel = stringResource(R.string.customer_info_description),
+                    icon = painterResource(R.drawable.ic_person)
+                ) {
+                    customerInfoChooser.launch(arrayOf("application/*"))
                 }
 
                 Spacer(Modifier.height(innerPadding.calculateBottomPadding()))
@@ -188,6 +186,24 @@ private fun SettingsOption(
             }
         }
     }
+}
+
+@Composable
+private fun OptionsDivider(
+    modifier: Modifier = Modifier
+) {
+    HorizontalDivider(
+        thickness = 2.dp,
+        modifier = Modifier
+            .padding(horizontal = 24.dp)
+            .then(modifier)
+    )
+}
+
+@Preview
+@Composable
+private fun ContentPreview() {
+    Content()
 }
 
 @Preview(showBackground = true)

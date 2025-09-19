@@ -52,7 +52,6 @@ import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
-import space.diomentia.ehzdiagnosticstracker.data.REPORT_CONFIG_FILENAME
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -63,12 +62,11 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.io.File
-import java.io.FileOutputStream
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppState.dataDir = dataDir
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
         setContent {
@@ -113,7 +111,7 @@ private fun Content() {
             },
             snackbarHost = { PtmSnackbarHost(snackbarHostState) }
         ) { innerPadding ->
-            if (AppState.reportConfig != null || remember { AppState.loadReportConfig(context) }) {
+            if (AppState.reportConfig.value != null) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -344,19 +342,10 @@ private fun MenuActionButtonsRow(
 private fun RequestConfigScreen(
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val configChooserLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) {
-        it ?: return@rememberLauncherForActivityResult
-        context.contentResolver.openInputStream(it)?.use { iStream ->
-            val bytes = iStream.readBytes()
-            FileOutputStream(File(context.dataDir, REPORT_CONFIG_FILENAME)).use { oStream ->
-                oStream.write(bytes)
-            }
-            AppState.reportConfig = ReportConfig.parseYaml(String(bytes))
+    val configChooserLauncher =
+        AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
+            AppState.reportConfig.value = it
         }
-    }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -393,7 +382,7 @@ private fun RequestConfigScreen(
 @Preview(showBackground = true)
 @Composable
 private fun ContentPreview() {
-    AppState.reportConfig = ReportConfig(listOf())
+    AppState.reportConfig.value = ReportConfig(listOf())
 
     PtmTheme {
         Content()
