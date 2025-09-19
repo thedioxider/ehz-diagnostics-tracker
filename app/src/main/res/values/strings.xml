@@ -42,4 +42,11 @@
     <string name="report_configuration">Конфигурация отчётов</string>
     <string name="report_configuration_description">Выберете файл с конфигурацией типов отчётов и параметров для каждого из них</string>
     <string name="settings">Настройки</string>
+    <string name="customer">Заказчик</string>
+    <string name="organization_full_name">Полное наименование организации</string>
+    <string name="organization_head">Руководитель организации</string>
+    <string name="legal_address">Юридический адрес</string>
+    <string name="dislocation">Местонахождение</string>
+    <string name="phone">Телефон</string>
+    <string name="email">E-Mail</string>
 </resources>

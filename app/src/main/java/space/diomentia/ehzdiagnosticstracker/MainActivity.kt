@@ -298,6 +298,9 @@ private fun MenuActionButtonsRow(
     modifier: Modifier = Modifier
 ) {
     val rowHeight = 80.dp
+
+    val context = LocalContext.current
+
     Row(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -318,7 +321,10 @@ private fun MenuActionButtonsRow(
             buttonHeight = rowHeight,
             description = stringResource(R.string.customer_info),
             icon = painterResource(R.drawable.ic_person)
-        ) {}
+        ) {
+            val intent = Intent(context, CustomerInfoActivity::class.java)
+            context.startActivity(intent)
+        }
         MenuActionButton(
             actionButtonModifier,
             buttonHeight = rowHeight,
