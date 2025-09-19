@@ -36,6 +36,7 @@
         <activity android:name=".TechDiagnosticsActivity" />
         <activity android:name=".SettingsActivity" />
         <activity android:name=".CustomerInfoActivity" />
+        <activity android:name="space.diomentia.ehzdiagnosticstracker.OrganizationInfoActivity" />
     </application>
 
 </manifest>

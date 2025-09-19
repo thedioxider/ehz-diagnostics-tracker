@@ -331,7 +331,10 @@ private fun MenuActionButtonsRow(
             description = stringResource(R.string.diagnostics_organization_info),
             shortDescription = stringResource(R.string.diagnostics_organization_info_short),
             icon = painterResource(R.drawable.ic_domain)
-        ) {}
+        ) {
+            val intent = Intent(context, OrganizationInfoActivity::class.java)
+            context.startActivity(intent)
+        }
     }
 }
 

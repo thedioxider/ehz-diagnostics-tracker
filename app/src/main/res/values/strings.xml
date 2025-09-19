@@ -5,7 +5,6 @@
     <string name="list_areas">Перечень участков технического диагностирования</string>
     <string name="list_areas_short">Перечень участков</string>
     <string name="contractor_info">Сведения о заказчике</string>
-    <string name="diagnostics_organization_info">Сведения об организации, проводившей техническое диагностирование</string>
     <string name="diagnostics_organization_info_short">Сведения об организации</string>
     <string name="customer_info">Сведения о заказчике</string>
     <string name="customer_info_description">Выберете файл с информацией о заказчике</string>
@@ -49,4 +48,6 @@
     <string name="dislocation">Местонахождение</string>
     <string name="phone">Телефон</string>
     <string name="email">E-Mail</string>
+    <string name="diagnostics_organization_info">Сведения об организации, проводившей техническое диагностирование</string>
+    <string name="diagnostics_organization_info_description">Выберете файл, содержащий информацию об организации, проводившей техническое диагностирование</string>
 </resources>

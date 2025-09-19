@@ -28,11 +28,16 @@ import java.time.LocalDateTime
 object AppState {
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
     const val CUSTOMER_INFO_FILENAME = "customer.yaml"
+    const val ORGANIZATION_INFO_FILENAME = "organization.yaml"
 
     var inspectionMode = true
     var dataDir: File? = null
     val reportConfig: MutableState<ReportConfig?> by lazy {
-        val dataDir = dataDir ?: if (!inspectionMode) error("no data directory passed") else null
+        val dataDir = dataDir
+            ?: if (!inspectionMode)
+                error("no data directory passes")
+            else
+                return@lazy mutableStateOf(null)
         File(dataDir, REPORT_CONFIG_FILENAME).let {
             if (!it.isFile) {
                 return@lazy mutableStateOf(null)
@@ -41,8 +46,25 @@ object AppState {
         }
     }
     val customerInfo: MutableState<OrganizationInfo?> by lazy {
-        val dataDir = dataDir ?: if (!inspectionMode) error("no data directory passes") else null
+        val dataDir = dataDir
+            ?: if (!inspectionMode)
+                error("no data directory passes")
+            else
+                return@lazy mutableStateOf(null)
         File(dataDir, CUSTOMER_INFO_FILENAME).let {
+            if (!it.isFile) {
+                return@lazy mutableStateOf(null)
+            }
+            return@lazy mutableStateOf(Yaml.default.decodeFromString(it.readText()))
+        }
+    }
+    val organizationInfo: MutableState<OrganizationInfo?> by lazy {
+        val dataDir = dataDir
+            ?: if (!inspectionMode)
+                error("no data directory passes")
+            else
+                return@lazy mutableStateOf(null)
+        File(dataDir, ORGANIZATION_INFO_FILENAME).let {
             if (!it.isFile) {
                 return@lazy mutableStateOf(null)
             }

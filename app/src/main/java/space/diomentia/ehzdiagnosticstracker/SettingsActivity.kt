@@ -79,6 +79,10 @@ private fun Content() {
         AppState.localYamlConfigCopyLauncher<OrganizationInfo>(AppState.CUSTOMER_INFO_FILENAME) {
             AppState.customerInfo.value = it
         }
+    val organizationInfoChooser =
+        AppState.localYamlConfigCopyLauncher<OrganizationInfo>(AppState.ORGANIZATION_INFO_FILENAME) {
+            AppState.organizationInfo.value = it
+        }
 
     PtmTheme {
         Scaffold(
@@ -118,6 +122,13 @@ private fun Content() {
                     icon = painterResource(R.drawable.ic_person)
                 ) {
                     customerInfoChooser.launch(arrayOf("application/*"))
+                }
+                SettingsOption(
+                    label = stringResource(R.string.diagnostics_organization_info),
+                    secondaryLabel = stringResource(R.string.diagnostics_organization_info_description),
+                    icon = painterResource(R.drawable.ic_domain)
+                ) {
+                    organizationInfoChooser.launch(arrayOf("application/*"))
                 }
             }
         }
