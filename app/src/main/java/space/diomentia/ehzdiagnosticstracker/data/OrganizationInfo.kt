@@ -3,7 +3,7 @@ package space.diomentia.ehzdiagnosticstracker.data
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CustomerInfo(
+data class OrganizationInfo(
     val organizationName: String,
     val head: String,
     val legalAddress: String,

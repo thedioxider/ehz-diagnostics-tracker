@@ -38,8 +38,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import space.diomentia.ehzdiagnosticstracker.data.AppState
-import space.diomentia.ehzdiagnosticstracker.data.CustomerInfo
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.OrganizationInfo
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -76,7 +76,7 @@ private fun Content() {
             AppState.reportConfig.value = it
         }
     val customerInfoChooser =
-        AppState.localYamlConfigCopyLauncher<CustomerInfo>(AppState.CUSTOMER_INFO_FILENAME) {
+        AppState.localYamlConfigCopyLauncher<OrganizationInfo>(AppState.CUSTOMER_INFO_FILENAME) {
             AppState.customerInfo.value = it
         }
 

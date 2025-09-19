@@ -40,7 +40,7 @@ object AppState {
             return@lazy mutableStateOf(Yaml.default.decodeFromString(it.readText()))
         }
     }
-    val customerInfo: MutableState<CustomerInfo?> by lazy {
+    val customerInfo: MutableState<OrganizationInfo?> by lazy {
         val dataDir = dataDir ?: if (!inspectionMode) error("no data directory passes") else null
         File(dataDir, CUSTOMER_INFO_FILENAME).let {
             if (!it.isFile) {
