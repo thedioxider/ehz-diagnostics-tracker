@@ -10,17 +10,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Settings
@@ -50,6 +45,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
@@ -73,7 +69,7 @@ class SettingsActivity : ComponentActivity() {
 private fun Content() {
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val layoutDirection = LocalLayoutDirection.current
+    LocalLayoutDirection.current
 
     val reportConfigChooser =
         AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
@@ -104,18 +100,10 @@ private fun Content() {
             },
             snackbarHost = { PtmSnackbarHost(snackbarHostState) }
         ) { innerPadding ->
-            Column(
-                verticalArrangement = Arrangement.Top,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(
-                        start = innerPadding.calculateStartPadding(layoutDirection),
-                        end = innerPadding.calculateEndPadding(layoutDirection)
-                    )
+            ScrollableColumn(
+                innerPadding,
+                modifier = Modifier.padding(horizontal = 16.dp)
             ) {
-                Spacer(Modifier.height(innerPadding.calculateTopPadding()))
-
                 SettingsOption(
                     label = stringResource(R.string.report_configuration),
                     secondaryLabel = stringResource(R.string.report_configuration_description),
@@ -131,8 +119,6 @@ private fun Content() {
                 ) {
                     customerInfoChooser.launch(arrayOf("application/*"))
                 }
-
-                Spacer(Modifier.height(innerPadding.calculateBottomPadding()))
             }
         }
     }
@@ -151,7 +137,7 @@ private fun SettingsOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(24.dp)
+            .padding(16.dp)
             .defaultMinSize(minHeight = 36.dp)
             .height(IntrinsicSize.Min)
             .then(modifier)
@@ -195,7 +181,7 @@ private fun OptionsDivider(
     HorizontalDivider(
         thickness = 2.dp,
         modifier = Modifier
-            .padding(horizontal = 24.dp)
+            .padding(horizontal = 16.dp)
             .then(modifier)
     )
 }

@@ -74,7 +74,6 @@ fun ReportEditor(
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
                     .padding(vertical = 4.dp)
             )
 
@@ -218,7 +217,6 @@ private fun ReportField(
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp)
                     .padding(vertical = 4.dp)
             )
             if (parameter.type == ParameterType.Bool) {
@@ -228,6 +226,7 @@ private fun ReportField(
                     onClick = { v = v != true },
                     shape = RectangleShape,
                     modifier = Modifier
+                        .padding(horizontal = 16.dp)
                         .border(BorderStroke(6.dp, MaterialTheme.colorScheme.primary))
                 ) {
                     Icon(
@@ -253,7 +252,6 @@ private fun ReportField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp, horizontal = 16.dp)
-                    .padding(start = 16.dp)
             ) {
                 TextField(
                     value,

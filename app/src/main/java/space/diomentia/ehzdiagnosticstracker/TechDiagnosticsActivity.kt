@@ -13,14 +13,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Settings
@@ -48,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -70,6 +65,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ReportEditor
 import space.diomentia.ehzdiagnosticstracker.ui.RequestConfigScreen
+import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
@@ -166,20 +162,10 @@ private fun Content() {
                 }
                 return@Scaffold
             }
-            Column(
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(
-                        start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                        end = innerPadding.calculateEndPadding(LocalLayoutDirection.current)
-                    )
-                    .padding(horizontal = 12.dp)
+            ScrollableColumn(
+                innerPadding,
+                modifier = Modifier.padding(horizontal = 16.dp)
             ) {
-                Spacer(Modifier.height(innerPadding.calculateTopPadding()))
-
                 Text(
                     "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.id}",
                     style = MaterialTheme.typography.headlineMedium,
@@ -211,12 +197,7 @@ private fun Content() {
                             .padding(top = 16.dp)
                     )
                 }
-
-                Spacer(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(innerPadding.calculateBottomPadding() + 16.dp)
-                )
+                Spacer(Modifier.height(24.dp))
             }
         }
     }
