@@ -65,7 +65,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppState.dataDir = dataDir
+        AppState.init(this)
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
         setContent {

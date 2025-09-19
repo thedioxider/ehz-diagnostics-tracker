@@ -1,5 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
+import android.content.Context
 import android.location.Location
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -28,9 +29,10 @@ object AppState {
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
     const val CUSTOMER_INFO_FILENAME = "customer.yaml"
 
+    var inspectionMode = true
     var dataDir: File? = null
     val reportConfig: MutableState<ReportConfig?> by lazy {
-        val dataDir = dataDir ?: error("no data directory passed")
+        val dataDir = dataDir ?: if (!inspectionMode) error("no data directory passed") else null
         File(dataDir, REPORT_CONFIG_FILENAME).let {
             if (!it.isFile) {
                 return@lazy mutableStateOf(null)
@@ -39,7 +41,7 @@ object AppState {
         }
     }
     val customerInfo: MutableState<CustomerInfo?> by lazy {
-        val dataDir = dataDir ?: error("no data directory passes")
+        val dataDir = dataDir ?: if (!inspectionMode) error("no data directory passes") else null
         File(dataDir, CUSTOMER_INFO_FILENAME).let {
             if (!it.isFile) {
                 return@lazy mutableStateOf(null)
@@ -63,6 +65,11 @@ object AppState {
             location = null
             data.clear()
         }
+    }
+
+    fun init(context: Context) {
+        inspectionMode = false
+        dataDir = context.dataDir
     }
 
     @Composable
