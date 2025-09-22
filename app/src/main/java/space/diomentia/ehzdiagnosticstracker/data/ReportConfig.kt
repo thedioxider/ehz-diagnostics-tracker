@@ -9,6 +9,7 @@ enum class ParameterType(val kClass: KClass<*>) {
     Bool(Boolean::class),
     Integer(Int::class),
     Decimal(Float::class),
+    Photo(Any::class),
 }
 
 @Serializable

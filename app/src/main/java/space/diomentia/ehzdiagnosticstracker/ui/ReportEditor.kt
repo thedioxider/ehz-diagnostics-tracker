@@ -88,7 +88,7 @@ fun ReportEditor(
                 ?: error("report type is not chosen")]?.parameters?.forEachIndexed { i, parameter ->
                 val value = remember {
                     AppState.CurrentDiagnosticSession.data[parameter.id] ?: when (parameter.type) {
-                        ParameterType.Text -> mutableStateOf<String?>(null)
+                        ParameterType.Text, ParameterType.Photo -> mutableStateOf<String?>(null)
                         ParameterType.Integer -> mutableStateOf<Int?>(null)
                         ParameterType.Decimal -> mutableStateOf<Float?>(null)
                         ParameterType.Bool -> mutableStateOf<Boolean?>(null)
@@ -275,7 +275,7 @@ private fun ReportField(
             }
         }
         when (parameter.type) {
-            ParameterType.Text -> {
+            ParameterType.Text, ParameterType.Photo -> {
                 @Suppress("UNCHECKED_CAST")
                 var v by value as MutableState<String?>
                 ParamField(value = v ?: "") { v = it }
