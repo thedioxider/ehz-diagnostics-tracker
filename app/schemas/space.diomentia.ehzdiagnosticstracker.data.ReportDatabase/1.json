@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "86f72b954cc6c89c119d8a4ec95b0f88",
+    "identityHash": "0ed2269741556513b969ad082dcc14c3",
     "entities": [
       {
         "tableName": "diagnostic_reports",
@@ -62,7 +62,19 @@
           "columnNames": [
             "id"
           ]
-        }
+        },
+        "indices": [
+          {
+            "name": "report_id",
+            "unique": true,
+            "columnNames": [
+              "area_id",
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `report_id` ON `${TABLE_NAME}` (`area_id`, `timestamp`)"
+          }
+        ]
       },
       {
         "tableName": "data_entries",
@@ -98,7 +110,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '86f72b954cc6c89c119d8a4ec95b0f88')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0ed2269741556513b969ad082dcc14c3')"
     ]
   }
 }

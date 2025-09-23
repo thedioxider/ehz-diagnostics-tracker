@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
@@ -30,7 +31,12 @@ data class Coordinates(
     @ColumnInfo(name = "altitude") val altitude: Double
 )
 
-@Entity(tableName = "diagnostic_reports")
+@Entity(
+    tableName = "diagnostic_reports",
+    indices = [
+        Index("area_id", "timestamp", unique = true, name = "report_id")
+    ]
+)
 data class DiagnosticReport(
     @ColumnInfo(name = "is_complete") val isComplete: Boolean,
     @ColumnInfo(name = "area_id") val areaId: String,
