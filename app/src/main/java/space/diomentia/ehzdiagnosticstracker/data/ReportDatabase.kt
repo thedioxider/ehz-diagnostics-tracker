@@ -3,6 +3,7 @@ package space.diomentia.ehzdiagnosticstracker.data
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
+import androidx.room.Delete
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
@@ -12,6 +13,7 @@ import androidx.room.Query
 import androidx.room.Relation
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 
 const val REPORT_DATABASE_NAME = "report-db"
 
@@ -62,12 +64,18 @@ data class DiagnosticReportRelative(
 @Dao
 interface DiagnosticReportDao {
     @Transaction
-    @Query("SELECT * FROM diagnostic_reports")
-    fun getReports(): List<DiagnosticReportRelative>
+    @Query("SELECT * FROM diagnostic_reports ORDER BY timestamp DESC")
+    fun getReports(): Flow<List<DiagnosticReportRelative>>
 
     @Insert
     fun insertReport(report: DiagnosticReport): Long
 
     @Insert
     fun insertData(vararg data: ReportDataEntry)
+
+    @Delete
+    fun deleteReport(report: DiagnosticReport)
+
+    @Delete
+    fun deleteData(vararg data: ReportDataEntry)
 }

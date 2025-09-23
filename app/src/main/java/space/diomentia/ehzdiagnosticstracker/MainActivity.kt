@@ -97,13 +97,18 @@ private fun Content() {
                         ActionButton(
                             icon = painterResource(R.drawable.ic_history),
                             label = stringResource(R.string.diagnostics_history)
-                        ) {}
+                        ) {
+                            context.startActivity(
+                                Intent(context, ReportHistoryActivity::class.java)
+                            )
+                        }
                         ActionButton(
                             icon = rememberVectorPainter(Icons.Outlined.Settings),
                             label = stringResource(R.string.settings)
                         ) {
-                            val intent = Intent(context, SettingsActivity::class.java)
-                            context.startActivity(intent)
+                            context.startActivity(
+                                Intent(context, SettingsActivity::class.java)
+                            )
                         }
                     }
                 )

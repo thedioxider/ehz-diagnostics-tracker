@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -40,5 +42,30 @@ fun ScrollableColumn(
         Spacer(Modifier.height(innerPadding.calculateTopPadding()))
         content()
         Spacer(Modifier.height(innerPadding.calculateBottomPadding()))
+    }
+}
+
+@Composable
+fun FullscreenLazyColumn(
+    innerPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    content: LazyListScope.() -> Unit
+) {
+    LazyColumn(
+        verticalArrangement = verticalArrangement,
+        horizontalAlignment = horizontalAlignment,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
+                end = innerPadding.calculateEndPadding(LocalLayoutDirection.current)
+            )
+            .then(modifier)
+    ) {
+        item { Spacer(Modifier.height(innerPadding.calculateTopPadding())) }
+        content()
+        item { Spacer(Modifier.height(innerPadding.calculateBottomPadding())) }
     }
 }

@@ -85,8 +85,14 @@ object AppState {
                 || reportConfig == null
                 || reportDb == null
             ) return false
+            val paramSet = (reportConfig.reportTypes[reportType].parameters ?: emptyList())
+                .asSequence()
+                .map { it.id }
+                .toSet()
             val report = DiagnosticReport(
-                data.all { it.value.value != null },
+                data.all { (k, v) ->
+                    k !in paramSet || v.value != null
+                },
                 id.toString(),
                 dateTime.toEpochSecond(ZoneOffset.UTC),
                 diagnosticsType,

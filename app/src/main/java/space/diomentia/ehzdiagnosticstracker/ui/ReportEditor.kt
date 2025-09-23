@@ -26,9 +26,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -62,55 +66,69 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.util.concurrent.atomic.AtomicBoolean
 
 
+private val LocalReportType = compositionLocalOf { 0 }
+
 @Composable
 fun ReportEditor(
     modifier: Modifier = Modifier
 ) {
-    var reportType = remember { AppState.CurrentDiagnosticSession.reportType ?: 0 }
+    var reportType by remember {
+        mutableIntStateOf(
+            AppState.CurrentDiagnosticSession.reportType ?: 0
+        )
+    }
     reportType = AppState.CurrentDiagnosticSession.reportType ?: reportType
 
-    PtmTheme {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier
-        ) {
-            Text(
-                stringResource(R.string.location),
-                style = MaterialTheme.typography.titleSmall,
-                textAlign = TextAlign.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-            )
-
-            LocationField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 24.dp)
-                    .padding(start = 32.dp, end = 16.dp)
-            )
-
-            AppState.reportConfig.value?.reportTypes[reportType]?.parameters?.forEachIndexed { i, parameter ->
-                val value = remember {
-                    AppState.CurrentDiagnosticSession.data[parameter.id] ?: when (parameter.type) {
-                        ParameterType.Text, ParameterType.Photo -> mutableStateOf<String?>(null)
-                        ParameterType.Integer -> mutableStateOf<Int?>(null)
-                        ParameterType.Decimal -> mutableStateOf<Float?>(null)
-                        ParameterType.Bool -> mutableStateOf<Boolean?>(null)
-                    }.also {
-                        AppState.CurrentDiagnosticSession.data[parameter.id] = it
-                    }
-                }
-                ReportField(
-                    parameter,
-                    value,
+    CompositionLocalProvider(
+        LocalReportType provides reportType
+    ) {
+        PtmTheme {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = modifier
+            ) {
+                Text(
+                    stringResource(R.string.location),
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Start,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp)
+                        .padding(vertical = 4.dp)
                 )
-            }
 
-            SaveButton(Modifier.padding(16.dp))
+                LocationField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 24.dp)
+                        .padding(start = 32.dp, end = 16.dp)
+                )
+
+                AppState.reportConfig.value?.reportTypes[reportType]?.parameters?.forEachIndexed { i, parameter ->
+                    val value = remember {
+                        AppState.CurrentDiagnosticSession.data[parameter.id]
+                            ?: when (parameter.type) {
+                                ParameterType.Text, ParameterType.Photo -> mutableStateOf<String?>(
+                                    null
+                                )
+
+                                ParameterType.Integer -> mutableStateOf<Int?>(null)
+                                ParameterType.Decimal -> mutableStateOf<Float?>(null)
+                                ParameterType.Bool -> mutableStateOf<Boolean?>(null)
+                            }.also {
+                                AppState.CurrentDiagnosticSession.data[parameter.id] = it
+                            }
+                    }
+                    ReportField(
+                        parameter,
+                        value,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                }
+
+                SaveButton(Modifier.padding(16.dp))
+            }
         }
     }
 }
@@ -327,11 +345,21 @@ private fun SaveButton(
     modifier: Modifier = Modifier
 ) {
     val activity = LocalActivity.current
+    val reportConfig = AppState.reportConfig.value ?: return
+    val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
+    val paramSet = remember(derivedReportType) {
+        (reportConfig.reportTypes[derivedReportType].parameters ?: emptyList())
+            .asSequence()
+            .map { it.id }
+            .toSet()
+    }
     val enabled = with(AppState.CurrentDiagnosticSession) {
         id != null
                 && reportType != null
                 && location != null
-                && data.all { it.value.value != null }
+                && data.all { (k, v) ->
+            k !in paramSet || v.value != null
+        }
     }
 
     PtmFilledButton(
