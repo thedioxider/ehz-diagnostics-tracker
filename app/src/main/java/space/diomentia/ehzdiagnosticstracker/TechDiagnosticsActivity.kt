@@ -119,7 +119,10 @@ class TechDiagnosticsActivity : ComponentActivity() {
 private fun Content() {
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
+    var state by LocalState.current
 
+    if (AppState.CurrentDiagnosticSession.id == null) activity?.finish()
+    if (AppState.CurrentDiagnosticSession.reportType == null) state = State.Configuration
     PtmTheme {
         Scaffold(
             topBar = {
@@ -183,13 +186,13 @@ private fun Content() {
                         .padding(top = 8.dp, bottom = 16.dp)
                 )
 
-                AnimatedVisibility(LocalState.current.value == State.Configuration) {
+                AnimatedVisibility(state == State.Configuration) {
                     ReportConfiguration(Modifier.fillMaxWidth())
                 }
 
                 ApplyButton()
 
-                AnimatedVisibility(LocalState.current.value == State.Editor)
+                AnimatedVisibility(state == State.Editor)
                 {
                     ReportEditor(
                         Modifier
@@ -197,6 +200,7 @@ private fun Content() {
                             .padding(top = 16.dp)
                     )
                 }
+
                 Spacer(Modifier.height(24.dp))
             }
         }

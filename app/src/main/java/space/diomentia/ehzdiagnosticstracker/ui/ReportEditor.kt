@@ -1,8 +1,10 @@
 package space.diomentia.ehzdiagnosticstracker.ui
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.icu.text.DecimalFormatSymbols
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -63,6 +65,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 fun ReportEditor(
     modifier: Modifier = Modifier
 ) {
+    var reportType = remember { AppState.CurrentDiagnosticSession.reportType ?: 0 }
+    reportType = AppState.CurrentDiagnosticSession.reportType ?: reportType
+
     PtmTheme {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -84,8 +89,7 @@ fun ReportEditor(
                     .padding(start = 32.dp, end = 16.dp)
             )
 
-            AppState.reportConfig.value?.reportTypes[AppState.CurrentDiagnosticSession.reportType
-                ?: error("report type is not chosen")]?.parameters?.forEachIndexed { i, parameter ->
+            AppState.reportConfig.value?.reportTypes[reportType]?.parameters?.forEachIndexed { i, parameter ->
                 val value = remember {
                     AppState.CurrentDiagnosticSession.data[parameter.id] ?: when (parameter.type) {
                         ParameterType.Text, ParameterType.Photo -> mutableStateOf<String?>(null)
@@ -103,6 +107,35 @@ fun ReportEditor(
                         .fillMaxWidth()
                         .padding(vertical = 16.dp)
                 )
+            }
+
+            val activity = LocalActivity.current
+            PtmFilledButton(
+                onClick = {
+                    AppState.CurrentDiagnosticSession.insertToDb()
+                    activity?.run {
+                        setResult(Activity.RESULT_OK)
+                        finish()
+                    }
+                }
+            ) {
+                Text("save")
+            }
+
+            val coroutineScope = rememberCoroutineScope()
+            val snackbarHostState = LocalSnackbarHostState.current
+            PtmFilledButton(
+                onClick = {
+                    val db = AppState.reportDb
+                    if (db == null) return@PtmFilledButton
+                    val report = db.diagnosticReportDao().getReports().first()
+                    coroutineScope.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(report.toString())
+                    }
+                }
+            ) {
+                Text("show")
             }
         }
     }
@@ -200,7 +233,7 @@ private fun ReportField(
     // FIXME: using * type seems to be a pretty bad solution.
     //   need to come up with something more failsafe and neat.
     //   but so far it is used only locally in this file, so it should be ok.
-    value: MutableState<*>,
+    value: MutableState<out Any?>,
     modifier: Modifier = Modifier
 ) {
     Column(
