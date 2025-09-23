@@ -258,6 +258,7 @@ private fun ContinueEditingButton(
 @Composable
 private fun MenuActionButton(
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     buttonHeight: Dp? = null,
     description: String,
     shortDescription: String = description,
@@ -272,12 +273,14 @@ private fun MenuActionButton(
             .padding(horizontal = 6.dp)
     ) {
         PtmOutlinedButton(
+            enabled = enabled,
             roundedCorners = true,
             modifier = Modifier
                 .let { if (buttonHeight != null) it.height(buttonHeight) else it }
                 .weight(1f, fill = false)
                 .aspectRatio(1f)
                 .clickableWithLabel(
+                    enabled = enabled,
                     label = description,
                     action = action
                 )
@@ -316,6 +319,7 @@ private fun MenuActionButtonsRow(
             .weight(1f)
         MenuActionButton(
             actionButtonModifier,
+            enabled = false,
             buttonHeight = rowHeight,
             description = stringResource(R.string.list_areas),
             shortDescription = stringResource(R.string.list_areas_short),
