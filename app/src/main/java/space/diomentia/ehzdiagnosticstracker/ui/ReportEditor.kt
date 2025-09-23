@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -109,34 +110,7 @@ fun ReportEditor(
                 )
             }
 
-            val activity = LocalActivity.current
-            PtmFilledButton(
-                onClick = {
-                    AppState.CurrentDiagnosticSession.insertToDb()
-                    activity?.run {
-                        setResult(Activity.RESULT_OK)
-                        finish()
-                    }
-                }
-            ) {
-                Text("save")
-            }
-
-            val coroutineScope = rememberCoroutineScope()
-            val snackbarHostState = LocalSnackbarHostState.current
-            PtmFilledButton(
-                onClick = {
-                    val db = AppState.reportDb
-                    if (db == null) return@PtmFilledButton
-                    val report = db.diagnosticReportDao().getReports().first()
-                    coroutineScope.launch {
-                        snackbarHostState.currentSnackbarData?.dismiss()
-                        snackbarHostState.showSnackbar(report.toString())
-                    }
-                }
-            ) {
-                Text("show")
-            }
+            SaveButton(Modifier.padding(16.dp))
         }
     }
 }
@@ -345,6 +319,38 @@ private fun ReportField(
 
             ParameterType.Bool -> Unit
         }
+    }
+}
+
+@Composable
+private fun SaveButton(
+    modifier: Modifier = Modifier
+) {
+    val activity = LocalActivity.current
+    val enabled = with(AppState.CurrentDiagnosticSession) {
+        id != null
+                && reportType != null
+                && location != null
+                && data.all { it.value.value != null }
+    }
+
+    PtmFilledButton(
+        enabled = enabled,
+        onClick = {
+            AppState.CurrentDiagnosticSession.insertToDb()
+            activity?.run {
+                setResult(Activity.RESULT_OK)
+                finish()
+            }
+        },
+        modifier = modifier
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_save),
+            contentDescription = stringResource(R.string.save),
+            modifier = Modifier.padding(end = 4.dp)
+        )
+        Text(stringResource(R.string.save))
     }
 }
 
