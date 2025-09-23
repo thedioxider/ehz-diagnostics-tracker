@@ -71,7 +71,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private enum class State {
+private enum class UiState {
     Configuration,
     Editor;
 
@@ -84,8 +84,8 @@ private enum class State {
     }
 }
 
-private val LocalState =
-    compositionLocalOf<MutableState<State>> { mutableStateOf(State.Configuration) }
+private val LocalUiState =
+    compositionLocalOf<MutableState<UiState>> { mutableStateOf(UiState.Configuration) }
 
 class TechDiagnosticsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,9 +102,9 @@ class TechDiagnosticsActivity : ComponentActivity() {
         setContent {
             CompositionLocalProvider(
                 LocalSnackbarHostState provides snackbarHostState,
-                LocalState provides remember {
+                LocalUiState provides remember {
                     mutableStateOf(
-                        if (State.canOpenEditor()) State.Editor else State.Configuration
+                        if (UiState.canOpenEditor()) UiState.Editor else UiState.Configuration
                     )
                 },
                 LocalLocationProvider provides LocationServices.getFusedLocationProviderClient(this)
@@ -119,10 +119,10 @@ class TechDiagnosticsActivity : ComponentActivity() {
 private fun Content() {
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
-    var state by LocalState.current
+    var state by LocalUiState.current
 
     if (AppState.CurrentDiagnosticSession.id == null) activity?.finish()
-    if (AppState.CurrentDiagnosticSession.reportType == null) state = State.Configuration
+    if (AppState.CurrentDiagnosticSession.reportType == null) state = UiState.Configuration
     PtmTheme {
         Scaffold(
             topBar = {
@@ -186,13 +186,13 @@ private fun Content() {
                         .padding(top = 8.dp, bottom = 16.dp)
                 )
 
-                AnimatedVisibility(state == State.Configuration) {
+                AnimatedVisibility(state == UiState.Configuration) {
                     ReportConfiguration(Modifier.fillMaxWidth())
                 }
 
                 ApplyButton()
 
-                AnimatedVisibility(state == State.Editor)
+                AnimatedVisibility(state == UiState.Editor)
                 {
                     ReportEditor(
                         Modifier
@@ -260,7 +260,7 @@ private fun ReportTypesList(
         return
     }
 
-    var state by LocalState.current
+    var state by LocalUiState.current
 
     Column(
         horizontalAlignment = Alignment.Start,
@@ -285,7 +285,7 @@ private fun ReportTypesList(
                     ) {
                         AppState.CurrentDiagnosticSession.reportType = i
                         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
-                        state = State.Editor
+                        state = UiState.Editor
                     }
                     .padding(start = 16.dp)
                     .padding(vertical = 12.dp)
@@ -344,22 +344,22 @@ private fun ReportConfiguration(
 private fun ApplyButton(
     modifier: Modifier = Modifier
 ) {
-    var state by LocalState.current
+    var state by LocalUiState.current
     val enabled = when (state) {
-        State.Configuration -> State.canOpenEditor()
-        State.Editor -> true
+        UiState.Configuration -> UiState.canOpenEditor()
+        UiState.Editor -> true
     }
     PtmTheme {
         PtmFilledButton(
             enabled = enabled,
             onClick = {
                 state = when (state) {
-                    State.Configuration -> {
+                    UiState.Configuration -> {
                         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
-                        State.Editor
+                        UiState.Editor
                     }
 
-                    State.Editor -> State.Configuration
+                    UiState.Editor -> UiState.Configuration
                 }
             },
             modifier = modifier
@@ -369,8 +369,8 @@ private fun ApplyButton(
             ) {
                 Icon(
                     when (state) {
-                        State.Configuration -> painterResource(R.drawable.ic_done_outline)
-                        State.Editor -> rememberVectorPainter(Icons.Outlined.Settings)
+                        UiState.Configuration -> painterResource(R.drawable.ic_done_outline)
+                        UiState.Editor -> rememberVectorPainter(Icons.Outlined.Settings)
                     },
                     contentDescription = stringResource(R.string.apply),
                     modifier = Modifier
@@ -379,8 +379,8 @@ private fun ApplyButton(
                 )
                 Text(
                     when (state) {
-                        State.Configuration -> stringResource(R.string.apply)
-                        State.Editor -> stringResource(R.string.edit_report_type)
+                        UiState.Configuration -> stringResource(R.string.apply)
+                        UiState.Editor -> stringResource(R.string.edit_report_type)
                     },
                     modifier = Modifier
                         .padding(4.dp)
@@ -416,7 +416,7 @@ private fun ContentPreview() {
         )
     )
     AppState.CurrentDiagnosticSession.reportType = 0
-    LocalState.current.value = State.Editor
+    LocalUiState.current.value = UiState.Editor
 
     PtmTheme {
         Content()
