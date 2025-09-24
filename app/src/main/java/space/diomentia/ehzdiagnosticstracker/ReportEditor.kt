@@ -1,8 +1,10 @@
-package space.diomentia.ehzdiagnosticstracker.data
+package space.diomentia.ehzdiagnosticstracker
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.icu.text.DecimalFormatSymbols
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -24,9 +26,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -36,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -47,58 +54,81 @@ import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
-import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
+import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ParameterType
+import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
+import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
+import space.diomentia.ehzdiagnosticstracker.data.ReportType
+import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.util.concurrent.atomic.AtomicBoolean
 
+
+private val LocalReportType = compositionLocalOf { 0 }
 
 @Composable
 fun ReportEditor(
     modifier: Modifier = Modifier
 ) {
-    PtmTheme {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = modifier
-        ) {
-            Text(
-                stringResource(R.string.location),
-                style = MaterialTheme.typography.titleSmall,
-                textAlign = TextAlign.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
-                    .padding(vertical = 4.dp)
-            )
+    var reportType by remember {
+        mutableIntStateOf(
+            AppState.CurrentDiagnosticSession.reportType ?: 0
+        )
+    }
+    reportType = AppState.CurrentDiagnosticSession.reportType ?: reportType
 
-            LocationField(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp, bottom = 24.dp)
-                    .padding(start = 32.dp, end = 16.dp)
-            )
-
-            AppState.reportConfig?.reportTypes[AppState.CurrentDiagnosticSession.reportType
-                ?: error("report type is not chosen")]?.parameters?.forEachIndexed { i, parameter ->
-                val value = remember {
-                    AppState.CurrentDiagnosticSession.data[parameter.id] ?: when (parameter.type) {
-                        ParameterType.Text -> mutableStateOf<String?>(null)
-                        ParameterType.Integer -> mutableStateOf<Int?>(null)
-                        ParameterType.Decimal -> mutableStateOf<Float?>(null)
-                        ParameterType.Bool -> mutableStateOf<Boolean?>(null)
-                    }.also {
-                        AppState.CurrentDiagnosticSession.data[parameter.id] = it
-                    }
-                }
-                ReportField(
-                    parameter,
-                    value,
+    CompositionLocalProvider(
+        LocalReportType provides reportType
+    ) {
+        PtmTheme {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = modifier
+            ) {
+                Text(
+                    stringResource(R.string.location),
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Start,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 16.dp)
+                        .padding(vertical = 4.dp)
                 )
-            } ?: error("missing report config")
+
+                LocationField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 24.dp)
+                        .padding(start = 32.dp, end = 16.dp)
+                )
+
+                AppState.reportConfig.value?.reportTypes[reportType]?.parameters?.forEachIndexed { i, parameter ->
+                    val value = remember {
+                        AppState.CurrentDiagnosticSession.data[parameter.id]
+                            ?: when (parameter.type) {
+                                ParameterType.Text, ParameterType.Photo -> mutableStateOf<String?>(
+                                    null
+                                )
+
+                                ParameterType.Integer -> mutableStateOf<Int?>(null)
+                                ParameterType.Decimal -> mutableStateOf<Float?>(null)
+                                ParameterType.Bool -> mutableStateOf<Boolean?>(null)
+                            }.also {
+                                AppState.CurrentDiagnosticSession.data[parameter.id] = it
+                            }
+                    }
+                    ReportField(
+                        parameter,
+                        value,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                }
+
+                SaveButton(Modifier.padding(16.dp))
+            }
         }
     }
 }
@@ -112,11 +142,14 @@ private fun LocationField(
     val snackbarHostState = LocalSnackbarHostState.current
     val locationProvider = LocalLocationProvider.current
 
+    var isSyncingLocation by remember { mutableStateOf(true) }
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) {}
-    var isSyncingLocation = AtomicBoolean(false)
-    val syncLocation = syncLocation@{
+    ) {
+        isSyncingLocation = true
+    }
+    LaunchedEffect(isSyncingLocation) syncLocation@{
+        if (!isSyncingLocation) return@syncLocation
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -133,18 +166,14 @@ private fun LocationField(
             )
             return@syncLocation
         }
-        if (!isSyncingLocation.compareAndSet(false, true)) {
-            return@syncLocation
-        }
         val currentLocationRequest = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setGranularity(Granularity.GRANULARITY_FINE)
-            .setMaxUpdateAgeMillis(30000L)
+            .setMaxUpdateAgeMillis(15000L)
             .build()
         locationProvider?.getCurrentLocation(currentLocationRequest, null)
             ?.addOnSuccessListener {
                 AppState.CurrentDiagnosticSession.location = it
-                isSyncingLocation.set(false)
             }
             ?.addOnFailureListener {
                 coroutineScope.launch {
@@ -154,14 +183,11 @@ private fun LocationField(
                             context.getString(
                                 R.string.something_wrong
                             )
-                        }"
+                        }..."
                     )
                 }
-                isSyncingLocation.set(false)
             }
-    }
-    LaunchedEffect(Unit) {
-        syncLocation()
+            ?.addOnCompleteListener { isSyncingLocation = false }
     }
 
     Row(
@@ -176,7 +202,7 @@ private fun LocationField(
             modifier = Modifier.weight(1f, fill = true)
         )
         PtmFilledIconButton(
-            onClick = syncLocation,
+            onClick = { isSyncingLocation = true },
         ) {
             Icon(
                 Icons.Outlined.Refresh,
@@ -195,7 +221,7 @@ private fun ReportField(
     // FIXME: using * type seems to be a pretty bad solution.
     //   need to come up with something more failsafe and neat.
     //   but so far it is used only locally in this file, so it should be ok.
-    value: MutableState<*>,
+    value: MutableState<out Any?>,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -212,7 +238,6 @@ private fun ReportField(
                 textAlign = TextAlign.Start,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 12.dp)
                     .padding(vertical = 4.dp)
             )
             if (parameter.type == ParameterType.Bool) {
@@ -222,6 +247,7 @@ private fun ReportField(
                     onClick = { v = v != true },
                     shape = RectangleShape,
                     modifier = Modifier
+                        .padding(horizontal = 16.dp)
                         .border(BorderStroke(6.dp, MaterialTheme.colorScheme.primary))
                 ) {
                     Icon(
@@ -247,7 +273,6 @@ private fun ReportField(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp, horizontal = 16.dp)
-                    .padding(start = 16.dp)
             ) {
                 TextField(
                     value,
@@ -271,7 +296,7 @@ private fun ReportField(
             }
         }
         when (parameter.type) {
-            ParameterType.Text -> {
+            ParameterType.Text, ParameterType.Photo -> {
                 @Suppress("UNCHECKED_CAST")
                 var v by value as MutableState<String?>
                 ParamField(value = v ?: "") { v = it }
@@ -311,11 +336,53 @@ private fun ReportField(
     }
 }
 
+@Composable
+private fun SaveButton(
+    modifier: Modifier = Modifier
+) {
+    val activity = LocalActivity.current
+    val reportConfig = AppState.reportConfig.value ?: return
+    val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
+    val paramSet = remember(derivedReportType) {
+        (reportConfig.reportTypes[derivedReportType].parameters ?: emptyList())
+            .asSequence()
+            .map { it.id }
+            .toSet()
+    }
+    val enabled = with(AppState.CurrentDiagnosticSession) {
+        id != null
+                && reportType != null
+                && location != null
+                && data.all { (k, v) ->
+            k !in paramSet || v.value != null
+        }
+    }
+
+    PtmFilledButton(
+        enabled = enabled,
+        onClick = {
+            AppState.CurrentDiagnosticSession.insertToDb()
+            activity?.run {
+                setResult(Activity.RESULT_OK)
+                finish()
+            }
+        },
+        modifier = modifier
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_save),
+            contentDescription = stringResource(R.string.save),
+            modifier = Modifier.padding(end = 4.dp)
+        )
+        Text(stringResource(R.string.save))
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
 private fun ReportEditorPreview() {
-    AppState.reportConfig = ReportConfig(
+    AppState.reportConfig.value = ReportConfig(
         listOf(
             ReportType(
                 "foo0",

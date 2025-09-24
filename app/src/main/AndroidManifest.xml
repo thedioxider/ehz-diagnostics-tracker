@@ -29,12 +29,15 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity android:name=".ScanIdActivity" />
         <activity android:name=".TechDiagnosticsActivity" />
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".CustomerInfoActivity" />
+        <activity android:name="space.diomentia.ehzdiagnosticstracker.OrganizationInfoActivity" />
+        <activity android:name="space.diomentia.ehzdiagnosticstracker.ReportHistoryActivity" />
     </application>
 
 </manifest>

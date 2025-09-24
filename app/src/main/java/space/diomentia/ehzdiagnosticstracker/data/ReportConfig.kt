@@ -1,8 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
-import com.charleskorn.kaml.Yaml
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlin.reflect.KClass
 
 @Serializable
@@ -11,6 +9,7 @@ enum class ParameterType(val kClass: KClass<*>) {
     Bool(Boolean::class),
     Integer(Int::class),
     Decimal(Float::class),
+    Photo(Any::class),
 }
 
 @Serializable
@@ -25,14 +24,10 @@ data class ReportParameter(
 data class ReportType(
     val id: String,
     val name: String,
-    val parameters: List<ReportParameter>
+    val parameters: List<ReportParameter>?
 )
 
 @Serializable
 data class ReportConfig(
     val reportTypes: List<ReportType>
-) {
-    companion object {
-        fun parseYaml(config: String): ReportConfig = Yaml.default.decodeFromString(config)
-    }
-}
+)

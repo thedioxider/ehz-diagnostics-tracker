@@ -185,7 +185,9 @@ fun PtmBottomBar(
                     .defaultMinSize(minHeight = currentHeight)
                     .backSlantedBorder(8.dp, MaterialTheme.colorScheme.primary)
             ) {
-                Box(
+                Row(
+                    horizontalArrangement = Arrangement.Start,
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .windowInsetsPadding(WindowInsets.navigationBars)
                         .padding(8.dp)

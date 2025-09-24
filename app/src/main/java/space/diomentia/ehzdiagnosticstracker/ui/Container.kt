@@ -26,7 +26,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import space.diomentia.ehzdiagnosticstracker.ui.theme.blue_robins_egg
 
 @Composable
 fun SideArrowContainer(
@@ -125,9 +124,11 @@ fun BorderedDialogContainer(
 ) {
     val borderColor: Color = MaterialTheme.colorScheme.primary
     val containerColor: Color = MaterialTheme.colorScheme.background
-    val contentColor: Color = blue_robins_egg
+    //val contentColor: Color = blue_robins_egg
     Surface(
         modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp)
             .drawWithCache {
                 val borderShape = Path().apply {
                     moveTo(0f, 0f)
@@ -139,13 +140,12 @@ fun BorderedDialogContainer(
                     drawPath(borderShape, borderColor)
                 }
             }
-            .fillMaxWidth(.95f)
             .padding(24.dp)
-            .defaultMinSize(minHeight = 200.dp)
+            .defaultMinSize(minHeight = 150.dp)
             .then(modifier),
         shape = RectangleShape,
-        color = containerColor,
-        contentColor = contentColor
+        color = containerColor
+        //contentColor = contentColor
     ) {
         content()
     }

@@ -13,14 +13,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Settings
@@ -48,8 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -62,7 +56,6 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
-import space.diomentia.ehzdiagnosticstracker.data.ReportEditor
 import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
 import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -70,12 +63,13 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.RequestConfigScreen
+import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private enum class State {
+private enum class UiState {
     Configuration,
     Editor;
 
@@ -88,8 +82,8 @@ private enum class State {
     }
 }
 
-private val LocalState =
-    compositionLocalOf<MutableState<State>> { mutableStateOf(State.Configuration) }
+private val LocalUiState =
+    compositionLocalOf<MutableState<UiState>> { mutableStateOf(UiState.Configuration) }
 
 class TechDiagnosticsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,9 +100,9 @@ class TechDiagnosticsActivity : ComponentActivity() {
         setContent {
             CompositionLocalProvider(
                 LocalSnackbarHostState provides snackbarHostState,
-                LocalState provides remember {
+                LocalUiState provides remember {
                     mutableStateOf(
-                        if (State.canOpenEditor()) State.Editor else State.Configuration
+                        if (UiState.canOpenEditor()) UiState.Editor else UiState.Configuration
                     )
                 },
                 LocalLocationProvider provides LocationServices.getFusedLocationProviderClient(this)
@@ -123,7 +117,10 @@ class TechDiagnosticsActivity : ComponentActivity() {
 private fun Content() {
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
+    var state by LocalUiState.current
 
+    if (AppState.CurrentDiagnosticSession.id == null) activity?.finish()
+    if (AppState.CurrentDiagnosticSession.reportType == null) state = UiState.Configuration
     PtmTheme {
         Scaffold(
             topBar = {
@@ -151,20 +148,25 @@ private fun Content() {
             snackbarHost = { PtmSnackbarHost(snackbarHostState) },
             modifier = Modifier.fillMaxSize()
         ) { innerPadding ->
-            Column(
-                verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),
-                        end = innerPadding.calculateEndPadding(LocalLayoutDirection.current)
-                    )
-                    .padding(horizontal = 12.dp)
-                    .verticalScroll(rememberScrollState())
+            if (AppState.reportConfig.value == null) {
+                val configChooserLauncher =
+                    AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
+                        AppState.reportConfig.value = it
+                    }
+                RequestConfigScreen(
+                    label = stringResource(R.string.import_report_config),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    configChooserLauncher.launch(arrayOf("application/*"))
+                }
+                return@Scaffold
+            }
+            ScrollableColumn(
+                innerPadding,
+                modifier = Modifier.padding(horizontal = 16.dp)
             ) {
-                Spacer(Modifier.height(innerPadding.calculateTopPadding()))
-
                 Text(
                     "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.id}",
                     style = MaterialTheme.typography.headlineMedium,
@@ -182,13 +184,13 @@ private fun Content() {
                         .padding(top = 8.dp, bottom = 16.dp)
                 )
 
-                AnimatedVisibility(LocalState.current.value == State.Configuration) {
+                AnimatedVisibility(state == UiState.Configuration) {
                     ReportConfiguration(Modifier.fillMaxWidth())
                 }
 
                 ApplyButton()
 
-                AnimatedVisibility(LocalState.current.value == State.Editor)
+                AnimatedVisibility(state == UiState.Editor)
                 {
                     ReportEditor(
                         Modifier
@@ -197,11 +199,7 @@ private fun Content() {
                     )
                 }
 
-                Spacer(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(innerPadding.calculateBottomPadding() + 16.dp)
-                )
+                Spacer(Modifier.height(24.dp))
             }
         }
     }
@@ -247,8 +245,7 @@ private fun DiagnosticsTypeSelector(
 private fun ReportTypesList(
     modifier: Modifier = Modifier
 ) {
-    if (AppState.reportConfig == null) AppState.loadReportConfig(LocalContext.current)
-    val reportConfig = AppState.reportConfig
+    val reportConfig = AppState.reportConfig.value
     if (reportConfig == null) {
         Text(
             stringResource(R.string.no_report_configuration),
@@ -261,7 +258,7 @@ private fun ReportTypesList(
         return
     }
 
-    var state by LocalState.current
+    var state by LocalUiState.current
 
     Column(
         horizontalAlignment = Alignment.Start,
@@ -285,8 +282,7 @@ private fun ReportTypesList(
                         indication = null
                     ) {
                         AppState.CurrentDiagnosticSession.reportType = i
-                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
-                        state = State.Editor
+                        state = UiState.Editor
                     }
                     .padding(start = 16.dp)
                     .padding(vertical = 12.dp)
@@ -345,22 +341,18 @@ private fun ReportConfiguration(
 private fun ApplyButton(
     modifier: Modifier = Modifier
 ) {
-    var state by LocalState.current
+    var state by LocalUiState.current
     val enabled = when (state) {
-        State.Configuration -> State.canOpenEditor()
-        State.Editor -> true
+        UiState.Configuration -> UiState.canOpenEditor()
+        UiState.Editor -> true
     }
     PtmTheme {
         PtmFilledButton(
             enabled = enabled,
             onClick = {
                 state = when (state) {
-                    State.Configuration -> {
-                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
-                        State.Editor
-                    }
-
-                    State.Editor -> State.Configuration
+                    UiState.Configuration -> UiState.Editor
+                    UiState.Editor -> UiState.Configuration
                 }
             },
             modifier = modifier
@@ -370,8 +362,8 @@ private fun ApplyButton(
             ) {
                 Icon(
                     when (state) {
-                        State.Configuration -> painterResource(R.drawable.ic_done_outline)
-                        State.Editor -> rememberVectorPainter(Icons.Outlined.Settings)
+                        UiState.Configuration -> painterResource(R.drawable.ic_done_outline)
+                        UiState.Editor -> rememberVectorPainter(Icons.Outlined.Settings)
                     },
                     contentDescription = stringResource(R.string.apply),
                     modifier = Modifier
@@ -380,8 +372,8 @@ private fun ApplyButton(
                 )
                 Text(
                     when (state) {
-                        State.Configuration -> stringResource(R.string.apply)
-                        State.Editor -> stringResource(R.string.edit_report_type)
+                        UiState.Configuration -> stringResource(R.string.apply)
+                        UiState.Editor -> stringResource(R.string.edit_report_type)
                     },
                     modifier = Modifier
                         .padding(4.dp)
@@ -395,7 +387,7 @@ private fun ApplyButton(
 @Preview(showBackground = true)
 @Composable
 private fun ContentPreview() {
-    AppState.reportConfig = ReportConfig(
+    AppState.reportConfig.value = ReportConfig(
         listOf(
             ReportType(
                 "foo0",
@@ -417,7 +409,7 @@ private fun ContentPreview() {
         )
     )
     AppState.CurrentDiagnosticSession.reportType = 0
-    LocalState.current.value = State.Editor
+    LocalUiState.current.value = UiState.Editor
 
     PtmTheme {
         Content()
