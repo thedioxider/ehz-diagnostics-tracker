@@ -164,8 +164,12 @@ private fun ReportItem(
     onLongClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
-    val dateTime =
-        LocalDateTime.ofEpochSecond(report.report.timestamp, 0, ZoneOffset.UTC)
+    val dateTime = LocalDateTime
+        .ofEpochSecond(
+            report.report.timestamp, 0, ZoneOffset.systemDefault().rules.getOffset(
+                LocalDateTime.now()
+            )
+        )
     val reportType = AppState.reportConfig.value
         ?.reportTypes
         ?.find { it.id == report.report.reportType }

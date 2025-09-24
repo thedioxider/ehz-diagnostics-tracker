@@ -25,7 +25,7 @@ import space.diomentia.ehzdiagnosticstracker.R
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.ZoneId
 
 @Stable
 object AppState {
@@ -118,7 +118,7 @@ object AppState {
                     k !in paramSet || v.value != null
                 },
                 id.toString(),
-                dateTime.toEpochSecond(ZoneOffset.UTC),
+                dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
                 diagnosticsType,
                 reportConfig.reportTypes[reportType].id,
                 Coordinates(location.latitude, location.altitude)
