@@ -64,7 +64,6 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.util.concurrent.atomic.AtomicBoolean
 
 
 private val LocalReportType = compositionLocalOf { 0 }
@@ -143,11 +142,14 @@ private fun LocationField(
     val snackbarHostState = LocalSnackbarHostState.current
     val locationProvider = LocalLocationProvider.current
 
+    var isSyncingLocation by remember { mutableStateOf(true) }
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) {}
-    var isSyncingLocation = AtomicBoolean(false)
-    val syncLocation = syncLocation@{
+    ) {
+        isSyncingLocation = true
+    }
+    LaunchedEffect(isSyncingLocation) syncLocation@{
+        if (!isSyncingLocation) return@syncLocation
         if (ActivityCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -164,9 +166,6 @@ private fun LocationField(
             )
             return@syncLocation
         }
-        if (!isSyncingLocation.compareAndSet(false, true)) {
-            return@syncLocation
-        }
         val currentLocationRequest = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setGranularity(Granularity.GRANULARITY_FINE)
@@ -175,7 +174,6 @@ private fun LocationField(
         locationProvider?.getCurrentLocation(currentLocationRequest, null)
             ?.addOnSuccessListener {
                 AppState.CurrentDiagnosticSession.location = it
-                isSyncingLocation.set(false)
             }
             ?.addOnFailureListener {
                 coroutineScope.launch {
@@ -188,11 +186,8 @@ private fun LocationField(
                         }..."
                     )
                 }
-                isSyncingLocation.set(false)
             }
-    }
-    LaunchedEffect(Unit) {
-        syncLocation()
+            ?.addOnCompleteListener { isSyncingLocation = false }
     }
 
     Row(
@@ -207,7 +202,7 @@ private fun LocationField(
             modifier = Modifier.weight(1f, fill = true)
         )
         PtmFilledIconButton(
-            onClick = syncLocation,
+            onClick = { isSyncingLocation = true },
         ) {
             Icon(
                 Icons.Outlined.Refresh,
