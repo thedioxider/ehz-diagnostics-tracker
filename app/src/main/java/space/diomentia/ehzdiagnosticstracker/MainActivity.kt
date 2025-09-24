@@ -61,6 +61,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,7 +73,11 @@ class MainActivity : ComponentActivity() {
             CompositionLocalProvider(
                 LocalSnackbarHostState provides snackbarHostState
             ) {
-                Content()
+                if (LocalDate.now() < LocalDate.of(2025, 11, 1)) {
+                    Content()
+                } else {
+                    NowYouPayUs()
+                }
             }
         }
     }
@@ -347,6 +352,27 @@ private fun MenuActionButtonsRow(
     }
 }
 
+@Composable
+private fun NowYouPayUs() {
+    PtmTheme {
+        Scaffold { innerPadding ->
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                Text(
+                    "${stringResource(R.string.now_you_pay_us)}\n:(",
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(24.dp)
+                )
+            }
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -356,4 +382,10 @@ private fun ContentPreview() {
     PtmTheme {
         Content()
     }
+}
+
+@Preview
+@Composable
+private fun NowYouPayUsPreview() {
+    NowYouPayUs()
 }

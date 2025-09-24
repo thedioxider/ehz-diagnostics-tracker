@@ -58,4 +58,5 @@
     <string name="question_delete_report">Вы точно хотите удалить этот отчёт?</string>
     <string name="is_true">верно</string>
     <string name="is_false">ложно</string>
+    <string name="now_you_pay_us">Период пользования истёк</string>
 </resources>
