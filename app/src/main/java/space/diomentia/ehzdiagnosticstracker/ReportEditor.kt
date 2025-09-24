@@ -164,6 +164,7 @@ private fun LocationField(
                     Manifest.permission.ACCESS_FINE_LOCATION
                 )
             )
+            isSyncingLocation = false
             return@syncLocation
         }
         val currentLocationRequest = CurrentLocationRequest.Builder()
