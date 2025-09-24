@@ -62,6 +62,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -166,6 +167,7 @@ private fun ScanQrButton(
         if (id != null) {
             AppState.CurrentDiagnosticSession.reset()
             AppState.CurrentDiagnosticSession.id = id
+            AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
             activity?.run {
                 val intent = Intent(context, TechDiagnosticsActivity::class.java)
                 startActivity(intent)

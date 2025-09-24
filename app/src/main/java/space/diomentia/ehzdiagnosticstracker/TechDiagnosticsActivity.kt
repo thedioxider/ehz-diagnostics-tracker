@@ -67,7 +67,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.RequestConfigScreen
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 private enum class UiState {
@@ -283,7 +282,6 @@ private fun ReportTypesList(
                         indication = null
                     ) {
                         AppState.CurrentDiagnosticSession.reportType = i
-                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
                         state = UiState.Editor
                     }
                     .padding(start = 16.dp)
@@ -353,11 +351,7 @@ private fun ApplyButton(
             enabled = enabled,
             onClick = {
                 state = when (state) {
-                    UiState.Configuration -> {
-                        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
-                        UiState.Editor
-                    }
-
+                    UiState.Configuration -> UiState.Editor
                     UiState.Editor -> UiState.Configuration
                 }
             },
