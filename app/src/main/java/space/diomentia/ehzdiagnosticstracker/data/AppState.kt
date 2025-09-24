@@ -1,6 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
 import android.content.Context
+import android.content.res.Resources
 import android.location.Location
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -34,26 +35,49 @@ object AppState {
 
     var inspectionMode = true
     var dataDir: File? = null
+    var resources: Resources? = null
     var reportDb: ReportDatabase? = null
 
-    private inline fun <reified T> lazyFileFetch(filename: String): Lazy<MutableState<T?>> = lazy {
+    private inline fun <reified T> lazyFileFetch(
+        filename: String,
+        resource: Int? = null
+    ): Lazy<MutableState<T?>> = lazy {
         val dataDir = dataDir
             ?: if (!inspectionMode)
-                error("no data directory passes")
+                error("no data directory passed")
+            else
+                return@lazy mutableStateOf(null)
+        val resources = resources
+            ?: if (!inspectionMode)
+                error("no resources passed")
             else
                 return@lazy mutableStateOf(null)
         File(dataDir, filename).let {
             if (!it.isFile) {
-                return@lazy mutableStateOf(null)
+                return@lazy mutableStateOf(
+                    resource?.let {
+                        Yaml.default.decodeFromString(
+                            String(
+                                resources.openRawResource(it).readBytes()
+                            )
+                        )
+                    }
+                )
             }
             return@lazy mutableStateOf(Yaml.default.decodeFromString(it.readText()))
         }
     }
 
-    val reportConfig: MutableState<ReportConfig?> by lazyFileFetch(REPORT_CONFIG_FILENAME)
-    val customerInfo: MutableState<OrganizationInfo?> by lazyFileFetch(CUSTOMER_INFO_FILENAME)
+    val reportConfig: MutableState<ReportConfig?> by lazyFileFetch(
+        REPORT_CONFIG_FILENAME,
+        R.raw.report_conf
+    )
+    val customerInfo: MutableState<OrganizationInfo?> by lazyFileFetch(
+        CUSTOMER_INFO_FILENAME,
+        R.raw.customer
+    )
     val organizationInfo: MutableState<OrganizationInfo?> by lazyFileFetch(
-        ORGANIZATION_INFO_FILENAME
+        ORGANIZATION_INFO_FILENAME, R.raw.organization
     )
 
     object CurrentDiagnosticSession {
@@ -119,6 +143,7 @@ object AppState {
     fun init(context: Context) {
         inspectionMode = false
         dataDir = context.dataDir
+        resources = context.resources
         reportDb = Room.databaseBuilder(context, ReportDatabase::class.java, REPORT_DATABASE_NAME)
             // TODO: get rid of this crutch
             .allowMainThreadQueries()
