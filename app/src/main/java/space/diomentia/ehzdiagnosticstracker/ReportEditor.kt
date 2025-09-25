@@ -344,7 +344,7 @@ private fun SaveButton(
     val activity = LocalActivity.current
     val reportConfig = AppState.reportConfig.value ?: return
     val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
-    val paramSet = remember(derivedReportType) {
+    remember(derivedReportType) {
         (reportConfig.reportTypes[derivedReportType].parameters ?: emptyList())
             .asSequence()
             .map { it.id }
@@ -354,9 +354,9 @@ private fun SaveButton(
         id != null
                 && reportType != null
                 && location != null
-                && data.all { (k, v) ->
-            k !in paramSet || v.value != null
-        }
+        // && data.all { (k, v) ->
+        //     k !in paramSet || v.value != null
+        // }
     }
 
     PtmFilledButton(
