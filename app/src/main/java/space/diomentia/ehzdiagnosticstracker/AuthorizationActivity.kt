@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -406,14 +408,22 @@ private fun ProfileItem(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(8.dp)
+            .padding(start = 12.dp, end = 16.dp)
     ) {
         Icon(
             Icons.Outlined.Person,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = if (AppState.profileSession == profile)
+                MaterialTheme.colorScheme.background
+            else MaterialTheme.colorScheme.primary,
             modifier = Modifier
-                .padding(16.dp)
+                .padding(12.dp)
+                .background(
+                    color = if (AppState.profileSession == profile)
+                        MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.background,
+                    shape = RectangleShape
+                )
                 .size(96.dp)
         )
         Text(
