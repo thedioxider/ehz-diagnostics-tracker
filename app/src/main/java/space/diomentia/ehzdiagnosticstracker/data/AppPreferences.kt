@@ -14,6 +14,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -22,13 +23,15 @@ private val Context.preferences: DataStore<Preferences> by preferencesDataStore(
 object AppPreferences {
     class ApplicationPreferencesException : IllegalArgumentException()
 
-    private const val DEFAULT_ADMIN_PASSWORD =
+    val KEY_ADMIN_HASHWORD = stringPreferencesKey("hashword_admin")
+
+    private const val DEFAULT_ADMIN_HASHWORD =
         "9a3a1db1fc6019de41f996a01493f5341ef743a765de87c13ea70b6c618cae7e30bf338953cc481a78050b93bafefd02264bd7639f18a00d62c22f9b5fdb9194"
 
     @Composable
-    fun rememberAdminPassword() = rememberPreference(
-        key = stringPreferencesKey("password_admin"),
-        defaultValue = DEFAULT_ADMIN_PASSWORD,
+    fun rememberAdminHashword() = rememberPreference(
+        key = KEY_ADMIN_HASHWORD,
+        defaultValue = DEFAULT_ADMIN_HASHWORD,
         encoder = {
             if (AppState.adminSession)
                 it.hash
@@ -38,9 +41,18 @@ object AppPreferences {
         decoder = { PasswordHash.fromHash(it) }
     )
 
+    suspend fun <T> Context.getPreference(
+        key: Preferences.Key<T>
+    ) = preferences.data.first()[key]
+
+    suspend fun <T> Context.getPreference(
+        key: Preferences.Key<T>,
+        defaultValue: T
+    ) = getPreference(key) ?: defaultValue
+
     @OptIn(DelicateCoroutinesApi::class)
     @Composable
-    private fun <P, T> rememberPreference(
+    fun <P, T> rememberPreference(
         key: Preferences.Key<P>,
         decoder: (P) -> T,
         encoder: (T) -> P,
@@ -72,7 +84,7 @@ object AppPreferences {
     }
 
     @Composable
-    private fun <T> rememberPreference(
+    fun <T> rememberPreference(
         key: Preferences.Key<T>,
         defaultValue: T
     ) = rememberPreference(key, { it }, { it }, defaultValue)

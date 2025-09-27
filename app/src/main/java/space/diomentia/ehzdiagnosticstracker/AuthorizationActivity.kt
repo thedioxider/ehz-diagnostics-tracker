@@ -1,5 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -24,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -33,7 +37,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
+import space.diomentia.ehzdiagnosticstracker.data.AppPreferences
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.EditProfileActivity
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.PasswordHash
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -61,6 +67,7 @@ class AuthorizationActivity : ComponentActivity() {
 
 @Composable
 private fun Content() {
+    val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
     var adminPasswordRequest by remember { mutableStateOf(false) }
 
@@ -75,11 +82,29 @@ private fun Content() {
                             painterResource(R.drawable.ic_manage_accounts),
                             label = "${stringResource(R.string.login_as)} ${stringResource(R.string.administrator)}"
                         ) { adminPasswordRequest = true }
+                        if (AppState.adminSession == true) {
+                            ActionButton(
+                                rememberVectorPainter(Icons.Outlined.Edit),
+                                label = stringResource(R.string.edit_profile)
+                            ) {
+                                context.startActivity(
+                                    Intent(
+                                        context,
+                                        EditProfileActivity::class.java
+                                    )
+                                )
+                            }
+                        }
                     }
                 )
             }
         ) { innerPadding ->
-            innerPadding
+            Column(
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                val adminHashword by AppPreferences.rememberAdminHashword()
+                Text(adminHashword.hash)
+            }
             AdminAuthorizeDialog(adminPasswordRequest) { adminPasswordRequest = false }
         }
     }
@@ -154,15 +179,14 @@ private fun AdminAuthorizeDialog(
 
     var adminPasswordInput by remember { mutableStateOf<String?>(null) }
     adminPasswordInput?.let {
-        val success = AppState.elevateToAdmin(it)
         coroutineScope.launch {
+            val success = AppState.elevateToAdmin(context, password = it)
             snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(
                 if (success)
                     "${context.getString(R.string.auth_success)}!"
                 else
                     "${context.getString(R.string.auth_fail)}..."
-
             )
         }
         adminPasswordInput = null

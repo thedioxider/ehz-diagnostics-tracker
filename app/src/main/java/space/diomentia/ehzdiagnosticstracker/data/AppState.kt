@@ -23,6 +23,7 @@ import com.charleskorn.kaml.Yaml
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.AppPreferences.getPreference
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
@@ -54,10 +55,11 @@ object AppState {
     var adminSession by mutableStateOf(false)
         private set
 
-    @Composable
-    fun elevateToAdmin(password: String): Boolean {
+    suspend fun elevateToAdmin(context: Context, password: String): Boolean {
         val encrypted = PasswordHash.encrypt(password) ?: return false
-        val correct by AppPreferences.rememberAdminPassword()
+        val correct = PasswordHash.fromHash(
+            context.getPreference(AppPreferences.KEY_ADMIN_HASHWORD) ?: return false
+        )
         return (encrypted == correct).also { adminSession = it }
     }
 

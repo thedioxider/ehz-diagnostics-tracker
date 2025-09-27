@@ -68,5 +68,9 @@
     <string name="login_as">Войти как</string>
     <string name="administrator">Администратор</string>
     <string name="auth_success">Авторизация успешна</string>
-    <string name="auth_fail">Ошибка авторизации</string>
+    <string name="auth_fail">Не удалось авторизоваться</string>
+    <string name="edit_profile">Редактировать профиль</string>
+    <string name="change_admin_password">Изменить пароль администратора</string>
+    <string name="change_password_success">Пароль успешно сменён</string>
+    <string name="change_password_fail">Не удалось сменить пароль</string>
 </resources>

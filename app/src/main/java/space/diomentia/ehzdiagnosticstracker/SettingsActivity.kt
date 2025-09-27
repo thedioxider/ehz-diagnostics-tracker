@@ -104,10 +104,7 @@ private fun Content() {
             },
             snackbarHost = { PtmSnackbarHost(snackbarHostState) }
         ) { innerPadding ->
-            ScrollableColumn(
-                innerPadding,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            ) {
+            ScrollableColumn(innerPadding) {
                 SettingsOption(
                     label = stringResource(R.string.report_configuration),
                     secondaryLabel = stringResource(R.string.report_configuration_description),
@@ -136,7 +133,7 @@ private fun Content() {
 }
 
 @Composable
-private fun SettingsOption(
+fun SettingsOption(
     label: String,
     modifier: Modifier = Modifier,
     secondaryLabel: String? = null,
@@ -148,6 +145,7 @@ private fun SettingsOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp)
             .padding(16.dp)
             .defaultMinSize(minHeight = 36.dp)
             .height(IntrinsicSize.Min)
