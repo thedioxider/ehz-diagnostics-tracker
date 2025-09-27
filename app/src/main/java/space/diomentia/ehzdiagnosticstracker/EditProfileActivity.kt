@@ -60,6 +60,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 class EditProfileActivity : ComponentActivity() {
+    companion object {
+        const val RESULT_PROFILE_DELETED = 2
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
@@ -148,6 +152,11 @@ private fun Content() {
                 )
             }
 
+            var profileDeleteRequest by remember { mutableStateOf<Profile?>(null) }
+            profileDeleteRequest?.let { profile ->
+                DeleteProfileDialog(profile) { profileDeleteRequest = null }
+            }
+
             ScrollableColumn(
                 innerPadding,
                 horizontalAlignment = Alignment.Start,
@@ -207,7 +216,7 @@ private fun Content() {
                         contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 8.dp)
+                            .padding(top = 8.dp, bottom = 4.dp)
                     ) {
                         PtmFilledButton(
                             onClick = {
@@ -229,6 +238,20 @@ private fun Content() {
                             }
                         ) {
                             Text(stringResource(R.string.save))
+                        }
+                    }
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    ) {
+                        PtmFilledButton(
+                            onClick = {
+                                profileDeleteRequest = profile
+                            }
+                        ) {
+                            Text(stringResource(R.string.delete_profile))
                         }
                     }
                 }
@@ -363,6 +386,55 @@ private fun AdminPasswordChangeDialog(
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteProfileDialog(
+    profile: Profile,
+    onDismissRequest: () -> Unit
+) {
+    LocalContext.current
+    val activity = LocalActivity.current
+    LocalCoroutineScope.current
+    LocalSnackbarHostState.current
+    Dialog(onDismissRequest) {
+        BorderedDialogContainer {
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "${stringResource(R.string.delete_profile)}:\n${profile.name}?",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+                PtmFilledButton(
+                    onClick = {
+                        if (AppState.profileDb
+                                ?.profileDao()
+                                ?.deleteProfile(profile) != null
+                        ) {
+                            onDismissRequest()
+                            activity?.run {
+                                setResult(EditProfileActivity.RESULT_PROFILE_DELETED)
+                                finish()
+                            }
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+                PtmFilledButton(
+                    onClick = onDismissRequest
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }

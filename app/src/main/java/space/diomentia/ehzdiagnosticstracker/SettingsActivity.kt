@@ -7,7 +7,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -120,16 +119,4 @@ private fun Content() {
 @Composable
 private fun ContentPreview() {
     Content()
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun SettingsOptionPreview() {
-    PtmTheme {
-        SettingsOption(
-            label = "Some settings option",
-            secondaryLabel = "Description of this option",
-            icon = rememberVectorPainter(Icons.Outlined.Settings)
-        ) {}
-    }
 }

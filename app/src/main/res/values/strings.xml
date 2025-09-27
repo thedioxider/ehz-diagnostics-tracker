@@ -82,4 +82,7 @@
     <string name="change_password_description">Изменить пароль текущего пользователя</string>
     <string name="profile_saved">Профиль сохранён</string>
     <string name="profile_save_fail">Не удалось сохранить профиль</string>
+    <string name="delete_profile">Удалить профиль</string>
+    <string name="delete">Удалить</string>
+    <string name="profile_deleted">Профиль удалён</string>
 </resources>

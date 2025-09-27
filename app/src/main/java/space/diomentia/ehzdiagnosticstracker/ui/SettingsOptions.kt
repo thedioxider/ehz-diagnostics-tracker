@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -20,7 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
 fun SettingsOption(
@@ -35,7 +40,6 @@ fun SettingsOption(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp)
             .padding(16.dp)
             .defaultMinSize(minHeight = 36.dp)
             .height(IntrinsicSize.Min)
@@ -83,4 +87,17 @@ fun SettingsOptionsDivider(
             .padding(horizontal = 16.dp)
             .then(modifier)
     )
+}
+
+
+@Preview(showBackground = true)
+@Composable
+private fun SettingsOptionPreview() {
+    PtmTheme {
+        SettingsOption(
+            label = "Some settings option",
+            secondaryLabel = "Description of this option",
+            icon = rememberVectorPainter(Icons.Outlined.Settings)
+        ) {}
+    }
 }

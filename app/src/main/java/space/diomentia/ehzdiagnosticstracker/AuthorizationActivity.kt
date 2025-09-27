@@ -3,7 +3,9 @@ package space.diomentia.ehzdiagnosticstracker
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -103,11 +105,21 @@ private fun Content(
                             label = "${stringResource(R.string.login_as)} ${stringResource(R.string.administrator)}"
                         ) { adminPasswordRequest = true }
                         if (AppState.adminSession == true) {
+                            val editorLauncher = rememberLauncherForActivityResult(
+                                ActivityResultContracts.StartActivityForResult()
+                            ) { result ->
+                                if (result.resultCode == EditProfileActivity.RESULT_PROFILE_DELETED) {
+                                    coroutineScope?.launch {
+                                        snackbarHostState.currentSnackbarData?.dismiss()
+                                        snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
+                                    }
+                                }
+                            }
                             ActionButton(
                                 rememberVectorPainter(Icons.Outlined.Edit),
                                 label = stringResource(R.string.edit_profile)
                             ) {
-                                context.startActivity(
+                                editorLauncher.launch(
                                     Intent(
                                         context,
                                         EditProfileActivity::class.java
