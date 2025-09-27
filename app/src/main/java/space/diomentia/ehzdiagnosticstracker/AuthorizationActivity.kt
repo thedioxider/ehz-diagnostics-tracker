@@ -107,7 +107,7 @@ private fun Content() {
                 val adminHashword by AppPreferences.rememberAdminHashword()
                 Text(adminHashword.hash)
             }
-            AdminAuthorizeDialog(adminPasswordRequest) { adminPasswordRequest = false }
+            if (adminPasswordRequest) AdminAuthorizeDialog { adminPasswordRequest = false }
         }
     }
 }
@@ -172,7 +172,6 @@ private fun AuthorizeDialog(
 
 @Composable
 private fun AdminAuthorizeDialog(
-    showDialog: Boolean,
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
@@ -194,12 +193,10 @@ private fun AdminAuthorizeDialog(
         adminPasswordInput = null
         onDismissRequest()
     }
-    if (showDialog) {
-        AuthorizeDialog(
-            name = stringResource(R.string.administrator),
-            onDismissRequest = onDismissRequest
-        ) { adminPasswordInput = it }
-    }
+    AuthorizeDialog(
+        name = stringResource(R.string.administrator),
+        onDismissRequest = onDismissRequest
+    ) { adminPasswordInput = it }
 }
 
 
