@@ -29,5 +29,5 @@ data class ReportType(
 
 @Serializable
 data class ReportConfig(
-    val reportTypes: List<ReportType>
+    val diagnosticTypes: List<ReportType>
 )

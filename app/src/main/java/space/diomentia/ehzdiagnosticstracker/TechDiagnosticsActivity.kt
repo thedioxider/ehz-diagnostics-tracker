@@ -76,7 +76,7 @@ private enum class UiState {
     companion object {
         fun canOpenEditor(): Boolean {
             return with(AppState.CurrentDiagnosticSession) {
-                id != null && reportType != null
+                id != null && diagnosticType != null
             }
         }
     }
@@ -120,7 +120,7 @@ private fun Content() {
     var state by LocalUiState.current
 
     if (AppState.CurrentDiagnosticSession.id == null) activity?.finish()
-    if (AppState.CurrentDiagnosticSession.reportType == null) state = UiState.Configuration
+    if (AppState.CurrentDiagnosticSession.diagnosticType == null) state = UiState.Configuration
     PtmTheme {
         Scaffold(
             topBar = {
@@ -218,7 +218,7 @@ private fun DiagnosticsTypeSelector(
         modifier = modifier
     ) {
         TextField(
-            value = options[AppState.CurrentDiagnosticSession.diagnosticsType],
+            value = options[AppState.CurrentDiagnosticSession.reportType],
             onValueChange = {},
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
@@ -232,7 +232,7 @@ private fun DiagnosticsTypeSelector(
                 DropdownMenuItem(
                     text = { Text(option) },
                     onClick = {
-                        AppState.CurrentDiagnosticSession.diagnosticsType = i
+                        AppState.CurrentDiagnosticSession.reportType = i
                         expanded = false
                     }
                 )
@@ -271,7 +271,7 @@ private fun ReportTypesList(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        reportConfig.reportTypes.forEachIndexed { i, rClass ->
+        reportConfig.diagnosticTypes.forEachIndexed { i, rClass ->
             val interactionSource = remember { MutableInteractionSource() }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -281,14 +281,14 @@ private fun ReportTypesList(
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        AppState.CurrentDiagnosticSession.reportType = i
+                        AppState.CurrentDiagnosticSession.diagnosticType = i
                         state = UiState.Editor
                     }
                     .padding(start = 16.dp)
                     .padding(vertical = 12.dp)
             ) {
                 Icon(
-                    if (AppState.CurrentDiagnosticSession.reportType == i)
+                    if (AppState.CurrentDiagnosticSession.diagnosticType == i)
                         painterResource(R.drawable.ic_radio_button_checked)
                     else
                         painterResource(R.drawable.ic_radio_button_unchecked),
@@ -408,7 +408,7 @@ private fun ContentPreview() {
             )
         )
     )
-    AppState.CurrentDiagnosticSession.reportType = 0
+    AppState.CurrentDiagnosticSession.diagnosticType = 0
     LocalUiState.current.value = UiState.Editor
 
     PtmTheme {

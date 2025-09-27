@@ -73,15 +73,15 @@ private val LocalReportType = compositionLocalOf { 0 }
 fun ReportEditor(
     modifier: Modifier = Modifier
 ) {
-    var reportType by remember {
+    var diagnosticType by remember {
         mutableIntStateOf(
-            AppState.CurrentDiagnosticSession.reportType ?: 0
+            AppState.CurrentDiagnosticSession.diagnosticType ?: 0
         )
     }
-    reportType = AppState.CurrentDiagnosticSession.reportType ?: reportType
+    diagnosticType = AppState.CurrentDiagnosticSession.diagnosticType ?: diagnosticType
 
     CompositionLocalProvider(
-        LocalReportType provides reportType
+        LocalReportType provides diagnosticType
     ) {
         PtmTheme {
             Column(
@@ -104,7 +104,7 @@ fun ReportEditor(
                         .padding(start = 32.dp, end = 16.dp)
                 )
 
-                AppState.reportConfig.value?.reportTypes[reportType]?.parameters?.forEachIndexed { i, parameter ->
+                AppState.reportConfig.value?.diagnosticTypes[diagnosticType]?.parameters?.forEachIndexed { i, parameter ->
                     val value = remember {
                         AppState.CurrentDiagnosticSession.data[parameter.id]
                             ?: when (parameter.type) {
@@ -347,14 +347,14 @@ private fun SaveButton(
     val reportConfig = AppState.reportConfig.value ?: return
     val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
     remember(derivedReportType) {
-        (reportConfig.reportTypes[derivedReportType].parameters ?: emptyList())
+        (reportConfig.diagnosticTypes[derivedReportType].parameters ?: emptyList())
             .asSequence()
             .map { it.id }
             .toSet()
     }
     val enabled = with(AppState.CurrentDiagnosticSession) {
         id != null
-                && reportType != null
+                && diagnosticType != null
                 && location != null
         // && data.all { (k, v) ->
         //     k !in paramSet || v.value != null
@@ -406,7 +406,7 @@ private fun ReportEditorPreview() {
             )
         )
     )
-    AppState.CurrentDiagnosticSession.reportType = 0
+    AppState.CurrentDiagnosticSession.diagnosticType = 0
 
     PtmTheme {
         ReportEditor()

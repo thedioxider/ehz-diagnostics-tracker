@@ -106,15 +106,15 @@ object AppState {
     object CurrentDiagnosticSession {
         var id by mutableStateOf<Int?>(null)
         var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        var diagnosticsType by mutableIntStateOf(0)
-        var reportType by mutableStateOf<Int?>(null)
+        var reportType by mutableIntStateOf(0)
+        var diagnosticType by mutableStateOf<Int?>(null)
         var location by mutableStateOf<Location?>(null)
         var data = mutableMapOf<String, MutableState<out Any?>>()
 
         fun reset() {
             id = null
             dateTime = LocalDateTime.now()
-            reportType = null
+            diagnosticType = null
             location = null
             data.forEach { (_, v) -> (v as MutableState<Any?>).value = null }
         }
@@ -123,16 +123,16 @@ object AppState {
             val reportDb = reportDb
             val reportConfig = reportConfig.value
             val id = id
-            val reportType = reportType
+            val diagnosticType = diagnosticType
             val location = location
             val data = data
             if (id == null
-                || reportType == null
+                || diagnosticType == null
                 || location == null
                 || reportConfig == null
                 || reportDb == null
             ) return false
-            val paramSet = (reportConfig.reportTypes[reportType].parameters ?: emptyList())
+            val paramSet = (reportConfig.diagnosticTypes[diagnosticType].parameters ?: emptyList())
                 .asSequence()
                 .map { it.id }
                 .toSet()
@@ -142,8 +142,8 @@ object AppState {
                 },
                 id.toString(),
                 dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
-                diagnosticsType,
-                reportConfig.reportTypes[reportType].id,
+                this@CurrentDiagnosticSession.reportType,
+                reportConfig.diagnosticTypes[diagnosticType].id,
                 Coordinates(location.latitude, location.altitude)
             )
             val reportId = reportDb.diagnosticReportDao().insertReport(report)

@@ -171,7 +171,7 @@ private fun ReportItem(
             )
         )
     val reportType = AppState.reportConfig.value
-        ?.reportTypes
+        ?.diagnosticTypes
         ?.find { it.id == report.report.reportType }
 
     Row(
@@ -217,7 +217,7 @@ private fun ReportDetailsDialog(
     onDismissRequest: () -> Unit
 ) {
     val parameters = AppState.reportConfig.value
-        ?.reportTypes
+        ?.diagnosticTypes
         ?.find { it.id == report.report.reportType }
         ?.parameters
         ?.asSequence()
