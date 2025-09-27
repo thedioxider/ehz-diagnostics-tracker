@@ -38,6 +38,7 @@ object AppState {
     var dataDir: File? = null
     var resources: Resources? = null
     var reportDb: ReportDatabase? = null
+    var profileDb: ProfileDatabase? = null
     var packageInfo: PackageInfo? = null
 
     fun init(context: Context) {
@@ -48,6 +49,10 @@ object AppState {
             // TODO: get rid of this crutch
             .allowMainThreadQueries()
             .build()
+        profileDb =
+            Room.databaseBuilder(context, ProfileDatabase::class.java, PROFILE_DATABASE_NAME)
+                .allowMainThreadQueries()
+                .build()
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
     }
 
@@ -61,6 +66,14 @@ object AppState {
         )
         return (encrypted == correct).also { adminSession = it }
     }
+
+    var profileSession by mutableStateOf<Profile?>(null)
+        private set
+
+    fun loginProfile(profile: Profile, password: String) =
+        (PasswordHash.encrypt(password) == PasswordHash.fromHash(profile.hashword)).also {
+            if (it) profileSession = profile else profileSession = null
+        }
 
     private inline fun <reified T> lazyFileFetch(
         filename: String,

@@ -1,4 +1,4 @@
-package space.diomentia.ehzdiagnosticstracker.data
+package space.diomentia.ehzdiagnosticstracker
 
 import android.app.Activity
 import android.os.Bundle
@@ -38,8 +38,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
-import space.diomentia.ehzdiagnosticstracker.R
-import space.diomentia.ehzdiagnosticstracker.SettingsOption
+import space.diomentia.ehzdiagnosticstracker.data.AppPreferences
+import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
+import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.PasswordHash
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -99,7 +102,7 @@ private fun Content() {
                     onDismissRequest = { adminPasswordChangeRequest = false },
                     onApply = { password ->
                         val success =
-                            PasswordHash.encrypt(password)
+                            PasswordHash.Companion.encrypt(password)
                                 ?.let { adminHashword = it } != null
                         coroutineScope?.launch {
                             snackbarHostState.currentSnackbarData?.dismiss()
@@ -136,8 +139,8 @@ private fun AdminPasswordChangeDialog(
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
             Column(
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier
+                horizontalAlignment = Alignment.Companion.Start,
+                modifier = Modifier.Companion
                     .fillMaxWidth()
                     .padding(16.dp)
             ) {
@@ -153,27 +156,27 @@ private fun AdminPasswordChangeDialog(
                     placeholder = {
                         Text(
                             stringResource(R.string.input_password),
-                            fontStyle = FontStyle.Italic,
-                            modifier = Modifier.alpha(.5f)
+                            fontStyle = FontStyle.Companion.Italic,
+                            modifier = Modifier.Companion.alpha(.5f)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Password),
+                    modifier = Modifier.Companion
                         .padding(vertical = 12.dp)
                 )
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.Companion.fillMaxWidth()
                 ) {
                     PtmFilledButton(
-                        enabled = PasswordHash.checkInput(passwordInput),
+                        enabled = PasswordHash.Companion.checkInput(passwordInput),
                         onClick = { onApply(passwordInput) }
                     ) {
                         Text(stringResource(R.string.login))
                     }
                     PtmFilledButton(
                         onClick = onDismissRequest,
-                        modifier = Modifier.padding(start = 8.dp)
+                        modifier = Modifier.Companion.padding(start = 8.dp)
                     ) {
                         Text(stringResource(R.string.cancel))
                     }

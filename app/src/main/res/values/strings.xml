@@ -73,4 +73,9 @@
     <string name="change_admin_password">Изменить пароль администратора</string>
     <string name="change_password_success">Пароль успешно сменён</string>
     <string name="change_password_fail">Не удалось сменить пароль</string>
+    <string name="add_profile">Добавить профиль</string>
+    <string name="name">Имя</string>
+    <string name="input_name">Введите имя</string>
+    <string name="password">Пароль</string>
+    <string name="wrong_profile_input">Неверно введены данные</string>
 </resources>
