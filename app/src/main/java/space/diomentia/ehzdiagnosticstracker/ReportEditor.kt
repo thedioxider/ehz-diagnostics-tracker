@@ -56,6 +56,7 @@ import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
@@ -81,6 +82,7 @@ fun ReportEditor(
     diagnosticType = AppState.CurrentDiagnosticSession.diagnosticType ?: diagnosticType
 
     CompositionLocalProvider(
+        LocalCoroutineScope provides rememberCoroutineScope(),
         LocalReportType provides diagnosticType
     ) {
         PtmTheme {
@@ -139,7 +141,7 @@ private fun LocationField(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     val locationProvider = LocalLocationProvider.current
 
@@ -178,7 +180,7 @@ private fun LocationField(
                 AppState.CurrentDiagnosticSession.location = it
             }
             ?.addOnFailureListener {
-                coroutineScope.launch {
+                coroutineScope?.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(
                         "${context.getString(R.string.location)}: ${

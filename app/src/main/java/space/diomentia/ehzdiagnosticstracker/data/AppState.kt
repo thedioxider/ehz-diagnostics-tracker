@@ -14,7 +14,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.room.Room
@@ -171,7 +170,7 @@ object AppState {
         crossinline onResult: (T) -> Unit
     ): ManagedActivityResultLauncher<Array<String>, Uri?> {
         val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
+        val coroutineScope = LocalCoroutineScope.current
         val snackbarHostState = LocalSnackbarHostState.current
 
         return rememberLauncherForActivityResult(
@@ -188,7 +187,7 @@ object AppState {
                 } catch (e: Exception) {
                     when (e) {
                         is InvalidPropertyValueException, is IllegalArgumentException ->
-                            coroutineScope.launch {
+                            coroutineScope?.launch {
                                 snackbarHostState.currentSnackbarData?.dismiss()
                                 snackbarHostState.showSnackbar(
                                     "${context.getString(R.string.something_wrong)}:\n${e.message}"

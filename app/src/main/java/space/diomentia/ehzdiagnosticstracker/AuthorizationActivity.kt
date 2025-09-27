@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppPreferences
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.EditProfileActivity
+import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.PasswordHash
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -57,6 +58,7 @@ class AuthorizationActivity : ComponentActivity() {
         setupEdgeToEdge(this)
         setContent {
             CompositionLocalProvider(
+                LocalCoroutineScope provides rememberCoroutineScope(),
                 LocalSnackbarHostState provides SnackbarHostState()
             ) {
                 Content()
@@ -174,12 +176,12 @@ private fun AdminAuthorizeDialog(
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
     var adminPasswordInput by remember { mutableStateOf<String?>(null) }
     adminPasswordInput?.let {
-        coroutineScope.launch {
+        coroutineScope?.launch {
             val success = AppState.elevateToAdmin(context, password = it)
             snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(

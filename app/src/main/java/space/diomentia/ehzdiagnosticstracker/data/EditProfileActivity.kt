@@ -56,6 +56,7 @@ class EditProfileActivity : ComponentActivity() {
         setupEdgeToEdge(this)
         setContent {
             CompositionLocalProvider(
+                LocalCoroutineScope provides rememberCoroutineScope(),
                 LocalSnackbarHostState provides SnackbarHostState()
             ) {
                 Content()
@@ -68,7 +69,7 @@ class EditProfileActivity : ComponentActivity() {
 private fun Content() {
     val context = LocalContext.current
     val activity = LocalActivity.current
-    val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
     PtmTheme {
@@ -100,7 +101,7 @@ private fun Content() {
                         val success =
                             PasswordHash.encrypt(password)
                                 ?.let { adminHashword = it } != null
-                        coroutineScope.launch {
+                        coroutineScope?.launch {
                             snackbarHostState.currentSnackbarData?.dismiss()
                             snackbarHostState.showSnackbar(
                                 if (success)

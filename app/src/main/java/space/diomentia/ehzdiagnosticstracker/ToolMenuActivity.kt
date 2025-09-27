@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -69,6 +70,7 @@ class ToolMenuActivity : ComponentActivity() {
         val snackbarHostState = SnackbarHostState()
         setContent {
             CompositionLocalProvider(
+                LocalCoroutineScope provides rememberCoroutineScope(),
                 LocalSnackbarHostState provides snackbarHostState
             ) {
                 Content()
@@ -142,7 +144,7 @@ private fun ScanQrButton(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = LocalCoroutineScope.current
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
 
@@ -161,7 +163,7 @@ private fun ScanQrButton(
                 startActivity(intent)
             }
         } else {
-            coroutineScope.launch {
+            coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
                 snackbarHostState.showSnackbar(context.getString(R.string.qr_no_id))
             }
