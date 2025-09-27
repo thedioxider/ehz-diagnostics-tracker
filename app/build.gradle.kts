@@ -12,6 +12,8 @@ android {
         create("release") {
             storeFile = file("/home/dio/Android/Keystore/diomentia.jks")
             storePassword = "5wdm8t7s"
+            keyAlias = "diomentia"
+            keyPassword = "5wdm8t7s"
         }
     }
     namespace = "space.diomentia.ehzdiagnosticstracker"
@@ -40,6 +42,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -50,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

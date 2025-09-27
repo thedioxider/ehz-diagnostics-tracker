@@ -57,28 +57,21 @@ import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
-import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.time.LocalDate
 import java.time.LocalDateTime
 
-class MainActivity : ComponentActivity() {
+class ToolMenuActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AppState.init(this)
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
         setContent {
             CompositionLocalProvider(
                 LocalSnackbarHostState provides snackbarHostState
             ) {
-                if (LocalDate.now() < LocalDate.of(2025, 11, 1)) {
-                    Content()
-                } else {
-                    NowYouPayUs()
-                }
+                Content()
             }
         }
     }
@@ -92,11 +85,6 @@ private fun Content() {
     PtmTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            topBar = {
-                PtmTopBar(
-                    title = { Text(stringResource(R.string.app_name)) }
-                )
-            },
             bottomBar = {
                 PtmBottomBar(
                     actions = {
@@ -354,27 +342,6 @@ private fun MenuActionButtonsRow(
     }
 }
 
-@Composable
-private fun NowYouPayUs() {
-    PtmTheme {
-        Scaffold { innerPadding ->
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                Text(
-                    "${stringResource(R.string.now_you_pay_us)}\n:(",
-                    style = MaterialTheme.typography.headlineLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(24.dp)
-                )
-            }
-        }
-    }
-}
-
 
 @Preview(showBackground = true)
 @Composable
@@ -384,10 +351,4 @@ private fun ContentPreview() {
     PtmTheme {
         Content()
     }
-}
-
-@Preview
-@Composable
-private fun NowYouPayUsPreview() {
-    NowYouPayUs()
 }

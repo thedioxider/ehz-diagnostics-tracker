@@ -25,7 +25,7 @@
         android:theme="@style/Theme.EHZDiagnosticsTracker"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".InitActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,6 +38,7 @@
         <activity android:name=".CustomerInfoActivity" />
         <activity android:name="space.diomentia.ehzdiagnosticstracker.OrganizationInfoActivity" />
         <activity android:name="space.diomentia.ehzdiagnosticstracker.ReportHistoryActivity" />
+        <activity android:name="space.diomentia.ehzdiagnosticstracker.ToolMenuActivity" />
     </application>
 
 </manifest>

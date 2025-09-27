@@ -1,6 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
 import android.content.Context
+import android.content.pm.PackageInfo
 import android.content.res.Resources
 import android.location.Location
 import android.net.Uri
@@ -37,6 +38,7 @@ object AppState {
     var dataDir: File? = null
     var resources: Resources? = null
     var reportDb: ReportDatabase? = null
+    var packageInfo: PackageInfo? = null
 
     private inline fun <reified T> lazyFileFetch(
         filename: String,
@@ -148,6 +150,7 @@ object AppState {
             // TODO: get rid of this crutch
             .allowMainThreadQueries()
             .build()
+        packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
     }
 
     @Composable

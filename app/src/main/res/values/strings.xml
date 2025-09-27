@@ -59,4 +59,8 @@
     <string name="is_true">верно</string>
     <string name="is_false">ложно</string>
     <string name="now_you_pay_us">Период пользования истёк</string>
+    <string name="authorization">Авторизация</string>
+    <string name="developer_name" translatable="false">ООО НПК \"ПромТехМастер\"</string>
+    <string name="version">Версия</string>
+    <string name="authorize">Авторизоваться</string>
 </resources>
