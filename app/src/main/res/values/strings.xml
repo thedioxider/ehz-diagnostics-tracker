@@ -78,4 +78,8 @@
     <string name="input_name">Введите имя</string>
     <string name="password">Пароль</string>
     <string name="wrong_profile_input">Неверно введены данные</string>
+    <string name="change_password">Изменить пароль</string>
+    <string name="change_password_description">Изменить пароль текущего пользователя</string>
+    <string name="profile_saved">Профиль сохранён</string>
+    <string name="profile_save_fail">Не удалось сохранить профиль</string>
 </resources>

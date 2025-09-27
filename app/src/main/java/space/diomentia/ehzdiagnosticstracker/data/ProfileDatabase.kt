@@ -9,6 +9,7 @@ import androidx.room.Insert
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 const val PROFILE_DATABASE_NAME = "profile-db"
@@ -47,6 +48,9 @@ interface ProfileDao {
 
     @Insert
     fun createProfile(profile: Profile)
+
+    @Update
+    fun updateProfile(profile: Profile)
 
     @Delete
     fun deleteProfile(profile: Profile)

@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,9 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -43,6 +46,7 @@ import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.PasswordHash
+import space.diomentia.ehzdiagnosticstracker.data.Profile
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -50,6 +54,8 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
+import space.diomentia.ehzdiagnosticstracker.ui.SettingsOption
+import space.diomentia.ehzdiagnosticstracker.ui.SettingsOptionsDivider
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
@@ -70,6 +76,7 @@ class EditProfileActivity : ComponentActivity() {
 
 @Composable
 private fun Content() {
+    val inspectionMode = LocalInspectionMode.current
     val context = LocalContext.current
     val activity = LocalActivity.current
     val coroutineScope = LocalCoroutineScope.current
@@ -113,16 +120,189 @@ private fun Content() {
                                     "${context.getString(R.string.change_password_fail)}..."
                             )
                         }
-                        adminPasswordChangeRequest = false
                     }
                 )
             }
-            ScrollableColumn(innerPadding) {
+
+            var profilePasswordChangeRequest by remember { mutableStateOf<Profile?>(null) }
+            profilePasswordChangeRequest?.let { profile ->
+                ProfilePasswordChangeDialog(
+                    profile,
+                    onApply = { password ->
+                        val hashword = PasswordHash.encrypt(password)
+                        if (hashword == null) return@ProfilePasswordChangeDialog
+                        val success = AppState.profileDb
+                            ?.profileDao()
+                            ?.updateProfile(profile.copy(hashword = hashword.hash)) != null
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(
+                                if (success)
+                                    context.getString(R.string.profile_saved)
+                                else
+                                    context.getString(R.string.profile_save_fail)
+                            )
+                        }
+                    },
+                    onDismissRequest = { profilePasswordChangeRequest = null }
+                )
+            }
+
+            ScrollableColumn(
+                innerPadding,
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                val profile = AppState.profileSession
+                    ?: if (inspectionMode)
+                        Profile("Name Secondname", "")
+                    else null
+                profile?.let { profile ->
+                    Text(
+                        profile.name,
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+
+                    var nameInput by remember { mutableStateOf(profile.name) }
+                    var nameError by remember { mutableStateOf(false) }
+                    Column(
+                        horizontalAlignment = Alignment.Start,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 8.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.name),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        TextField(
+                            nameInput,
+                            onValueChange = {
+                                nameError = false
+                                nameInput = it
+                            },
+                            placeholder = {
+                                Text(
+                                    stringResource(R.string.input_name),
+                                    fontStyle = FontStyle.Italic,
+                                    modifier = Modifier.alpha(.5f)
+                                )
+                            },
+                            isError = nameError,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .padding(start = 16.dp)
+                        )
+                        SettingsOption(
+                            label = stringResource(R.string.change_password),
+                            secondaryLabel = stringResource(R.string.change_password_description)
+                        ) { profilePasswordChangeRequest = profile }
+                    }
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp)
+                    ) {
+                        PtmFilledButton(
+                            onClick = {
+                                val name = nameInput
+                                if (Profile.checkName(name).also { nameError = it })
+                                    return@PtmFilledButton
+                                val success = AppState.profileDb
+                                    ?.profileDao()
+                                    ?.updateProfile(profile.copy(name = name)) != null
+                                coroutineScope?.launch {
+                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                    snackbarHostState.showSnackbar(
+                                        if (success)
+                                            context.getString(R.string.profile_saved)
+                                        else
+                                            context.getString(R.string.profile_save_fail)
+                                    )
+                                }
+                            }
+                        ) {
+                            Text(stringResource(R.string.save))
+                        }
+                    }
+                }
+
+                if (AppState.profileSession != null && AppState.adminSession) {
+                    SettingsOptionsDivider()
+                }
+
                 if (AppState.adminSession) {
                     SettingsOption(
                         label = stringResource(R.string.change_admin_password),
                         icon = painterResource(R.drawable.ic_manage_accounts)
                     ) { adminPasswordChangeRequest = true }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfilePasswordChangeDialog(
+    profile: Profile,
+    onDismissRequest: () -> Unit,
+    onApply: (String) -> Unit
+) {
+    var passwordInput by remember { mutableStateOf("") }
+
+    Dialog(onDismissRequest) {
+        BorderedDialogContainer {
+            Column(
+                horizontalAlignment = Alignment.Companion.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "${stringResource(R.string.change_password)}:\n${profile.name}",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                TextField(
+                    passwordInput,
+                    onValueChange = { input ->
+                        passwordInput = input.filter { !it.isWhitespace() }
+                    },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.input_password),
+                            fontStyle = FontStyle.Companion.Italic,
+                            modifier = Modifier.alpha(.5f)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Companion.Password),
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    PtmFilledButton(
+                        enabled = PasswordHash.checkInput(passwordInput),
+                        onClick = {
+                            onApply(passwordInput)
+                            onDismissRequest()
+                        }
+                    ) {
+                        Text(stringResource(R.string.login))
+                    }
+                    PtmFilledButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.Companion.padding(start = 8.dp)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
                 }
             }
         }
@@ -170,7 +350,10 @@ private fun AdminPasswordChangeDialog(
                 ) {
                     PtmFilledButton(
                         enabled = PasswordHash.Companion.checkInput(passwordInput),
-                        onClick = { onApply(passwordInput) }
+                        onClick = {
+                            onApply(passwordInput)
+                            onDismissRequest()
+                        }
                     ) {
                         Text(stringResource(R.string.login))
                     }
