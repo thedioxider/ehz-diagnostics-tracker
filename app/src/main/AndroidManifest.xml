@@ -39,6 +39,7 @@
         <activity android:name="space.diomentia.ehzdiagnosticstracker.OrganizationInfoActivity" />
         <activity android:name="space.diomentia.ehzdiagnosticstracker.ReportHistoryActivity" />
         <activity android:name="space.diomentia.ehzdiagnosticstracker.ToolMenuActivity" />
+        <activity android:name="space.diomentia.ehzdiagnosticstracker.AuthorizationActivity" />
     </application>
 
 </manifest>

@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -280,7 +281,8 @@ private fun ReportField(
                     onValueChange = onValueChange,
                     placeholder = {
                         Text(
-                            "${stringResource(R.string.input_value)}...",
+                            stringResource(R.string.input_value),
+                            fontStyle = FontStyle.Italic,
                             modifier = Modifier.alpha(.5f)
                         )
                     },

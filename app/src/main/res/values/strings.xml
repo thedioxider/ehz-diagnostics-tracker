@@ -36,6 +36,7 @@
     <string name="something_wrong">Что-то пошло не так</string>
     <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
     <string name="input_value">Введите значение</string>
+    <string name="input_password">Введите пароль</string>
     <string name="import_report_config">Пожалуйста, выберите файл с конфигурацией отчётов</string>
     <string name="choose_file">Выбрать файл</string>
     <string name="report_configuration">Конфигурация отчётов</string>
@@ -63,4 +64,9 @@
     <string name="developer_name" translatable="false">ООО НПК \"ПромТехМастер\"</string>
     <string name="version">Версия</string>
     <string name="authorize">Авторизоваться</string>
+    <string name="login">Войти</string>
+    <string name="login_as">Войти как</string>
+    <string name="administrator">Администратор</string>
+    <string name="auth_success">Авторизация успешна</string>
+    <string name="auth_fail">Ошибка авторизации</string>
 </resources>

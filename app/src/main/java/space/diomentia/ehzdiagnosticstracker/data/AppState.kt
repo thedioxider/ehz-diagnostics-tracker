@@ -40,6 +40,27 @@ object AppState {
     var reportDb: ReportDatabase? = null
     var packageInfo: PackageInfo? = null
 
+    fun init(context: Context) {
+        inspectionMode = false
+        dataDir = context.dataDir
+        resources = context.resources
+        reportDb = Room.databaseBuilder(context, ReportDatabase::class.java, REPORT_DATABASE_NAME)
+            // TODO: get rid of this crutch
+            .allowMainThreadQueries()
+            .build()
+        packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+    }
+
+    var adminSession by mutableStateOf(false)
+        private set
+
+    @Composable
+    fun elevateToAdmin(password: String): Boolean {
+        val encrypted = PasswordHash.encrypt(password) ?: return false
+        val correct by AppPreferences.rememberAdminPassword()
+        return (encrypted == correct).also { adminSession = it }
+    }
+
     private inline fun <reified T> lazyFileFetch(
         filename: String,
         resource: Int? = null
@@ -140,17 +161,6 @@ object AppState {
             reset()
             return true
         }
-    }
-
-    fun init(context: Context) {
-        inspectionMode = false
-        dataDir = context.dataDir
-        resources = context.resources
-        reportDb = Room.databaseBuilder(context, ReportDatabase::class.java, REPORT_DATABASE_NAME)
-            // TODO: get rid of this crutch
-            .allowMainThreadQueries()
-            .build()
-        packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
     }
 
     @Composable
