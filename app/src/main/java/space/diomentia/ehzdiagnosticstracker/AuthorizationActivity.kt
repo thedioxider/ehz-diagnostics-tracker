@@ -3,6 +3,7 @@ package space.diomentia.ehzdiagnosticstracker
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
@@ -39,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -87,6 +88,7 @@ private fun Content(
     profiles: MutableState<List<Profile>> = mutableStateOf(emptyList())
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     var adminPasswordRequest by remember { mutableStateOf(false) }
@@ -157,6 +159,10 @@ private fun Content(
                             )
                         }
                         authorizeRequest = null
+                        activity?.run {
+                            startActivity(Intent(context, ToolMenuActivity::class.java))
+                            finish()
+                        }
                     }
                 )
             }
@@ -168,7 +174,16 @@ private fun Content(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(profiles) { profile ->
-                    ProfileItem(profile) { authorizeRequest = profile }
+                    ProfileItem(profile) {
+                        if (AppState.profileSession != profile) {
+                            authorizeRequest = profile
+                        } else {
+                            activity?.run {
+                                startActivity(Intent(context, ToolMenuActivity::class.java))
+                                finish()
+                            }
+                        }
+                    }
                 }
                 item {
                     AnimatedVisibility(AppState.adminSession) {
@@ -422,7 +437,7 @@ private fun ProfileItem(
                     color = if (AppState.profileSession == profile)
                         MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.background,
-                    shape = RectangleShape
+                    shape = CircleShape
                 )
                 .size(96.dp)
         )

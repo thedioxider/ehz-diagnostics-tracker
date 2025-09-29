@@ -82,6 +82,7 @@ class ToolMenuActivity : ComponentActivity() {
 @Composable
 private fun Content() {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
 
     PtmTheme {
@@ -89,6 +90,17 @@ private fun Content() {
             modifier = Modifier.fillMaxSize(),
             bottomBar = {
                 PtmBottomBar(
+                    navigation = {
+                        ActionButton(
+                            icon = painterResource(R.drawable.ic_person),
+                            label = stringResource(R.string.change_account)
+                        ) {
+                            activity?.run {
+                                startActivity(Intent(context, AuthorizationActivity::class.java))
+                                finish()
+                            }
+                        }
+                    },
                     actions = {
                         ActionButton(
                             icon = painterResource(R.drawable.ic_history),

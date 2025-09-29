@@ -85,4 +85,5 @@
     <string name="delete_profile">Удалить профиль</string>
     <string name="delete">Удалить</string>
     <string name="profile_deleted">Профиль удалён</string>
+    <string name="change_account">Сменить аккаунт</string>
 </resources>
