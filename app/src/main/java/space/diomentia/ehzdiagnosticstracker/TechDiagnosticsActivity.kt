@@ -176,12 +176,22 @@ private fun Content() {
                         .padding(top = 24.dp)
                 )
                 Text(
+                    "${stringResource(R.string.report_by)} ${
+                        AppState.profileSession?.name ?: stringResource(
+                            R.string.unknown
+                        )
+                    }",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Text(
                     AppState.CurrentDiagnosticSession.dateTime
                         .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier
                         .alpha(.5f)
-                        .padding(top = 8.dp, bottom = 16.dp)
+                        .padding(bottom = 16.dp)
                 )
 
                 AnimatedVisibility(state == UiState.Configuration) {
