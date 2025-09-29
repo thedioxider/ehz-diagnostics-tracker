@@ -130,12 +130,14 @@ object AppState {
             val id = id
             val diagnosticType = diagnosticType
             val location = location
+            val inspector = profileSession
             val data = data
             if (id == null
                 || diagnosticType == null
                 || location == null
                 || reportConfig == null
                 || reportDb == null
+                || inspector == null
             ) return false
             val paramSet = (reportConfig.diagnosticTypes[diagnosticType].parameters ?: emptyList())
                 .asSequence()
@@ -147,9 +149,10 @@ object AppState {
                 },
                 id.toString(),
                 dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
-                this@CurrentDiagnosticSession.reportType,
+                this@CurrentDiagnosticSession.reportType.toString(),
                 reportConfig.diagnosticTypes[diagnosticType].id,
-                Coordinates(location.latitude, location.altitude)
+                Coordinates(location.latitude, location.altitude),
+                inspector.name
             )
             val reportId = reportDb.diagnosticReportDao().insertReport(report)
             val dataEntries = data

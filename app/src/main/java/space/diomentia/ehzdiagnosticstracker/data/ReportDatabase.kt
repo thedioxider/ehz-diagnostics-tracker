@@ -43,9 +43,10 @@ data class DiagnosticReport(
     @ColumnInfo(name = "is_complete") val isComplete: Boolean,
     @ColumnInfo(name = "area_id") val areaId: String,
     @ColumnInfo(name = "timestamp") val timestamp: Long,
-    @ColumnInfo(name = "diagnostics_type") val diagnosticsType: Int,
+    @ColumnInfo(name = "diagnostics_type") val diagnosticsType: String,
     @ColumnInfo(name = "report_type") val reportType: String,
     @Embedded val location: Coordinates,
+    @ColumnInfo(name = "inspector") val inspector: String,
     @PrimaryKey(autoGenerate = true) val id: Long = 0
 )
 
