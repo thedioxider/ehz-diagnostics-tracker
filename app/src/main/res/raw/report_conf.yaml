@@ -1,4 +1,4 @@
-reportTypes:
+diagnosticTypes:
   - id: 85c906f60dff0f735be9ac84411d71e867e7104f
     name: Состояние УКЗ (Установка Катодной Защиты)
     parameters:
