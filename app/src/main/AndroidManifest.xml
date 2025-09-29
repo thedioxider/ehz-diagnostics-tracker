@@ -35,12 +35,10 @@
         <activity android:name=".ScanIdActivity" />
         <activity android:name=".TechDiagnosticsActivity" />
         <activity android:name=".SettingsActivity" />
-        <activity android:name=".CustomerInfoActivity" />
-        <activity android:name="space.diomentia.ehzdiagnosticstracker.OrganizationInfoActivity" />
-        <activity android:name="space.diomentia.ehzdiagnosticstracker.ReportHistoryActivity" />
-        <activity android:name="space.diomentia.ehzdiagnosticstracker.ToolMenuActivity" />
-        <activity android:name="space.diomentia.ehzdiagnosticstracker.AuthorizationActivity" />
-        <activity android:name="space.diomentia.ehzdiagnosticstracker.EditProfileActivity" />
+        <activity android:name=".ReportHistoryActivity" />
+        <activity android:name=".AuthorizationActivity" />
+        <activity android:name=".ToolMenuActivity" />
+        <activity android:name=".EditProfileActivity" />
     </application>
 
 </manifest>

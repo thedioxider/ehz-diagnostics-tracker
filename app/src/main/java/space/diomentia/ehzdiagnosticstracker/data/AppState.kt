@@ -31,8 +31,6 @@ import java.time.ZoneId
 @Stable
 object AppState {
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
-    const val CUSTOMER_INFO_FILENAME = "customer.yaml"
-    const val ORGANIZATION_INFO_FILENAME = "organization.yaml"
 
     var inspectionMode = true
     var dataDir: File? = null
@@ -108,13 +106,6 @@ object AppState {
     val reportConfig: MutableState<ReportConfig?> by lazyFileFetch(
         REPORT_CONFIG_FILENAME,
         R.raw.report_conf
-    )
-    val customerInfo: MutableState<OrganizationInfo?> by lazyFileFetch(
-        CUSTOMER_INFO_FILENAME,
-        R.raw.customer
-    )
-    val organizationInfo: MutableState<OrganizationInfo?> by lazyFileFetch(
-        ORGANIZATION_INFO_FILENAME, R.raw.organization
     )
 
     object CurrentDiagnosticSession {

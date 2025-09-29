@@ -19,7 +19,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
-import space.diomentia.ehzdiagnosticstracker.data.OrganizationInfo
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -27,7 +26,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.SettingsOption
-import space.diomentia.ehzdiagnosticstracker.ui.SettingsOptionsDivider
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
@@ -57,14 +55,6 @@ private fun Content() {
         AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
             AppState.reportConfig.value = it
         }
-    val customerInfoChooser =
-        AppState.localYamlConfigCopyLauncher<OrganizationInfo>(AppState.CUSTOMER_INFO_FILENAME) {
-            AppState.customerInfo.value = it
-        }
-    val organizationInfoChooser =
-        AppState.localYamlConfigCopyLauncher<OrganizationInfo>(AppState.ORGANIZATION_INFO_FILENAME) {
-            AppState.organizationInfo.value = it
-        }
 
     PtmTheme {
         Scaffold(
@@ -93,21 +83,6 @@ private fun Content() {
                     icon = painterResource(R.drawable.ic_file_open)
                 ) {
                     reportConfigChooser.launch(arrayOf("application/*"))
-                }
-                SettingsOptionsDivider()
-                SettingsOption(
-                    label = stringResource(R.string.customer_info),
-                    secondaryLabel = stringResource(R.string.customer_info_description),
-                    icon = painterResource(R.drawable.ic_person)
-                ) {
-                    customerInfoChooser.launch(arrayOf("application/*"))
-                }
-                SettingsOption(
-                    label = stringResource(R.string.diagnostics_organization_info),
-                    secondaryLabel = stringResource(R.string.diagnostics_organization_info_description),
-                    icon = painterResource(R.drawable.ic_domain)
-                ) {
-                    organizationInfoChooser.launch(arrayOf("application/*"))
                 }
             }
         }
