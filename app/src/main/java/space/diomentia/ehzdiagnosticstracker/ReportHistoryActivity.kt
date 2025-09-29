@@ -49,7 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportRelative
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
@@ -87,7 +87,7 @@ class ReportHistoryActivity : ComponentActivity() {
 
 @Composable
 private fun Content(
-    reports: MutableState<List<DiagnosticReportRelative>> = mutableStateOf(emptyList())
+    reports: MutableState<List<DiagnosticReportWithData>> = mutableStateOf(emptyList())
 ) {
     val activity = LocalActivity.current
     var areaHistory by LocalAreaHistory.current
@@ -124,12 +124,12 @@ private fun Content(
                 )
             }
         ) { innerPadding ->
-            var reportShowDetails by remember { mutableStateOf<DiagnosticReportRelative?>(null) }
+            var reportShowDetails by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
             reportShowDetails?.let {
                 ReportDetailsDialog(it) { reportShowDetails = null }
             }
 
-            var reportDelete by remember { mutableStateOf<DiagnosticReportRelative?>(null) }
+            var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
             reportDelete?.let {
                 ReportDeleteDialog(
                     onDismissRequest = { reportDelete = null },
@@ -211,7 +211,7 @@ private fun Content(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ReportItem(
-    report: DiagnosticReportRelative,
+    report: DiagnosticReportWithData,
     modifier: Modifier = Modifier,
     onLongClick: () -> Unit = {},
     onClick: () -> Unit
@@ -291,7 +291,7 @@ private fun AreaItem(
 
 @Composable
 private fun ReportDetailsDialog(
-    report: DiagnosticReportRelative,
+    report: DiagnosticReportWithData,
     onDismissRequest: () -> Unit
 ) {
     val parameters = AppState.reportConfig.value
@@ -408,7 +408,7 @@ private fun ReportDeleteDialog(
 
 
 private val previewReports = listOf(
-    DiagnosticReportRelative(
+    DiagnosticReportWithData(
         DiagnosticReport(
             true,
             "8539848",

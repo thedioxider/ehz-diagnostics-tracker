@@ -160,7 +160,12 @@ private fun Content(
                         }
                         authorizeRequest = null
                         activity?.run {
-                            startActivity(Intent(context, ToolMenuActivity::class.java))
+                            startActivity(
+                                Intent(
+                                    context,
+                                    DiagnosticObjectChooseActivity::class.java
+                                )
+                            )
                             finish()
                         }
                     }
@@ -179,7 +184,12 @@ private fun Content(
                             authorizeRequest = profile
                         } else {
                             activity?.run {
-                                startActivity(Intent(context, ToolMenuActivity::class.java))
+                                startActivity(
+                                    Intent(
+                                        context,
+                                        DiagnosticObjectChooseActivity::class.java
+                                    )
+                                )
                                 finish()
                             }
                         }

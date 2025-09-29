@@ -39,6 +39,7 @@
         <activity android:name=".AuthorizationActivity" />
         <activity android:name=".ToolMenuActivity" />
         <activity android:name=".EditProfileActivity" />
+        <activity android:name=".DiagnosticObjectChooseActivity" />
     </application>
 
 </manifest>

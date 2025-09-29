@@ -30,7 +30,7 @@ abstract class ProfileDatabase : RoomDatabase() {
 data class Profile(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "hashword") val hashword: String,
-    @PrimaryKey(autoGenerate = true) val id: Long = 0
+    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") val id: Long = 0
 ) {
     companion object {
         fun checkName(name: String): Boolean = Regex("^\\w+( \\w+){1,2}$").matches(name)

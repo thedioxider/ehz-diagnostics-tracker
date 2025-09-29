@@ -60,7 +60,10 @@ object AppState {
     suspend fun elevateToAdmin(context: Context, password: String): Boolean {
         val encrypted = PasswordHash.encrypt(password) ?: return false
         val correct = PasswordHash.fromHash(
-            context.getPreference(AppPreferences.KEY_ADMIN_HASHWORD) ?: return false
+            context.getPreference(
+                AppPreferences.KEY_ADMIN_HASHWORD,
+                AppPreferences.DEFAULT_ADMIN_HASHWORD
+            )
         )
         return (encrypted == correct).also { adminSession = it }
     }
@@ -72,6 +75,8 @@ object AppState {
         (PasswordHash.encrypt(password) == PasswordHash.fromHash(profile.hashword)).also {
             if (it) profileSession = profile else profileSession = null
         }
+
+    var diagnosticObject by mutableStateOf<DiagnosticObjectRelative?>(null)
 
     private inline fun <reified T> lazyFileFetch(
         filename: String,

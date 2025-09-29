@@ -25,7 +25,7 @@ object AppPreferences {
 
     val KEY_ADMIN_HASHWORD = stringPreferencesKey("hashword_admin")
 
-    private const val DEFAULT_ADMIN_HASHWORD =
+    const val DEFAULT_ADMIN_HASHWORD =
         "9a3a1db1fc6019de41f996a01493f5341ef743a765de87c13ea70b6c618cae7e30bf338953cc481a78050b93bafefd02264bd7639f18a00d62c22f9b5fdb9194"
 
     @Composable
