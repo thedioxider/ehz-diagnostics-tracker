@@ -66,7 +66,14 @@ data class DiagnosticReportRelative(
 interface DiagnosticReportDao {
     @Transaction
     @Query("SELECT * FROM diagnostic_reports ORDER BY timestamp DESC")
-    fun getReports(): Flow<List<DiagnosticReportRelative>>
+    fun getAllReports(): Flow<List<DiagnosticReportRelative>>
+
+    @Transaction
+    @Query("SELECT * FROM diagnostic_reports WHERE area_id = :areaId ORDER BY timestamp DESC")
+    fun getAreaReports(areaId: String): Flow<List<DiagnosticReportRelative>>
+
+    @Query("SELECT area_id FROM diagnostic_reports")
+    fun getAreas(): Flow<List<String>>
 
     @Insert
     fun insertReport(report: DiagnosticReport): Long
