@@ -92,7 +92,7 @@ object AppState {
             if (it) profileSession = profile else profileSession = null
         }
 
-    var diagnosticObject by mutableStateOf<DiagnosticObjectRelative?>(null)
+    var diagnosticObject by mutableStateOf<DiagnosticObjectWithAreas?>(null)
 
     private inline fun <reified T> lazyFileFetch(
         filename: String,
@@ -160,14 +160,11 @@ object AppState {
                 || reportDb == null
                 || inspector == null
             ) return false
-            val paramSet = (reportConfig.diagnosticTypes[diagnosticType].parameters ?: emptyList())
+            (reportConfig.diagnosticTypes[diagnosticType].parameters ?: emptyList())
                 .asSequence()
                 .map { it.id }
                 .toSet()
             val report = DiagnosticReport(
-                data.all { (k, v) ->
-                    k !in paramSet || v.value != null
-                },
                 id.toString(),
                 dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
                 this@CurrentDiagnosticSession.reportType.toString(),

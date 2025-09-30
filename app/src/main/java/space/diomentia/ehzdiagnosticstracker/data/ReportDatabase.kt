@@ -21,12 +21,13 @@ import kotlinx.serialization.Serializable
 const val REPORT_DATABASE_NAME = "report-db"
 
 @Database(
-    version = 2,
+    version = 3,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
         DiagnosticObject::class,
-        DiagnosticArea::class
+        DiagnosticArea::class,
+        DiagnosticPoint::class
     ],
     autoMigrations = [
         AutoMigration(from = 1, to = 2)
@@ -45,12 +46,11 @@ data class Coordinates(
 @Entity(
     tableName = "diagnostic_reports",
     indices = [
-        Index("area_id", "timestamp", unique = true, name = "report_id")
+        Index("diagnostic_point", "timestamp", unique = true, name = "report_id")
     ]
 )
 data class DiagnosticReport(
-    @ColumnInfo(name = "is_complete") val isComplete: Boolean,
-    @ColumnInfo(name = "area_id") val areaId: String,
+    @ColumnInfo(name = "diagnostic_point") val diagnosticPoint: String,
     @ColumnInfo(name = "timestamp") val timestamp: Long,
     @ColumnInfo(name = "diagnostics_type") val diagnosticsType: String,
     @ColumnInfo(name = "report_type") val reportType: String,
@@ -78,11 +78,11 @@ interface DiagnosticReportDao {
     fun getAllReports(): Flow<List<DiagnosticReportWithData>>
 
     @Transaction
-    @Query("SELECT * FROM diagnostic_reports WHERE area_id = :areaId ORDER BY timestamp DESC")
-    fun getAreaReports(areaId: String): Flow<List<DiagnosticReportWithData>>
+    @Query("SELECT * FROM diagnostic_reports WHERE diagnostic_point = :pointId ORDER BY timestamp DESC")
+    fun getPointReports(pointId: String): Flow<List<DiagnosticReportWithData>>
 
-    @Query("SELECT area_id FROM diagnostic_reports")
-    fun getAreas(): Flow<List<String>>
+    @Query("SELECT diagnostic_point FROM diagnostic_reports")
+    fun getPoints(): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertReport(report: DiagnosticReport): Long
@@ -111,13 +111,21 @@ data class DiagnosticObject(
 data class DiagnosticArea(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "diagnostic_object") val diagnosticObject: String,
-    @ColumnInfo(name = "inventory_id") val inventoryId: String,
-    @ColumnInfo(name = "registration_number") val registrationNumber: String,
     @ColumnInfo(name = "danger_class") val dangerClass: String,
     @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
 )
 
-data class DiagnosticObjectRelative(
+@Serializable
+@Entity(tableName = "diagnostic_points")
+data class DiagnosticPoint(
+    @PrimaryKey @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "diagnostic_area") val diagnosticArea: String,
+    @ColumnInfo(name = "inventory_id") val inventoryId: String,
+    @ColumnInfo(name = "registration_number") val registrationNumber: String,
+    @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
+)
+
+data class DiagnosticObjectWithAreas(
     @Embedded val diagnosticObject: DiagnosticObject,
     @Relation(
         parentColumn = "id",
@@ -125,27 +133,43 @@ data class DiagnosticObjectRelative(
     ) val areas: List<DiagnosticArea>
 )
 
-data class DiagnosticAreaRelative(
-    @Embedded val area: DiagnosticArea,
-    @Relation(
-        parentColumn = "diagnostic_object",
-        entityColumn = "id"
-    ) val diagnosticObject: DiagnosticObject,
+data class DiagnosticAreaWithPoints(
+    @Embedded val diagnosticArea: DiagnosticArea,
     @Relation(
         parentColumn = "id",
-        entityColumn = "area_id"
-    ) val history: List<DiagnosticReportWithData>
+        entityColumn = "diagnostic_area"
+    ) val points: List<DiagnosticPoint>
+)
+
+
+data class DiagnosticPointWithHistory(
+    @Embedded val point: DiagnosticPoint,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "diagnostic_point"
+    ) val history: List<DiagnosticReport>
 )
 
 @Dao
 interface DiagnosticAreaDao {
     @Transaction
     @Query("SELECT * FROM diagnostic_objects")
-    fun getAllObjects(): Flow<List<DiagnosticObjectRelative>>
+    fun getAllObjects(): Flow<List<DiagnosticObjectWithAreas>>
+
+    @Transaction
+    @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject")
+    fun getObjectAreas(diagnosticObject: String): Flow<List<DiagnosticAreaWithPoints>>
+
+    @Transaction
+    @Query("SELECT * FROM diagnostic_points WHERE diagnostic_area = :diagnosticArea")
+    fun getAreaPoints(diagnosticArea: String): Flow<List<DiagnosticPointWithHistory>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertDiagnosticObject(diagnosticObject: DiagnosticObject)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertDiagnosticArea(diagnosticArea: DiagnosticArea)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertDiagnosticPoint(diagnosticPoint: DiagnosticPoint)
 }

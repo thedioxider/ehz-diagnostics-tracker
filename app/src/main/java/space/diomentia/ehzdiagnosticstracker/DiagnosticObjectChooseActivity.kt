@@ -34,7 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.data.AppState
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObjectRelative
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObjectWithAreas
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
@@ -107,7 +107,7 @@ private fun Content(
 
 @Composable
 private fun DiagnosticObjectItem(
-    diagnosticObject: DiagnosticObjectRelative,
+    diagnosticObject: DiagnosticObjectWithAreas,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {

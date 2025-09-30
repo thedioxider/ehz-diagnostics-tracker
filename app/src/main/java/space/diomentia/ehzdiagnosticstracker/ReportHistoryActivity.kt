@@ -149,7 +149,7 @@ private fun Content(
                 areaHistory?.let { areaId ->
                     val reports by AppState.reportDb
                         ?.diagnosticReportDao()
-                        ?.getAreaReports(areaId)
+                        ?.getPointReports(areaId)
                         ?.collectAsStateWithLifecycle(emptyList())
                         ?: reports
                     if (reports.isEmpty()) {
@@ -179,7 +179,7 @@ private fun Content(
             } else {
                 val areas by AppState.reportDb
                     ?.diagnosticReportDao()
-                    ?.getAreas()
+                    ?.getPoints()
                     ?.collectAsStateWithLifecycle(emptyList())
                     ?: remember { mutableStateOf(emptyList()) }
                 val distinctAreas = remember(areas) { areas.distinct() }
@@ -410,7 +410,6 @@ private fun ReportDeleteDialog(
 private val previewReports = listOf(
     DiagnosticReportWithData(
         DiagnosticReport(
-            true,
             "8539848",
             1758638351,
             "2",
