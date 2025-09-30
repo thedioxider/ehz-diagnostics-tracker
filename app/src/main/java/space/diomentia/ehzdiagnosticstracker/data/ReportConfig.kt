@@ -31,3 +31,9 @@ data class ReportType(
 data class ReportConfig(
     val diagnosticTypes: List<ReportType>
 )
+
+@Serializable
+data class InitialAreaEntries(
+    val diagnosticObjects: List<DiagnosticObject>,
+    val diagnosticAreas: List<DiagnosticArea>
+)

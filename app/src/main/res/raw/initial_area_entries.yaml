@@ -1,0 +1,15 @@
+diagnosticObjects:
+  - id: 5484b855400576141edceb9a9d22ee1bd77483fa
+    inventoryId: 5484b855400576141edceb9a9d22ee1bd77483fa
+    name: Газопровод 12623
+diagnosticAreas:
+  - id: 4111
+    diagnosticObject: 5484b855400576141edceb9a9d22ee1bd77483fa
+    inventoryId: f39eb18687c261277ffac55422ea493448e8a801
+    registrationNumber: 52837519515346
+    dangerClass: 0
+  - id: 12795
+    diagnosticObject: 5484b855400576141edceb9a9d22ee1bd77483fa
+    inventoryId: f39eb18687c261277ffac55422ea493448e8a801
+    registrationNumber: 52837519515346
+    dangerClass: 1

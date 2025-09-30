@@ -9,12 +9,14 @@ import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
 const val REPORT_DATABASE_NAME = "report-db"
 
@@ -82,7 +84,7 @@ interface DiagnosticReportDao {
     @Query("SELECT area_id FROM diagnostic_reports")
     fun getAreas(): Flow<List<String>>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertReport(report: DiagnosticReport): Long
 
     @Insert
@@ -95,6 +97,7 @@ interface DiagnosticReportDao {
     fun deleteData(vararg data: ReportDataEntry)
 }
 
+@Serializable
 @Entity(tableName = "diagnostic_objects")
 data class DiagnosticObject(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
@@ -103,6 +106,7 @@ data class DiagnosticObject(
     @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
 )
 
+@Serializable
 @Entity(tableName = "diagnostic_areas")
 data class DiagnosticArea(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
@@ -139,9 +143,9 @@ interface DiagnosticAreaDao {
     @Query("SELECT * FROM diagnostic_objects")
     fun getAllObjects(): Flow<List<DiagnosticObjectRelative>>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertDiagnosticObject(diagnosticObject: DiagnosticObject)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertDiagnosticArea(diagnosticArea: DiagnosticArea)
 }

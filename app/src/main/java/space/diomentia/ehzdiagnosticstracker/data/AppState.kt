@@ -52,6 +52,22 @@ object AppState {
                 .allowMainThreadQueries()
                 .build()
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+
+        val initialAreaEntries = Yaml.default.decodeFromString<InitialAreaEntries>(
+            String(
+                resources?.openRawResource(R.raw.initial_area_entries)?.readBytes() ?: ByteArray(0)
+            )
+        )
+        initialAreaEntries.diagnosticObjects.forEach {
+            reportDb
+                ?.diagnosticAreaDao()
+                ?.insertDiagnosticObject(it)
+        }
+        initialAreaEntries.diagnosticAreas.forEach {
+            reportDb
+                ?.diagnosticAreaDao()
+                ?.insertDiagnosticArea(it)
+        }
     }
 
     var adminSession by mutableStateOf(false)
@@ -114,7 +130,7 @@ object AppState {
     )
 
     object CurrentDiagnosticSession {
-        var id by mutableStateOf<Int?>(null)
+        var id by mutableStateOf<String?>(null)
         var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
         var reportType by mutableIntStateOf(0)
         var diagnosticType by mutableStateOf<Int?>(null)

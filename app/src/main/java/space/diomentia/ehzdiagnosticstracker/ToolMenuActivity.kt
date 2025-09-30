@@ -58,6 +58,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
+import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
@@ -88,6 +89,16 @@ private fun Content() {
     PtmTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            topBar = {
+                PtmTopBar(
+                    title = {
+                        Text(
+                            AppState.diagnosticObject?.diagnosticObject?.name
+                                ?: stringResource(R.string.app_name)
+                        )
+                    }
+                )
+            },
             bottomBar = {
                 PtmBottomBar(
                     navigation = {
@@ -164,21 +175,27 @@ private fun ScanQrButton(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode != RESULT_OK) return@rememberLauncherForActivityResult
-        val data = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
-        val id = data?.toIntOrNull()
-        if (id != null) {
-            AppState.CurrentDiagnosticSession.reset()
-            AppState.CurrentDiagnosticSession.id = id
-            AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
-            activity?.run {
-                val intent = Intent(context, TechDiagnosticsActivity::class.java)
-                startActivity(intent)
-            }
-        } else {
+        val id = result.data?.extras?.getString(ScanIdActivity.QR_DATA)
+        if (id == null) {
             coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
                 snackbarHostState.showSnackbar(context.getString(R.string.qr_no_id))
             }
+            return@rememberLauncherForActivityResult
+        }
+        if (AppState.diagnosticObject?.areas?.find { it.id == id } == null) {
+            coroutineScope?.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar("Участок не принадлежит объекту")
+            }
+            return@rememberLauncherForActivityResult
+        }
+        AppState.CurrentDiagnosticSession.reset()
+        AppState.CurrentDiagnosticSession.id = id
+        AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
+        activity?.run {
+            val intent = Intent(context, TechDiagnosticsActivity::class.java)
+            startActivity(intent)
         }
     }
     val launchScanQr = {
