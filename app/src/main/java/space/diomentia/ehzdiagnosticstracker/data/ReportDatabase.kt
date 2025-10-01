@@ -15,6 +15,7 @@ import androidx.room.Query
 import androidx.room.Relation
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
@@ -38,6 +39,7 @@ abstract class ReportDatabase : RoomDatabase() {
     abstract fun diagnosticAreaDao(): DiagnosticAreaDao
 }
 
+@Serializable
 data class Coordinates(
     @ColumnInfo(name = "latitude") val latitude: Double,
     @ColumnInfo(name = "altitude") val altitude: Double
@@ -111,6 +113,7 @@ data class DiagnosticObject(
 data class DiagnosticArea(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
     @ColumnInfo(name = "diagnostic_object") val diagnosticObject: String,
+    @Embedded(prefix = "last_") val lastLocation: Coordinates? = null,
     @ColumnInfo(name = "danger_class") val dangerClass: String,
     @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
 )
@@ -122,6 +125,7 @@ data class DiagnosticPoint(
     @ColumnInfo(name = "diagnostic_area") val diagnosticArea: String,
     @ColumnInfo(name = "inventory_id") val inventoryId: String,
     @ColumnInfo(name = "registration_number") val registrationNumber: String,
+    @ColumnInfo(name = "diagnostics_type") val diagnosticsType: String? = null,
     @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
 )
 
@@ -180,4 +184,7 @@ interface DiagnosticAreaDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertDiagnosticPoint(diagnosticPoint: DiagnosticPoint)
+
+    @Update
+    fun updateArea(area: DiagnosticArea)
 }

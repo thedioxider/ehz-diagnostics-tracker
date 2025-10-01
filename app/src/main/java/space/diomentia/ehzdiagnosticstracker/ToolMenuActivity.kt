@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,6 +72,10 @@ class ToolMenuActivity : ComponentActivity() {
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
         setContent {
+            BackHandler {
+                startActivity(Intent(this, DiagnosticObjectChooseActivity::class.java))
+            }
+
             CompositionLocalProvider(
                 LocalCoroutineScope provides rememberCoroutineScope(),
                 LocalSnackbarHostState provides snackbarHostState
@@ -105,6 +111,19 @@ private fun Content() {
                         ) {
                             activity?.run {
                                 startActivity(Intent(context, AuthorizationActivity::class.java))
+                                finish()
+                            }
+                        }
+                        ActionButton(
+                            icon = rememberVectorPainter(Icons.Outlined.LocationOn)
+                        ) {
+                            activity?.run {
+                                startActivity(
+                                    Intent(
+                                        context,
+                                        DiagnosticObjectChooseActivity::class.java
+                                    )
+                                )
                                 finish()
                             }
                         }

@@ -170,11 +170,7 @@ fun PtmBottomBar(
                         .padding(8.dp)
                         .height(IntrinsicSize.Min)
                 ) {
-                    navigation.let {
-                        Box {
-                            it()
-                        }
-                    }
+                    navigation()
                 }
             }
         }
