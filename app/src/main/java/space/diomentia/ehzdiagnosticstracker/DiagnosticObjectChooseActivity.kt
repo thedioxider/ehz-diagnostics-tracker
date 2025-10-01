@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,14 +13,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -69,7 +67,7 @@ class DiagnosticObjectChooseActivity : ComponentActivity() {
 @Composable
 private fun Content() {
     val activity = LocalActivity.current
-    val layoutDirection = LocalLayoutDirection.current
+    LocalLayoutDirection.current
 
     PtmTheme {
         Scaffold(
@@ -113,34 +111,27 @@ private fun Content() {
                 }
                 return@Scaffold
             }
-            if (AppState.CurrentDiagnosticSession.diagnosticObject == null) {
-                FullscreenLazyColumn(innerPadding) {
-                    items(diagnosticObjects) { diagnosticObject ->
-                        DiagnosticObjectItem(diagnosticObject.diagnosticObject.name) {
-                            AppState.CurrentDiagnosticSession.diagnosticObject = diagnosticObject
-                        }
+            FullscreenLazyColumn(innerPadding) {
+                items(diagnosticObjects) { diagnosticObject ->
+                    AnimatedVisibility(
+                        AppState.CurrentDiagnosticSession.diagnosticObject == null
+                                || AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject
+                    ) {
+                        DiagnosticObjectItem(
+                            diagnosticObject.diagnosticObject.name,
+                            onBack = if (AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject) { ->
+                                AppState.CurrentDiagnosticSession.diagnosticObject = null
+                            } else null,
+                            onClick = if (AppState.CurrentDiagnosticSession.diagnosticObject == null) { ->
+                                AppState.CurrentDiagnosticSession.diagnosticObject =
+                                    diagnosticObject
+                            } else null
+                        )
                     }
                 }
-            }
-            AppState.CurrentDiagnosticSession.diagnosticObject?.let { dObject ->
-                Column(
-                    modifier = Modifier
-                        .padding(
-                            top = innerPadding.calculateTopPadding(),
-                            start = innerPadding.calculateStartPadding(layoutDirection),
-                            end = innerPadding.calculateEndPadding(layoutDirection)
-                        )
-                ) {
-                    DiagnosticObjectItem(
-                        dObject.diagnosticObject.name,
-                        onBack = { AppState.CurrentDiagnosticSession.diagnosticObject = null }
-                    )
-                    LazyColumn(
-                        verticalArrangement = Arrangement.Top,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        items(dObject.areas) { area ->
+                AppState.CurrentDiagnosticSession.diagnosticObject?.let { dObject ->
+                    items(dObject.areas) { area ->
+                        AnimatedVisibility(AppState.CurrentDiagnosticSession.diagnosticObject != null) {
                             DiagnosticAreaItem(
                                 area.id,
                                 modifier = Modifier.padding(start = 64.dp)
@@ -209,12 +200,12 @@ private fun DiagnosticObjectItem(
             .height(IntrinsicSize.Min)
             .then(modifier)
     ) {
-        if (onBack != null) {
+        AnimatedVisibility(onBack != null) {
             Icon(
                 Icons.AutoMirrored.Outlined.ArrowBack,
                 contentDescription = stringResource(R.string.back),
                 modifier = Modifier
-                    .clickable(onClick = onBack)
+                    .clickable(onClick = onBack ?: {})
                     .fillMaxHeight()
                     .aspectRatio(1f)
                     .padding(end = 12.dp)
