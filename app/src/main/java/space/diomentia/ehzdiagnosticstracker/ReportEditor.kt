@@ -355,12 +355,9 @@ private fun SaveButton(
             .toSet()
     }
     val enabled = with(AppState.CurrentDiagnosticSession) {
-        id != null
+        diagnosticPoint != null
                 && diagnosticType != null
                 && location != null
-        // && data.all { (k, v) ->
-        //     k !in paramSet || v.value != null
-        // }
     }
 
     PtmFilledButton(

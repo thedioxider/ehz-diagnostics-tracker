@@ -157,6 +157,10 @@ interface DiagnosticAreaDao {
     fun getAllObjects(): Flow<List<DiagnosticObjectWithAreas>>
 
     @Transaction
+    @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
+    fun getAreaById(id: String): DiagnosticAreaWithPoints
+
+    @Transaction
     @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject")
     fun getObjectAreas(diagnosticObject: String): Flow<List<DiagnosticAreaWithPoints>>
 

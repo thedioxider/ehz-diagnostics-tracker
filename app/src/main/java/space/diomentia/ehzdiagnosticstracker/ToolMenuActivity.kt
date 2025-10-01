@@ -93,7 +93,7 @@ private fun Content() {
                 PtmTopBar(
                     title = {
                         Text(
-                            AppState.diagnosticObject?.diagnosticObject?.name
+                            AppState.CurrentDiagnosticSession.diagnosticObject?.diagnosticObject?.name
                                 ?: stringResource(R.string.app_name)
                         )
                     }
@@ -183,7 +183,7 @@ private fun ScanQrButton(
             }
             return@rememberLauncherForActivityResult
         }
-        if (AppState.diagnosticObject?.areas?.find { it.id == id } == null) {
+        if (AppState.CurrentDiagnosticSession.diagnosticObject?.areas?.find { it.id == id } == null) {
             coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
                 snackbarHostState.showSnackbar("Участок не принадлежит объекту")
@@ -191,7 +191,7 @@ private fun ScanQrButton(
             return@rememberLauncherForActivityResult
         }
         AppState.CurrentDiagnosticSession.reset()
-        AppState.CurrentDiagnosticSession.id = id
+        AppState.CurrentDiagnosticSession.diagnosticPoint = TODO()
         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
         activity?.run {
             val intent = Intent(context, TechDiagnosticsActivity::class.java)
@@ -242,7 +242,7 @@ private fun ContinueEditingButton(
 ) {
     val activity = LocalActivity.current
     val interactionSource = remember { MutableInteractionSource() }
-    val isVisible = AppState.CurrentDiagnosticSession.id != null
+    val isVisible = AppState.CurrentDiagnosticSession.diagnosticPoint != null
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,

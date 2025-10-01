@@ -35,5 +35,6 @@ data class ReportConfig(
 @Serializable
 data class InitialAreaEntries(
     val diagnosticObjects: List<DiagnosticObject>,
-    val diagnosticAreas: List<DiagnosticArea>
+    val diagnosticAreas: List<DiagnosticArea>,
+    val diagnosticPoints: List<DiagnosticPoint>
 )

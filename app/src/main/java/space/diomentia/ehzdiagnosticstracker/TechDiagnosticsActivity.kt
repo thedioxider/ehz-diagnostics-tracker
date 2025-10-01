@@ -76,7 +76,7 @@ private enum class UiState {
     companion object {
         fun canOpenEditor(): Boolean {
             return with(AppState.CurrentDiagnosticSession) {
-                id != null && diagnosticType != null
+                diagnosticPoint != null && diagnosticType != null
             }
         }
     }
@@ -90,8 +90,8 @@ class TechDiagnosticsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
-        val areaId = AppState.CurrentDiagnosticSession.id
-        if (areaId == null) {
+        val pointId = AppState.CurrentDiagnosticSession.diagnosticPoint?.point?.id
+        if (pointId == null) {
             setResult(RESULT_CANCELED)
             finish()
             return
@@ -119,7 +119,7 @@ private fun Content() {
     val snackbarHostState = LocalSnackbarHostState.current
     var state by LocalUiState.current
 
-    if (AppState.CurrentDiagnosticSession.id == null) activity?.finish()
+    if (AppState.CurrentDiagnosticSession.diagnosticPoint == null) activity?.finish()
     if (AppState.CurrentDiagnosticSession.diagnosticType == null) state = UiState.Configuration
     PtmTheme {
         Scaffold(
@@ -168,7 +168,7 @@ private fun Content() {
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 Text(
-                    "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.id}",
+                    "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.diagnosticPoint}",
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
