@@ -50,6 +50,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.google.android.gms.location.LocationServices
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
@@ -168,12 +169,36 @@ private fun Content() {
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 Text(
-                    "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.diagnosticPoint}",
-                    style = MaterialTheme.typography.headlineMedium,
+                    "${stringResource(R.string.point)} ${
+                        AppState.CurrentDiagnosticSession.diagnosticPoint?.point?.id ?: stringResource(
+                            R.string.unknown
+                        )
+                    }",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 36.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 24.dp)
+                )
+                Text(
+                    AppState.CurrentDiagnosticSession.diagnosticObject?.diagnosticObject?.name
+                        ?: stringResource(R.string.unknown),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Text(
+                    "${stringResource(R.string.area)} ${
+                        AppState.CurrentDiagnosticSession.diagnosticArea?.diagnosticArea?.id ?: stringResource(
+                            R.string.unknown
+                        )
+                    }",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
                 )
                 Text(
                     "${stringResource(R.string.report_by)} ${

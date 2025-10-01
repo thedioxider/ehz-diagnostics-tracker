@@ -15,6 +15,7 @@
     <string name="scanning">Сканирование</string>
     <string name="diagnostic_object">Объект диагностирования</string>
     <string name="area">Участок</string>
+    <string name="point">Точка</string>
     <string name="diagnostics_type">Вид коррозионного обследования</string>
     <string name="diagnostics_type_0">приёмочное (первичное)</string>
     <string name="diagnostics_type_1">периодическое комплексное</string>

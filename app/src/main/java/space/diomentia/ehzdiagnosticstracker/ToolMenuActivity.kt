@@ -92,10 +92,7 @@ private fun Content() {
             topBar = {
                 PtmTopBar(
                     title = {
-                        Text(
-                            AppState.CurrentDiagnosticSession.diagnosticObject?.diagnosticObject?.name
-                                ?: stringResource(R.string.app_name)
-                        )
+                        Text(stringResource(R.string.app_name))
                     }
                 )
             },
@@ -113,14 +110,6 @@ private fun Content() {
                         }
                     },
                     actions = {
-                        ActionButton(
-                            icon = painterResource(R.drawable.ic_history),
-                            label = stringResource(R.string.diagnostics_history)
-                        ) {
-                            context.startActivity(
-                                Intent(context, ReportHistoryActivity::class.java)
-                            )
-                        }
                         ActionButton(
                             icon = rememberVectorPainter(Icons.Outlined.Settings),
                             label = stringResource(R.string.settings)
@@ -141,6 +130,7 @@ private fun Content() {
                 verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                AreaInfo()
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -150,7 +140,7 @@ private fun Content() {
                     ContinueEditingButton(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 16.dp)
+                            .padding(top = 8.dp)
                     )
                 }
                 MenuActionButtonsRow(
@@ -159,6 +149,28 @@ private fun Content() {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun AreaInfo(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
+        Text(
+            AppState.CurrentDiagnosticSession.diagnosticObject?.diagnosticObject?.name
+                ?: stringResource(R.string.unknown),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineSmall
+        )
+        Text(
+            "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.diagnosticArea?.diagnosticArea?.id}",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.headlineSmall
+        )
     }
 }
 
@@ -183,7 +195,7 @@ private fun ScanQrButton(
             }
             return@rememberLauncherForActivityResult
         }
-        if (AppState.CurrentDiagnosticSession.diagnosticObject?.areas?.find { it.id == id } == null) {
+        if (AppState.CurrentDiagnosticSession.diagnosticArea?.points?.find { it.id == id } == null) {
             coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
                 snackbarHostState.showSnackbar("Участок не принадлежит объекту")
@@ -191,7 +203,9 @@ private fun ScanQrButton(
             return@rememberLauncherForActivityResult
         }
         AppState.CurrentDiagnosticSession.reset()
-        AppState.CurrentDiagnosticSession.diagnosticPoint = TODO()
+        AppState.CurrentDiagnosticSession.diagnosticPoint = AppState.reportDb
+            ?.diagnosticAreaDao()
+            ?.getPointById(id)
         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
         activity?.run {
             val intent = Intent(context, TechDiagnosticsActivity::class.java)
@@ -266,7 +280,7 @@ private fun ContinueEditingButton(
             contentDescription = stringResource(R.string.continue_editing),
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 8.dp)
                 .indication(
                     interactionSource = interactionSource,
                     indication = ripple(bounded = false)
@@ -331,9 +345,8 @@ private fun MenuActionButton(
 private fun MenuActionButtonsRow(
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val rowHeight = 80.dp
-
-    LocalContext.current
 
     Row(
         verticalAlignment = Alignment.Top,
@@ -353,19 +366,14 @@ private fun MenuActionButtonsRow(
         ) {}
         MenuActionButton(
             actionButtonModifier,
-            enabled = false,
             buttonHeight = rowHeight,
-            description = stringResource(R.string.customer_info),
-            icon = painterResource(R.drawable.ic_person)
-        ) {}
-        MenuActionButton(
-            actionButtonModifier,
-            enabled = false,
-            buttonHeight = rowHeight,
-            description = stringResource(R.string.diagnostics_organization_info),
-            shortDescription = stringResource(R.string.diagnostics_organization_info_short),
-            icon = painterResource(R.drawable.ic_domain)
-        ) {}
+            description = stringResource(R.string.diagnostics_history),
+            icon = painterResource(R.drawable.ic_history)
+        ) {
+            context.startActivity(
+                Intent(context, ReportHistoryActivity::class.java)
+            )
+        }
     }
 }
 
