@@ -2,6 +2,7 @@ package space.diomentia.ehzdiagnosticstracker
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.icu.text.DecimalFormatSymbols
 import androidx.activity.compose.LocalActivity
@@ -9,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -19,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -51,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.Priority
@@ -198,13 +202,33 @@ private fun LocationField(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
-        Text(
-            AppState.CurrentDiagnosticSession.location?.let {
-                "${it.latitude} ${it.altitude}"
-            } ?: stringResource(R.string.unknown),
-            style = MaterialTheme.typography.bodyLarge,
+        val location = AppState.CurrentDiagnosticSession.location
+        PtmFilledButton(
+            enabled = location != null,
+            onClick = {
+                location?.let {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            "geo:0,0?q=${it.latitude},${it.longitude}".toUri()
+                        )
+                    )
+                }
+            },
             modifier = Modifier.weight(1f, fill = true)
-        )
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.LocationOn,
+                    contentDescription = stringResource(R.string.location),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                Text(stringResource(R.string.show_area_on_map_short))
+            }
+        }
         PtmFilledIconButton(
             onClick = { isSyncingLocation = true },
         ) {

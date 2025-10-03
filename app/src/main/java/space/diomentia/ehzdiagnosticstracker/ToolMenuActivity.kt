@@ -74,9 +74,9 @@ import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
 
-val LocalDiagnosticObject =
+private val LocalDiagnosticObject =
     compositionLocalOf<State<DiagnosticObjectWithAreas?>> { mutableStateOf(null) }
-val LocalDiagnosticArea =
+private val LocalDiagnosticArea =
     compositionLocalOf<State<DiagnosticAreaWithPoints?>> { mutableStateOf(null) }
 
 class ToolMenuActivity : ComponentActivity() {
