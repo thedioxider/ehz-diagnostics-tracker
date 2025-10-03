@@ -1,7 +1,10 @@
 diagnosticObjects:
   - id: 5484b855400576141edceb9a9d22ee1bd77483fa
     inventoryId: 5484b855400576141edceb9a9d22ee1bd77483fa
-    name: Газопровод 12623
+    name: Газопровод 123
+  - id: 98q398hg983h98hg849g83h9g8h9a8hg94gah94
+    inventoryId: 98q398hg983h98hg849g83h9g8h9a8hg94gah94
+    name: Газопровод 313
 diagnosticAreas:
   - id: 92754
     diagnosticObject: 5484b855400576141edceb9a9d22ee1bd77483fa
@@ -9,9 +12,12 @@ diagnosticAreas:
   - id: 85394
     diagnosticObject: 5484b855400576141edceb9a9d22ee1bd77483fa
     dangerClass: 1
+  - id: 68655
+    diagnosticObject: 98q398hg983h98hg849g83h9g8h9a8hg94gah94
+    dangerClass: 2
 diagnosticPoints:
   - id: 4111
-    diagnosticArea: 92754
+    diagnosticArea: 68655
     inventoryId: f39eb18687c261277ffac55422ea493448e8a801
     registrationNumber: 52837519515346
   - id: 12795
