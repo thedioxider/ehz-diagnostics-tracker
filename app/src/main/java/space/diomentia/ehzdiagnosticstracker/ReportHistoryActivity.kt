@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,8 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,8 +63,6 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-private val LocalAreaHistory = compositionLocalOf { mutableStateOf<String?>(null) }
-
 class ReportHistoryActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,8 +71,7 @@ class ReportHistoryActivity : ComponentActivity() {
 
         setContent {
             CompositionLocalProvider(
-                LocalSnackbarHostState provides snackbarHostState,
-                LocalAreaHistory provides remember { mutableStateOf(null) }
+                LocalSnackbarHostState provides snackbarHostState
             ) {
                 Content()
             }
@@ -90,18 +84,13 @@ private fun Content(
     reports: MutableState<List<DiagnosticReportWithData>> = mutableStateOf(emptyList())
 ) {
     val activity = LocalActivity.current
-    var areaHistory by LocalAreaHistory.current
 
     PtmTheme {
         Scaffold(
             snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
             topBar = {
                 PtmTopBar(title = {
-                    Text(
-                        if (areaHistory == null)
-                            stringResource(R.string.diagnostics_history)
-                        else "${stringResource(R.string.area)} $areaHistory"
-                    )
+                    Text(stringResource(R.string.diagnostics_history))
                 })
             },
             bottomBar = {
@@ -111,13 +100,9 @@ private fun Content(
                             icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
-                            if (areaHistory != null) {
-                                areaHistory = null
-                            } else {
-                                activity?.run {
-                                    setResult(RESULT_CANCELED)
-                                    finish()
-                                }
+                            activity?.run {
+                                setResult(RESULT_CANCELED)
+                                finish()
                             }
                         }
                     }
@@ -143,47 +128,19 @@ private fun Content(
                 )
             }
 
-            // TODO: better transition between these screens
-            val areaChosen by remember { derivedStateOf { areaHistory != null } }
-            if (areaChosen) {
-                areaHistory?.let { areaId ->
-                    val reports by AppState.reportDb
-                        ?.diagnosticReportDao()
-                        ?.getPointReports(areaId)
-                        ?.collectAsStateWithLifecycle(emptyList())
-                        ?: reports
-                    if (reports.isEmpty()) {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Text(
-                                stringResource(R.string.entries_not_found),
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.alpha(.3f)
-                            )
-                        }
-                        return@Scaffold
-                    }
-                    FullscreenLazyColumn(innerPadding) {
-                        items(reports) { report ->
-                            ReportItem(
-                                report,
-                                onLongClick = { reportDelete = report }
-                            ) {
-                                reportShowDetails = report
-                            }
-                        }
-                    }
-                }
-            } else {
-                val areas by AppState.reportDb
-                    ?.diagnosticReportDao()
-                    ?.getPoints()
+            val history by AppState.CurrentDiagnosticSession.diagnosticArea?.let {
+                AppState.reportDb
+                    ?.diagnosticAreaDao()
+                    ?.getAreaPoints(it)
                     ?.collectAsStateWithLifecycle(emptyList())
-                    ?: remember { mutableStateOf(emptyList()) }
-                val distinctAreas = remember(areas) { areas.distinct() }
-                if (areas.isEmpty()) {
+            } ?: remember { mutableStateOf(emptyList()) }
+            history.forEach { point ->
+                val reports by AppState.reportDb
+                    ?.diagnosticAreaDao()
+                    ?.getPointReports(point.point.id)
+                    ?.collectAsStateWithLifecycle(emptyList())
+                    ?: reports
+                if (reports.isEmpty()) {
                     Box(
                         contentAlignment = Alignment.Center,
                         modifier = Modifier.fillMaxSize()
@@ -197,9 +154,12 @@ private fun Content(
                     return@Scaffold
                 }
                 FullscreenLazyColumn(innerPadding) {
-                    items(distinctAreas) { area ->
-                        AreaItem(area) {
-                            areaHistory = area
+                    items(reports) { report ->
+                        ReportItem(
+                            report,
+                            onLongClick = { reportDelete = report }
+                        ) {
+                            reportShowDetails = report
                         }
                     }
                 }
@@ -222,9 +182,6 @@ private fun ReportItem(
                 LocalDateTime.now()
             )
         )
-    val reportType = AppState.reportConfig.value
-        ?.diagnosticTypes
-        ?.find { it.id == report.report.reportType }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -249,7 +206,7 @@ private fun ReportItem(
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
-                reportType?.name ?: stringResource(R.string.unknown),
+                "${stringResource(R.string.point)} ${report.report.diagnosticPoint}",
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier
                     .padding(top = 4.dp)
@@ -259,35 +216,6 @@ private fun ReportItem(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun AreaItem(
-    areaId: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(24.dp)
-            .defaultMinSize(minHeight = 36.dp)
-            .height(IntrinsicSize.Min)
-            .then(modifier)
-    ) {
-        Column(
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f)
-        ) {
-            Text(
-                "${stringResource(R.string.area)} ${areaId}",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-    }
-}
 
 @Composable
 private fun ReportDetailsDialog(
@@ -301,6 +229,10 @@ private fun ReportDetailsDialog(
         ?.asSequence()
         ?.map { it.id to it }
         ?.toMap()
+    val reportType = AppState.reportConfig.value
+        ?.diagnosticTypes
+        ?.find { it.id == report.report.reportType }
+        ?.name
 
     @Composable
     fun DataEntryItem(entry: ReportDataEntry) {
@@ -345,10 +277,18 @@ private fun ReportDetailsDialog(
                         .fillMaxWidth()
                         .weight(1f, fill = false)
                 ) {
+                    reportType?.let {
+                        item {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(top = 16.dp)
+                            )
+                        }
+                    }
                     item {
                         Text(
                             "${stringResource(R.string.report_by)} ${report.report.inspector}",
-                            style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
                         )
                     }

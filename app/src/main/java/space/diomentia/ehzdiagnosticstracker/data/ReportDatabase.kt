@@ -79,13 +79,6 @@ interface DiagnosticReportDao {
     @Query("SELECT * FROM diagnostic_reports ORDER BY timestamp DESC")
     fun getAllReports(): Flow<List<DiagnosticReportWithData>>
 
-    @Transaction
-    @Query("SELECT * FROM diagnostic_reports WHERE diagnostic_point = :pointId ORDER BY timestamp DESC")
-    fun getPointReports(pointId: String): Flow<List<DiagnosticReportWithData>>
-
-    @Query("SELECT diagnostic_point FROM diagnostic_reports")
-    fun getPoints(): Flow<List<String>>
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertReport(report: DiagnosticReport): Long
 
@@ -182,6 +175,10 @@ interface DiagnosticAreaDao {
     @Transaction
     @Query("SELECT * FROM diagnostic_points WHERE diagnostic_area = :diagnosticArea ORDER BY id ASC")
     fun getAreaPoints(diagnosticArea: String): Flow<List<DiagnosticPointWithHistory>>
+
+    @Transaction
+    @Query("SELECT * FROM diagnostic_reports WHERE diagnostic_point = :diagnosticPoint ORDER BY id ASC")
+    fun getPointReports(diagnosticPoint: String): Flow<List<DiagnosticReportWithData>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertDiagnosticObject(diagnosticObject: DiagnosticObject)
