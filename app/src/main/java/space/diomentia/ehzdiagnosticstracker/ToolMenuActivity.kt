@@ -408,15 +408,15 @@ private fun MenuActionButtonsRow(
             actionButtonModifier,
             enabled = areaLastLocation != null,
             buttonHeight = rowHeight,
-            description = stringResource(R.string.navigate_to_area),
-            shortDescription = stringResource(R.string.navigate_to_area_short),
+            description = stringResource(R.string.show_area_on_map),
+            shortDescription = stringResource(R.string.show_area_on_map_short),
             icon = painterResource(R.drawable.ic_explore)
         ) {
             areaLastLocation?.let {
                 context.startActivity(
                     Intent(
                         Intent.ACTION_VIEW,
-                        "geo:${it.latitude},${it.altitude}".toUri()
+                        "geo:0,0?q=${it.latitude},${it.longitude}".toUri()
                     )
                 )
             }

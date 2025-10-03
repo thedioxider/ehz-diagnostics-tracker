@@ -197,7 +197,7 @@ object AppState {
                         area.copy(
                             lastLocation = Coordinates(
                                 latitude = location.latitude,
-                                altitude = location.altitude
+                                longitude = location.longitude
                             )
                         )
                     )

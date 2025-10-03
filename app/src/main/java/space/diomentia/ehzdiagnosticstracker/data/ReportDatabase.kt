@@ -42,7 +42,7 @@ abstract class ReportDatabase : RoomDatabase() {
 @Serializable
 data class Coordinates(
     @ColumnInfo(name = "latitude") val latitude: Double,
-    @ColumnInfo(name = "altitude") val altitude: Double
+    @ColumnInfo(name = "altitude") val longitude: Double
 )
 
 @Entity(
