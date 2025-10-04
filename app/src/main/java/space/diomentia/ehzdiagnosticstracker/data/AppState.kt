@@ -1,6 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
 import android.content.Context
+import android.content.pm.PackageInfo
 import android.content.res.Resources
 import android.location.Location
 import android.net.Uri
@@ -13,7 +14,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.room.Room
@@ -22,6 +22,7 @@ import com.charleskorn.kaml.Yaml
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.AppPreferences.getPreference
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDateTime
@@ -30,13 +31,71 @@ import java.time.ZoneId
 @Stable
 object AppState {
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
-    const val CUSTOMER_INFO_FILENAME = "customer.yaml"
-    const val ORGANIZATION_INFO_FILENAME = "organization.yaml"
 
     var inspectionMode = true
     var dataDir: File? = null
     var resources: Resources? = null
     var reportDb: ReportDatabase? = null
+    var profileDb: ProfileDatabase? = null
+    var packageInfo: PackageInfo? = null
+
+    fun init(context: Context) {
+        inspectionMode = false
+        dataDir = context.dataDir
+        resources = context.resources
+        reportDb = Room.databaseBuilder(context, ReportDatabase::class.java, REPORT_DATABASE_NAME)
+            // TODO: get rid of this crutch
+            .allowMainThreadQueries()
+            .build()
+        profileDb =
+            Room.databaseBuilder(context, ProfileDatabase::class.java, PROFILE_DATABASE_NAME)
+                .allowMainThreadQueries()
+                .build()
+        packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+
+        val initialAreaEntries = Yaml.default.decodeFromString<InitialAreaEntries>(
+            String(
+                resources?.openRawResource(R.raw.initial_area_entries)?.readBytes() ?: ByteArray(0)
+            )
+        )
+        initialAreaEntries.diagnosticObjects.forEach {
+            reportDb
+                ?.diagnosticAreaDao()
+                ?.insertDiagnosticObject(it)
+        }
+        initialAreaEntries.diagnosticAreas.forEach {
+            reportDb
+                ?.diagnosticAreaDao()
+                ?.insertDiagnosticArea(it)
+        }
+        initialAreaEntries.diagnosticPoints.forEach {
+            reportDb
+                ?.diagnosticAreaDao()
+                ?.insertDiagnosticPoint(it)
+        }
+    }
+
+    var adminSession by mutableStateOf(true)
+        private set
+
+    suspend fun elevateToAdmin(context: Context, password: String): Boolean {
+        val encrypted = PasswordHash.encrypt(password) ?: return false
+        val correct = PasswordHash.fromHash(
+            context.getPreference(
+                AppPreferences.KEY_ADMIN_HASHWORD,
+                AppPreferences.DEFAULT_ADMIN_HASHWORD
+            )
+        )
+        return (encrypted == correct).also { adminSession = it }
+    }
+
+    var profileSession by mutableStateOf<Profile?>(null)
+        private set
+
+    fun loginProfile(profile: Profile, password: String) =
+        (PasswordHash.encrypt(password) == PasswordHash.fromHash(profile.hashword)).also {
+            if (it) profileSession = profile else profileSession = null
+        }
 
     private inline fun <reified T> lazyFileFetch(
         filename: String,
@@ -72,25 +131,20 @@ object AppState {
         REPORT_CONFIG_FILENAME,
         R.raw.report_conf
     )
-    val customerInfo: MutableState<OrganizationInfo?> by lazyFileFetch(
-        CUSTOMER_INFO_FILENAME,
-        R.raw.customer
-    )
-    val organizationInfo: MutableState<OrganizationInfo?> by lazyFileFetch(
-        ORGANIZATION_INFO_FILENAME, R.raw.organization
-    )
 
     object CurrentDiagnosticSession {
-        var id by mutableStateOf<Int?>(null)
         var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        var diagnosticsType by mutableIntStateOf(0)
+        var diagnosticObject by mutableStateOf<String?>(null)
+        var diagnosticArea by mutableStateOf<String?>(null)
+        var diagnosticPoint by mutableStateOf<String?>(null)
+        var diagnosticType by mutableIntStateOf(0)
         var reportType by mutableStateOf<Int?>(null)
         var location by mutableStateOf<Location?>(null)
         var data = mutableMapOf<String, MutableState<out Any?>>()
 
         fun reset() {
-            id = null
             dateTime = LocalDateTime.now()
+            diagnosticPoint = null
             reportType = null
             location = null
             data.forEach { (_, v) -> (v as MutableState<Any?>).value = null }
@@ -99,29 +153,29 @@ object AppState {
         fun insertToDb(): Boolean {
             val reportDb = reportDb
             val reportConfig = reportConfig.value
-            val id = id
-            val reportType = reportType
+            val dPoint = diagnosticPoint
+            val diagnosticType = reportType
             val location = location
+            val inspector = profileSession
             val data = data
-            if (id == null
-                || reportType == null
+            if (dPoint == null
+                || diagnosticType == null
                 || location == null
                 || reportConfig == null
                 || reportDb == null
+                || inspector == null
             ) return false
-            val paramSet = (reportConfig.reportTypes[reportType].parameters ?: emptyList())
+            (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
                 .asSequence()
                 .map { it.id }
                 .toSet()
             val report = DiagnosticReport(
-                data.all { (k, v) ->
-                    k !in paramSet || v.value != null
-                },
-                id.toString(),
+                dPoint,
                 dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
-                diagnosticsType,
-                reportConfig.reportTypes[reportType].id,
-                Coordinates(location.latitude, location.altitude)
+                this@CurrentDiagnosticSession.diagnosticType.toString(),
+                reportConfig.reportTypes[diagnosticType].id,
+                Coordinates(location.latitude, location.altitude),
+                inspector.name
             )
             val reportId = reportDb.diagnosticReportDao().insertReport(report)
             val dataEntries = data
@@ -136,18 +190,21 @@ object AppState {
                 .toTypedArray()
             reportDb.diagnosticReportDao().insertData(*dataEntries)
             reset()
+            AppState.reportDb?.diagnosticAreaDao()?.run {
+                diagnosticArea?.let {
+                    val area = getAreaByIdOnce(it)
+                    updateArea(
+                        area.copy(
+                            lastLocation = Coordinates(
+                                latitude = location.latitude,
+                                longitude = location.longitude
+                            )
+                        )
+                    )
+                }
+            }
             return true
         }
-    }
-
-    fun init(context: Context) {
-        inspectionMode = false
-        dataDir = context.dataDir
-        resources = context.resources
-        reportDb = Room.databaseBuilder(context, ReportDatabase::class.java, REPORT_DATABASE_NAME)
-            // TODO: get rid of this crutch
-            .allowMainThreadQueries()
-            .build()
     }
 
     @Composable
@@ -156,7 +213,7 @@ object AppState {
         crossinline onResult: (T) -> Unit
     ): ManagedActivityResultLauncher<Array<String>, Uri?> {
         val context = LocalContext.current
-        val coroutineScope = rememberCoroutineScope()
+        val coroutineScope = LocalCoroutineScope.current
         val snackbarHostState = LocalSnackbarHostState.current
 
         return rememberLauncherForActivityResult(
@@ -173,7 +230,7 @@ object AppState {
                 } catch (e: Exception) {
                     when (e) {
                         is InvalidPropertyValueException, is IllegalArgumentException ->
-                            coroutineScope.launch {
+                            coroutineScope?.launch {
                                 snackbarHostState.currentSnackbarData?.dismiss()
                                 snackbarHostState.showSnackbar(
                                     "${context.getString(R.string.something_wrong)}:\n${e.message}"

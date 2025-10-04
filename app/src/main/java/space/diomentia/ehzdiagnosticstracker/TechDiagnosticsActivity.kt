@@ -20,17 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -45,11 +39,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.LocationServices
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
@@ -76,7 +71,7 @@ private enum class UiState {
     companion object {
         fun canOpenEditor(): Boolean {
             return with(AppState.CurrentDiagnosticSession) {
-                id != null && reportType != null
+                diagnosticPoint != null && reportType != null
             }
         }
     }
@@ -90,8 +85,8 @@ class TechDiagnosticsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
         val snackbarHostState = SnackbarHostState()
-        val areaId = AppState.CurrentDiagnosticSession.id
-        if (areaId == null) {
+        val pointId = AppState.CurrentDiagnosticSession.diagnosticPoint
+        if (pointId == null) {
             setResult(RESULT_CANCELED)
             finish()
             return
@@ -118,8 +113,20 @@ private fun Content() {
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
     var state by LocalUiState.current
+    val diagnosticObject by AppState.CurrentDiagnosticSession.diagnosticObject?.let { id ->
+        AppState.reportDb
+            ?.diagnosticAreaDao()
+            ?.getObjectById(id)
+            ?.collectAsStateWithLifecycle(null)
+    } ?: remember { mutableStateOf(null) }
+    val diagnosticArea by AppState.CurrentDiagnosticSession.diagnosticArea?.let { id ->
+        AppState.reportDb
+            ?.diagnosticAreaDao()
+            ?.getAreaById(id)
+            ?.collectAsStateWithLifecycle(null)
+    } ?: remember { mutableStateOf(null) }
 
-    if (AppState.CurrentDiagnosticSession.id == null) activity?.finish()
+    if (AppState.CurrentDiagnosticSession.diagnosticPoint == null) activity?.finish()
     if (AppState.CurrentDiagnosticSession.reportType == null) state = UiState.Configuration
     PtmTheme {
         Scaffold(
@@ -168,12 +175,45 @@ private fun Content() {
                 modifier = Modifier.padding(horizontal = 16.dp)
             ) {
                 Text(
-                    "${stringResource(R.string.area)} ${AppState.CurrentDiagnosticSession.id}",
-                    style = MaterialTheme.typography.headlineMedium,
+                    "${stringResource(R.string.point)} ${
+                        AppState.CurrentDiagnosticSession.diagnosticPoint ?: stringResource(
+                            R.string.unknown
+                        )
+                    }",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 36.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 24.dp)
+                )
+                Text(
+                    diagnosticObject?.diagnosticObject?.name ?: stringResource(R.string.unknown),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Text(
+                    "${stringResource(R.string.area)} ${
+                        diagnosticArea?.diagnosticArea?.name ?: stringResource(
+                            R.string.unknown
+                        )
+                    }",
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                )
+                Text(
+                    "${stringResource(R.string.report_by)} ${
+                        AppState.profileSession?.name ?: stringResource(
+                            R.string.unknown
+                        )
+                    }",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
                 Text(
                     AppState.CurrentDiagnosticSession.dateTime
@@ -181,8 +221,20 @@ private fun Content() {
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier
                         .alpha(.5f)
-                        .padding(top = 8.dp, bottom = 16.dp)
+                        .padding(bottom = 16.dp)
                 )
+
+                AnimatedVisibility(state == UiState.Editor) {
+                    Text(
+                        AppState.CurrentDiagnosticSession.reportType?.let { reportType ->
+                            AppState.reportConfig.value?.reportTypes[reportType]?.name
+                        } ?: stringResource(R.string.unknown),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 8.dp)
+                    )
+                }
 
                 AnimatedVisibility(state == UiState.Configuration) {
                     ReportConfiguration(Modifier.fillMaxWidth())
@@ -200,42 +252,6 @@ private fun Content() {
                 }
 
                 Spacer(Modifier.height(24.dp))
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DiagnosticsTypeSelector(
-    modifier: Modifier = Modifier
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val options = stringArrayResource(R.array.diagnostics_types)
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = modifier
-    ) {
-        TextField(
-            value = options[AppState.CurrentDiagnosticSession.diagnosticsType],
-            onValueChange = {},
-            readOnly = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, true)
-        )
-        ExposedDropdownMenu(
-            expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEachIndexed { i, option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        AppState.CurrentDiagnosticSession.diagnosticsType = i
-                        expanded = false
-                    }
-                )
             }
         }
     }
@@ -317,18 +333,6 @@ private fun ReportConfiguration(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
-        Text(
-            stringResource(R.string.diagnostics_type),
-            textAlign = TextAlign.Start,
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-        )
-        DiagnosticsTypeSelector(
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
-
         ReportTypesList(
             modifier = Modifier
                 .fillMaxWidth()

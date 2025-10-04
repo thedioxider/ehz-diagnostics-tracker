@@ -2,6 +2,7 @@ package space.diomentia.ehzdiagnosticstracker
 
 import android.Manifest
 import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.icu.text.DecimalFormatSymbols
 import androidx.activity.compose.LocalActivity
@@ -9,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -19,6 +21,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
@@ -44,17 +47,21 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.net.toUri
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
@@ -72,15 +79,16 @@ private val LocalReportType = compositionLocalOf { 0 }
 fun ReportEditor(
     modifier: Modifier = Modifier
 ) {
-    var reportType by remember {
+    var diagnosticType by remember {
         mutableIntStateOf(
             AppState.CurrentDiagnosticSession.reportType ?: 0
         )
     }
-    reportType = AppState.CurrentDiagnosticSession.reportType ?: reportType
+    diagnosticType = AppState.CurrentDiagnosticSession.reportType ?: diagnosticType
 
     CompositionLocalProvider(
-        LocalReportType provides reportType
+        LocalCoroutineScope provides rememberCoroutineScope(),
+        LocalReportType provides diagnosticType
     ) {
         PtmTheme {
             Column(
@@ -103,7 +111,7 @@ fun ReportEditor(
                         .padding(start = 32.dp, end = 16.dp)
                 )
 
-                AppState.reportConfig.value?.reportTypes[reportType]?.parameters?.forEachIndexed { i, parameter ->
+                AppState.reportConfig.value?.reportTypes[diagnosticType]?.parameters?.forEachIndexed { i, parameter ->
                     val value = remember {
                         AppState.CurrentDiagnosticSession.data[parameter.id]
                             ?: when (parameter.type) {
@@ -138,7 +146,7 @@ private fun LocationField(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
+    val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     val locationProvider = LocalLocationProvider.current
 
@@ -177,7 +185,7 @@ private fun LocationField(
                 AppState.CurrentDiagnosticSession.location = it
             }
             ?.addOnFailureListener {
-                coroutineScope.launch {
+                coroutineScope?.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(
                         "${context.getString(R.string.location)}: ${
@@ -195,13 +203,33 @@ private fun LocationField(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
-        Text(
-            AppState.CurrentDiagnosticSession.location?.let {
-                "${it.latitude} ${it.altitude}"
-            } ?: stringResource(R.string.unknown),
-            style = MaterialTheme.typography.bodyLarge,
+        val location = AppState.CurrentDiagnosticSession.location
+        PtmFilledButton(
+            enabled = location != null,
+            onClick = {
+                location?.let {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            "geo:0,0?q=${it.latitude},${it.longitude}".toUri()
+                        )
+                    )
+                }
+            },
             modifier = Modifier.weight(1f, fill = true)
-        )
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.LocationOn,
+                    contentDescription = stringResource(R.string.location),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                Text(stringResource(R.string.show_area_on_map_short))
+            }
+        }
         PtmFilledIconButton(
             onClick = { isSyncingLocation = true },
         ) {
@@ -280,11 +308,15 @@ private fun ReportField(
                     onValueChange = onValueChange,
                     placeholder = {
                         Text(
-                            "${stringResource(R.string.input_value)}...",
+                            stringResource(R.string.input_value),
+                            fontStyle = FontStyle.Italic,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = keyboardType,
+                        imeAction = ImeAction.Next
+                    ),
                     modifier = Modifier.weight(1f)
                 )
                 if (parameter.unit != null) {
@@ -344,19 +376,16 @@ private fun SaveButton(
     val activity = LocalActivity.current
     val reportConfig = AppState.reportConfig.value ?: return
     val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
-    val paramSet = remember(derivedReportType) {
+    remember(derivedReportType) {
         (reportConfig.reportTypes[derivedReportType].parameters ?: emptyList())
             .asSequence()
             .map { it.id }
             .toSet()
     }
     val enabled = with(AppState.CurrentDiagnosticSession) {
-        id != null
+        diagnosticPoint != null
                 && reportType != null
                 && location != null
-                && data.all { (k, v) ->
-            k !in paramSet || v.value != null
-        }
     }
 
     PtmFilledButton(

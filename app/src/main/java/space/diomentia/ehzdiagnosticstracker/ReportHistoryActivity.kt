@@ -46,7 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportRelative
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
@@ -81,18 +81,18 @@ class ReportHistoryActivity : ComponentActivity() {
 
 @Composable
 private fun Content(
-    reports: MutableState<List<DiagnosticReportRelative>> = mutableStateOf(emptyList())
+    reports: MutableState<List<DiagnosticReportWithData>> = mutableStateOf(emptyList())
 ) {
     val activity = LocalActivity.current
-    val reports by AppState.reportDb
-        ?.diagnosticReportDao()
-        ?.getReports()
-        ?.collectAsStateWithLifecycle(emptyList()) ?: reports
 
     PtmTheme {
         Scaffold(
             snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
-            topBar = { PtmTopBar(title = { Text(stringResource(R.string.diagnostics_history)) }) },
+            topBar = {
+                PtmTopBar(title = {
+                    Text(stringResource(R.string.diagnostics_history))
+                })
+            },
             bottomBar = {
                 PtmBottomBar(
                     navigation = {
@@ -109,26 +109,12 @@ private fun Content(
                 )
             }
         ) { innerPadding ->
-            if (reports.isEmpty()) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    Text(
-                        stringResource(R.string.entries_not_found),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.alpha(.3f)
-                    )
-                }
-                return@Scaffold
-            }
-
-            var reportShowDetails by remember { mutableStateOf<DiagnosticReportRelative?>(null) }
+            var reportShowDetails by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
             reportShowDetails?.let {
                 ReportDetailsDialog(it) { reportShowDetails = null }
             }
 
-            var reportDelete by remember { mutableStateOf<DiagnosticReportRelative?>(null) }
+            var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
             reportDelete?.let {
                 ReportDeleteDialog(
                     onDismissRequest = { reportDelete = null },
@@ -142,13 +128,39 @@ private fun Content(
                 )
             }
 
-            FullscreenLazyColumn(innerPadding) {
-                items(reports) { report ->
-                    ReportItem(
-                        report,
-                        onLongClick = { reportDelete = report }
+            val history by AppState.CurrentDiagnosticSession.diagnosticArea?.let {
+                AppState.reportDb
+                    ?.diagnosticAreaDao()
+                    ?.getAreaPoints(it)
+                    ?.collectAsStateWithLifecycle(emptyList())
+            } ?: remember { mutableStateOf(emptyList()) }
+            history.forEach { point ->
+                val reports by AppState.reportDb
+                    ?.diagnosticAreaDao()
+                    ?.getPointReports(point.point.id)
+                    ?.collectAsStateWithLifecycle(emptyList())
+                    ?: reports
+                if (reports.isEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
                     ) {
-                        reportShowDetails = report
+                        Text(
+                            stringResource(R.string.entries_not_found),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.alpha(.3f)
+                        )
+                    }
+                    return@Scaffold
+                }
+                FullscreenLazyColumn(innerPadding) {
+                    items(reports) { report ->
+                        ReportItem(
+                            report,
+                            onLongClick = { reportDelete = report }
+                        ) {
+                            reportShowDetails = report
+                        }
                     }
                 }
             }
@@ -159,7 +171,7 @@ private fun Content(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ReportItem(
-    report: DiagnosticReportRelative,
+    report: DiagnosticReportWithData,
     modifier: Modifier = Modifier,
     onLongClick: () -> Unit = {},
     onClick: () -> Unit
@@ -170,9 +182,6 @@ private fun ReportItem(
                 LocalDateTime.now()
             )
         )
-    val reportType = AppState.reportConfig.value
-        ?.reportTypes
-        ?.find { it.id == report.report.reportType }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -193,15 +202,11 @@ private fun ReportItem(
                 .weight(1f)
         ) {
             Text(
-                "${dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))} @ ${
-                    stringResource(
-                        R.string.area
-                    )
-                } ${report.report.areaId}",
+                "${dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))}",
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
-                reportType?.name ?: stringResource(R.string.unknown),
+                "${stringResource(R.string.point)} ${report.report.diagnosticPoint}",
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier
                     .padding(top = 4.dp)
@@ -211,9 +216,10 @@ private fun ReportItem(
     }
 }
 
+
 @Composable
 private fun ReportDetailsDialog(
-    report: DiagnosticReportRelative,
+    report: DiagnosticReportWithData,
     onDismissRequest: () -> Unit
 ) {
     val parameters = AppState.reportConfig.value
@@ -223,6 +229,10 @@ private fun ReportDetailsDialog(
         ?.asSequence()
         ?.map { it.id to it }
         ?.toMap()
+    val reportType = AppState.reportConfig.value
+        ?.reportTypes
+        ?.find { it.id == report.report.reportType }
+        ?.name
 
     @Composable
     fun DataEntryItem(entry: ReportDataEntry) {
@@ -267,6 +277,21 @@ private fun ReportDetailsDialog(
                         .fillMaxWidth()
                         .weight(1f, fill = false)
                 ) {
+                    reportType?.let {
+                        item {
+                            Text(
+                                it,
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(top = 16.dp)
+                            )
+                        }
+                    }
+                    item {
+                        Text(
+                            "${stringResource(R.string.report_by)} ${report.report.inspector}",
+                            modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
+                        )
+                    }
                     items(report.data) { entry ->
                         DataEntryItem(entry)
                     }
@@ -323,14 +348,14 @@ private fun ReportDeleteDialog(
 
 
 private val previewReports = listOf(
-    DiagnosticReportRelative(
+    DiagnosticReportWithData(
         DiagnosticReport(
-            true,
             "8539848",
             1758638351,
-            2,
+            "2",
             "85c906f60dff0f735be9ac84411d71e867e7104f",
             Coordinates(25.94825038, 220.4249238),
+            "Me Me",
             5
         ),
         listOf()

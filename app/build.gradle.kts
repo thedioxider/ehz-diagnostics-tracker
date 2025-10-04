@@ -12,6 +12,8 @@ android {
         create("release") {
             storeFile = file("/home/dio/Android/Keystore/diomentia.jks")
             storePassword = "5wdm8t7s"
+            keyAlias = "diomentia"
+            keyPassword = "5wdm8t7s"
         }
     }
     namespace = "space.diomentia.ehzdiagnosticstracker"
@@ -21,8 +23,8 @@ android {
         applicationId = "space.diomentia.ehzdiagnosticstracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.3.1"
+        versionCode = 6
+        versionName = "0.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -40,6 +42,10 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -50,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -69,6 +76,7 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.kaml)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.datastore.preferences)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

@@ -49,7 +49,10 @@ fun SideArrowContainer(
                     Path().apply {
                         moveTo(-absCoordinates.x, 0f)
                         lineTo(screenSize.width * (1f - slant) - absCoordinates.x, 0f)
-                        lineTo(screenSize.width - absCoordinates.x * (1 + slant), size.height / 2f)
+                        lineTo(
+                            screenSize.width * .99f - absCoordinates.x * (1 + slant),
+                            size.height / 2f
+                        )
                         lineTo(screenSize.width * (1f - slant) - absCoordinates.x, size.height)
                         lineTo(-absCoordinates.x, size.height)
                     }
@@ -57,7 +60,10 @@ fun SideArrowContainer(
                     Path().apply {
                         moveTo(screenSize.width - absCoordinates.x, 0f)
                         lineTo(screenSize.width * slant - absCoordinates.x, 0f)
-                        lineTo(-absCoordinates.x * (1 - slant), size.height / 2f)
+                        lineTo(
+                            screenSize.width * .01f - absCoordinates.x * (1f - slant),
+                            size.height / 2f
+                        )
                         lineTo(screenSize.width * slant - absCoordinates.x, size.height)
                         lineTo(screenSize.width - absCoordinates.x, size.height)
                     }

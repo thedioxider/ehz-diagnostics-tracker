@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material3.MaterialTheme
@@ -111,7 +112,9 @@ fun PtmTopBar(
                 shape = slantedShape,
                 color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.defaultMinSize(minHeight = currentHeight)
+                modifier = Modifier
+                    .defaultMinSize(minHeight = currentHeight)
+                    .width(IntrinsicSize.Min)
             ) {
                 Row(
                     horizontalArrangement = Arrangement.Start,
@@ -167,11 +170,7 @@ fun PtmBottomBar(
                         .padding(8.dp)
                         .height(IntrinsicSize.Min)
                 ) {
-                    navigation.let {
-                        Box {
-                            it()
-                        }
-                    }
+                    navigation()
                 }
             }
         }
