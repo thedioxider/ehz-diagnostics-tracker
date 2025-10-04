@@ -41,8 +41,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -84,7 +84,7 @@ class DiagnosticObjectChooseActivity : ComponentActivity() {
 @Composable
 private fun Content() {
     val activity = LocalActivity.current
-    LocalLayoutDirection.current
+    var createObjectRequest by remember { mutableStateOf(false) }
 
     PtmTheme {
         Scaffold(
@@ -106,6 +106,12 @@ private fun Content() {
                                 finish()
                             }
                         }
+                    },
+                    actions = {
+                        ActionButton(
+                            rememberVectorPainter(Icons.Outlined.Add),
+                            label = stringResource(R.string.create_object)
+                        ) { createObjectRequest = true }
                     }
                 )
             }
@@ -115,6 +121,10 @@ private fun Content() {
                 ?.getAllObjects()
                 ?.collectAsStateWithLifecycle(emptyList())
                 ?: remember { mutableStateOf(emptyList()) }
+
+            if (createObjectRequest) {
+                AddObjectDialog { createObjectRequest = false }
+            }
 
             if (diagnosticObjects.isEmpty()) {
                 Box(
@@ -284,6 +294,108 @@ private fun DiagnosticObjectItem(
 }
 
 @Composable
+private fun AddObjectDialog(
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    var idInput by remember { mutableStateOf("") }
+    var nameInput by remember { mutableStateOf("") }
+
+    Dialog(onDismissRequest) {
+        BorderedDialogContainer {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    stringResource(R.string.create_object),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
+                    "${stringResource(R.string.id)}:",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                TextField(
+                    idInput,
+                    onValueChange = { idInput = it },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.input_id),
+                            fontStyle = FontStyle.Italic,
+                            modifier = Modifier.alpha(.5f)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .padding(start = 16.dp)
+                )
+                Text(
+                    "${stringResource(R.string.title)}:",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                TextField(
+                    nameInput,
+                    onValueChange = { nameInput = it },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.input_title),
+                            fontStyle = FontStyle.Italic,
+                            modifier = Modifier.alpha(.5f)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .padding(start = 16.dp)
+                )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    PtmFilledButton(
+                        onClick = {
+                            val id = idInput
+                            val name = nameInput
+                            if (id.isEmpty() || name.isEmpty()) {
+                                coroutineScope?.launch {
+                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                    snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
+                                }
+                                return@PtmFilledButton
+                            }
+                            AppState.reportDb?.diagnosticAreaDao()?.run {
+                                insertDiagnosticObject(
+                                    DiagnosticObject(
+                                        id = id,
+                                        inventoryId = id,
+                                        name = name
+                                    )
+                                )
+                            }
+                            onDismissRequest()
+                        }
+                    ) {
+                        Text(stringResource(R.string.submit))
+                    }
+                    PtmFilledButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.padding(start = 8.dp)
+                    ) {
+                        Text(stringResource(R.string.cancel))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun AddAreaDialog(
     diagnosticObject: DiagnosticObject,
     onDismissRequest: () -> Unit
@@ -327,7 +439,7 @@ private fun AddAreaDialog(
                     PtmFilledButton(
                         onClick = {
                             val id = idInput
-                            if (idInput.isEmpty()) {
+                            if (id.isEmpty()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
@@ -335,7 +447,13 @@ private fun AddAreaDialog(
                                 return@PtmFilledButton
                             }
                             AppState.reportDb?.diagnosticAreaDao()?.run {
-                                insertDiagnosticArea(DiagnosticArea(id, diagnosticObject.id, "0"))
+                                insertDiagnosticArea(
+                                    DiagnosticArea(
+                                        id = id,
+                                        diagnosticObject = diagnosticObject.id,
+                                        dangerClass = "0"
+                                    )
+                                )
                             }
                             onDismissRequest()
                         }
@@ -358,3 +476,7 @@ private fun AddAreaDialog(
 @Preview
 @Composable
 private fun ContentPreview() = PtmTheme { Content() }
+
+@Preview
+@Composable
+private fun AddObjectDialogPreview() = PtmTheme { AddObjectDialog { } }

@@ -17,6 +17,8 @@
     <string name="area">Участок</string>
     <string name="point">Точка</string>
     <string name="id">Идентификатор</string>
+    <string name="title">Название</string>
+    <string name="input_title">Введите название</string>
     <string name="diagnostics_type">Вид коррозионного обследования</string>
     <string name="diagnostics_type_0">приёмочное (первичное)</string>
     <string name="diagnostics_type_1">периодическое комплексное</string>
@@ -34,6 +36,7 @@
     <string name="works_contents">Состав работ</string>
     <string name="apply">Готово</string>
     <string name="edit_report_type">Изменить состав работ</string>
+    <string name="create_object">Создать объект</string>
     <string name="location">Местоположение</string>
     <string name="unknown">неизвестно</string>
     <string name="something_wrong">Что-то пошло не так</string>
