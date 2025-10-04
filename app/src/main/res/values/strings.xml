@@ -33,7 +33,7 @@
     <string name="qr_no_id">QR-код не содержит информации об участке</string>
     <string name="works_contents">Состав работ</string>
     <string name="apply">Готово</string>
-    <string name="edit_report_type">Изменить тип отчёта</string>
+    <string name="edit_report_type">Изменить состав работ</string>
     <string name="location">Местоположение</string>
     <string name="unknown">неизвестно</string>
     <string name="something_wrong">Что-то пошло не так</string>
