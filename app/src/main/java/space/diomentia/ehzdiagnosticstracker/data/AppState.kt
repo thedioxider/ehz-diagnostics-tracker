@@ -137,15 +137,15 @@ object AppState {
         var diagnosticObject by mutableStateOf<String?>(null)
         var diagnosticArea by mutableStateOf<String?>(null)
         var diagnosticPoint by mutableStateOf<String?>(null)
-        var reportType by mutableIntStateOf(0)
-        var diagnosticType by mutableStateOf<Int?>(null)
+        var diagnosticType by mutableIntStateOf(0)
+        var reportType by mutableStateOf<Int?>(null)
         var location by mutableStateOf<Location?>(null)
         var data = mutableMapOf<String, MutableState<out Any?>>()
 
         fun reset() {
             dateTime = LocalDateTime.now()
             diagnosticPoint = null
-            diagnosticType = null
+            reportType = null
             location = null
             data.forEach { (_, v) -> (v as MutableState<Any?>).value = null }
         }
@@ -154,7 +154,7 @@ object AppState {
             val reportDb = reportDb
             val reportConfig = reportConfig.value
             val dPoint = diagnosticPoint
-            val diagnosticType = diagnosticType
+            val diagnosticType = reportType
             val location = location
             val inspector = profileSession
             val data = data
@@ -165,15 +165,15 @@ object AppState {
                 || reportDb == null
                 || inspector == null
             ) return false
-            (reportConfig.diagnosticTypes[diagnosticType].parameters ?: emptyList())
+            (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
                 .asSequence()
                 .map { it.id }
                 .toSet()
             val report = DiagnosticReport(
                 dPoint,
                 dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
-                this@CurrentDiagnosticSession.reportType.toString(),
-                reportConfig.diagnosticTypes[diagnosticType].id,
+                this@CurrentDiagnosticSession.diagnosticType.toString(),
+                reportConfig.reportTypes[diagnosticType].id,
                 Coordinates(location.latitude, location.altitude),
                 inspector.name
             )

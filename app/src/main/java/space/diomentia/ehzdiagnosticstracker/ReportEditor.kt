@@ -81,10 +81,10 @@ fun ReportEditor(
 ) {
     var diagnosticType by remember {
         mutableIntStateOf(
-            AppState.CurrentDiagnosticSession.diagnosticType ?: 0
+            AppState.CurrentDiagnosticSession.reportType ?: 0
         )
     }
-    diagnosticType = AppState.CurrentDiagnosticSession.diagnosticType ?: diagnosticType
+    diagnosticType = AppState.CurrentDiagnosticSession.reportType ?: diagnosticType
 
     CompositionLocalProvider(
         LocalCoroutineScope provides rememberCoroutineScope(),
@@ -111,7 +111,7 @@ fun ReportEditor(
                         .padding(start = 32.dp, end = 16.dp)
                 )
 
-                AppState.reportConfig.value?.diagnosticTypes[diagnosticType]?.parameters?.forEachIndexed { i, parameter ->
+                AppState.reportConfig.value?.reportTypes[diagnosticType]?.parameters?.forEachIndexed { i, parameter ->
                     val value = remember {
                         AppState.CurrentDiagnosticSession.data[parameter.id]
                             ?: when (parameter.type) {
@@ -377,14 +377,14 @@ private fun SaveButton(
     val reportConfig = AppState.reportConfig.value ?: return
     val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
     remember(derivedReportType) {
-        (reportConfig.diagnosticTypes[derivedReportType].parameters ?: emptyList())
+        (reportConfig.reportTypes[derivedReportType].parameters ?: emptyList())
             .asSequence()
             .map { it.id }
             .toSet()
     }
     val enabled = with(AppState.CurrentDiagnosticSession) {
         diagnosticPoint != null
-                && diagnosticType != null
+                && reportType != null
                 && location != null
     }
 
@@ -433,7 +433,7 @@ private fun ReportEditorPreview() {
             )
         )
     )
-    AppState.CurrentDiagnosticSession.diagnosticType = 0
+    AppState.CurrentDiagnosticSession.reportType = 0
 
     PtmTheme {
         ReportEditor()

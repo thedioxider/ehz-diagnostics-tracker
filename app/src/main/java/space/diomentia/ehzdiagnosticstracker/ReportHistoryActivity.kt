@@ -223,14 +223,14 @@ private fun ReportDetailsDialog(
     onDismissRequest: () -> Unit
 ) {
     val parameters = AppState.reportConfig.value
-        ?.diagnosticTypes
+        ?.reportTypes
         ?.find { it.id == report.report.reportType }
         ?.parameters
         ?.asSequence()
         ?.map { it.id to it }
         ?.toMap()
     val reportType = AppState.reportConfig.value
-        ?.diagnosticTypes
+        ?.reportTypes
         ?.find { it.id == report.report.reportType }
         ?.name
 

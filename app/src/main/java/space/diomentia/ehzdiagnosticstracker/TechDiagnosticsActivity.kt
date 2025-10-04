@@ -71,7 +71,7 @@ private enum class UiState {
     companion object {
         fun canOpenEditor(): Boolean {
             return with(AppState.CurrentDiagnosticSession) {
-                diagnosticPoint != null && diagnosticType != null
+                diagnosticPoint != null && reportType != null
             }
         }
     }
@@ -127,7 +127,7 @@ private fun Content() {
     } ?: remember { mutableStateOf(null) }
 
     if (AppState.CurrentDiagnosticSession.diagnosticPoint == null) activity?.finish()
-    if (AppState.CurrentDiagnosticSession.diagnosticType == null) state = UiState.Configuration
+    if (AppState.CurrentDiagnosticSession.reportType == null) state = UiState.Configuration
     PtmTheme {
         Scaffold(
             topBar = {
@@ -275,7 +275,7 @@ private fun ReportTypesList(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        reportConfig.diagnosticTypes.forEachIndexed { i, rClass ->
+        reportConfig.reportTypes.forEachIndexed { i, rClass ->
             val interactionSource = remember { MutableInteractionSource() }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -285,14 +285,14 @@ private fun ReportTypesList(
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        AppState.CurrentDiagnosticSession.diagnosticType = i
+                        AppState.CurrentDiagnosticSession.reportType = i
                         state = UiState.Editor
                     }
                     .padding(start = 16.dp)
                     .padding(vertical = 12.dp)
             ) {
                 Icon(
-                    if (AppState.CurrentDiagnosticSession.diagnosticType == i)
+                    if (AppState.CurrentDiagnosticSession.reportType == i)
                         painterResource(R.drawable.ic_radio_button_checked)
                     else
                         painterResource(R.drawable.ic_radio_button_unchecked),
@@ -400,7 +400,7 @@ private fun ContentPreview() {
             )
         )
     )
-    AppState.CurrentDiagnosticSession.diagnosticType = 0
+    AppState.CurrentDiagnosticSession.reportType = 0
     LocalUiState.current.value = UiState.Editor
 
     PtmTheme {

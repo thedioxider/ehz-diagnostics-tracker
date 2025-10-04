@@ -467,7 +467,7 @@ private fun DiagnosticsTypeSelector(
             modifier = modifier
         ) {
             TextField(
-                value = options[AppState.CurrentDiagnosticSession.reportType],
+                value = options[AppState.CurrentDiagnosticSession.diagnosticType],
                 colors = colors,
                 supportingText = {
                     Text(
@@ -490,7 +490,7 @@ private fun DiagnosticsTypeSelector(
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
-                            AppState.CurrentDiagnosticSession.reportType = i
+                            AppState.CurrentDiagnosticSession.diagnosticType = i
                             expanded = false
                         }
                     )
