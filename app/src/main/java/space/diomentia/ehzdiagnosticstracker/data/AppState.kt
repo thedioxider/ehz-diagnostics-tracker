@@ -75,7 +75,7 @@ object AppState {
         }
     }
 
-    var adminSession by mutableStateOf(false)
+    var adminSession by mutableStateOf(true)
         private set
 
     suspend fun elevateToAdmin(context: Context, password: String): Boolean {
