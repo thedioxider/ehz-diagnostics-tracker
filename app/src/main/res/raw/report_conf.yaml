@@ -2,6 +2,9 @@ reportTypes:
   - id: 85c906f60dff0f735be9ac84411d71e867e7104f
     name: Состояние СКЗ (Станция Катодной Защиты)
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: 4528ba923e6204031d8ee663f6e1b018a6c86716
         name: Сопротивление растеканию тока защитного заземления
         type: Decimal
@@ -64,9 +67,15 @@ reportTypes:
       - id: 49edaa5ee18d40d0772fdaf160436ef6d6ffde58
         name: Работоспособность АВР, блоков управления и автоматики СКЗ
         type: Bool
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: f1efb1897b6a55d0b204b71bc7f14680e460eb0c
     name: Состояние УДЗ (Установка Дренажной Защиты)
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: d5e0d969d2f1310636598f0d760bcfc8db290ccf
         name: Сопротивление растеканию тока защитного заземления
         type: Decimal
@@ -99,9 +108,15 @@ reportTypes:
       - id: 988325d870a0d1295b75f2b59a31fae42210d01c
         name: Проверка дистанционного контроля и управления
         type: Bool
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: e4ef49ab1452981ec4c491b754820eebb4f8840e
     name: Состояние УПЗ (Установка Протекторной Защиты)
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: aa6f8c648f42a64aea81aae5f8ef79523e35c599
         name: Проверка контактных соединений в БДР (БСЗ)
         type: Bool
@@ -129,9 +144,15 @@ reportTypes:
         name: Удельное сопротивление грунта в месте расположения УПЗ
         type: Decimal
         unit: Ом
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: a3ddec72bcfd0a75c8ccf43b98a9b79e3faaba5a
     name: Состояние ВЭИ (Вставка Электроизолирующая)
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: ab5f6ab1942617b3f6ba5fd5d9cf85fd65a65ae8
         name: Продольное (кажущееся) электрическое сопротивление
         type: Decimal
@@ -144,9 +165,15 @@ reportTypes:
         name: Одновременное измерение поляризационного потенциала трубы до и после ВЭИ
         type: Decimal
         unit: В
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: 90f429c74d9d1dff998770f2f221fff3e84fea2a
     name: Состояние КИП (Контрольно-Измерительный Пункт)
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: 2fec78fc9d701bf9d12cee2280d0b9e63c51e867
         name: Потенциалы сооружения с омической составляющей
         type: Decimal
@@ -161,10 +188,16 @@ reportTypes:
       - id: d3571f556f7c2329360a303dca38f893377f30f2
         name: Удельное сопротивление грунта в месте расположения КИП
         type: Decimal
-        unit: Ом
+        unit:
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: 7e715ea6daf247a0c78bd3004e7afdfeb3a8641b
     name: Состояние переходов, оборудованных защитными кожухами
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: 43dbb54b61d52b7a1b2d3cfd5fce3fb32ed7a01b
         name: Сопротивление "защитный кожух-труба" в местах переходов трубопровода под автомобильными и железными дорогами
         type: Decimal
@@ -187,9 +220,15 @@ reportTypes:
       - id: 4859ae9f4cfef4b8aefc8fda945a08f7d364e987
         name: Работоспособность средств защиты
         type: Bool
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: a291b88dffb550138ed93ae0ca80d87a750a3575
     name: Состояние БДР (БСЗ)
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: 3329075f0055fee64558c2b3927a238d136d014d
         name: Потенциалы на всех выводах от коммуникаций относительно стационарных ЭСДД и образцовых (переносных) ЭС при подключенном БДР
         type: Decimal
@@ -202,9 +241,15 @@ reportTypes:
         name: Сопротивления растекания тока каждого трубопровода, каждого ЭСДД и ВЭ
         type: Decimal
         unit: Ом
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: 7e321eff449d5911176ae37bf3020895fbe20186
     name: Контроль защищенности трубопровода
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: 6f7e73d4105d5286ac871463e01f1640f5c63d54
         name: Измерение при прерывистой поляризации потенциалов включения/отключения вне зоны блуждающих токов
         type: Decimal
@@ -224,9 +269,15 @@ reportTypes:
       - id: 3c475487beb65fcc7453a275c2447db9a6bf002e
         name: При отсутствии на участке блуждающих токов определение длины зоны за щиты УКЗ при выполнении оптимизации
         type: Decimal
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: 14025a7abb7cf63420b3dc0531b27a5cf2275d2a
     name: Оценка состояния Защитного Покрытия (ЗП)
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: d98c74e0e17d4ca4bac78c9254156cd74528cb37
         name: Обследование сплошности ЗП сооружения с нахождением мест сквозных дефектов
         type: Bool
@@ -237,16 +288,28 @@ reportTypes:
         name: Интегральная оценка сопротивления ЗП подземного сооружения, в том числе с применением методов на переменном токе
         type: Decimal
         unit: Ом
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: a22871a076a549c93142a7dbf1f43f37141c7847
     name: Контроль негативного влияния на сторонние сооружения
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: 8a22ad40d8fba262a259c28e4ba84e2a564717f8
         name: Синхронные измерения в КИП и КДП потенциалов в месте пересечения или сближения обследуемого объекта с сопутствующим (сторонним) сооружением
         type: Decimal
         unit: В
+      - id: commentary
+        name: Комментарий
+        type: Text
   - id: 7ac2b5539c44f3ff7c58cd24f5e30dc3ad860d35
     name: Обследование коррозионного состояния сооружения в шурфах
     parameters:
+      - id: kilometer_location
+        name: Километраж
+        type: Integer
       - id: 6f0098f3e8946e4259ac22afda3fb74d78b58228
         name: Ориентиры на местности
         type: Text
@@ -324,3 +387,6 @@ reportTypes:
       - id: fc7a48922feef42f204581de9c2287c12b4638ba
         name: Восстановление ЗП после проведения обследования
         type: Bool
+      - id: commentary
+        name: Комментарий
+        type: Text

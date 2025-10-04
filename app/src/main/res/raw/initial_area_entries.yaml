@@ -14,9 +14,9 @@ diagnosticAreas:
 diagnosticPoints:
   - id: 12795
     diagnosticArea: 85394
-    inventoryId: f39eb18687c261277ffac55422ea493448e8a801
+    inventoryId: 48953938
     registrationNumber: 52837519515346
   - id: "https://npk-ptm.ru/"
-    diagnosticArea: 68655
-    inventoryId: f39eb18687c261277ffac55422ea493448e8a801
+    diagnosticArea: 92754
+    inventoryId: 1235135
     registrationNumber: 52837519515346

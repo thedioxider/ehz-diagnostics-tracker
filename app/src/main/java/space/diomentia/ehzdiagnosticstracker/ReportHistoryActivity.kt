@@ -182,6 +182,11 @@ private fun ReportItem(
                 LocalDateTime.now()
             )
         )
+    val diagnosticPoint by AppState.reportDb
+        ?.diagnosticAreaDao()
+        ?.getPointById(report.report.diagnosticPoint)
+        ?.collectAsStateWithLifecycle(null)
+        ?: remember { mutableStateOf(null) }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -206,7 +211,7 @@ private fun ReportItem(
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
-                "${stringResource(R.string.point)} ${report.report.diagnosticPoint}",
+                "${stringResource(R.string.point)} ${diagnosticPoint?.point?.inventoryId}",
                 style = MaterialTheme.typography.titleSmall,
                 modifier = Modifier
                     .padding(top = 4.dp)
