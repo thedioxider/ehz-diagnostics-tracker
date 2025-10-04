@@ -196,7 +196,7 @@ private fun Content() {
                 )
                 Text(
                     "${stringResource(R.string.area)} ${
-                        diagnosticArea?.diagnosticArea?.id ?: stringResource(
+                        diagnosticArea?.diagnosticArea?.name ?: stringResource(
                             R.string.unknown
                         )
                     }",

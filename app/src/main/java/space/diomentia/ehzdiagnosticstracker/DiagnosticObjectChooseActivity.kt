@@ -177,7 +177,7 @@ private fun Content() {
                 items(selectedObjectAreas) { area ->
                     AnimatedVisibility(AppState.CurrentDiagnosticSession.diagnosticObject != null) {
                         DiagnosticAreaItem(
-                            area.diagnosticArea.id,
+                            area.diagnosticArea.name,
                             modifier = Modifier.padding(start = 64.dp),
                             onLongClick = {
                                 if (AppState.adminSession) {
@@ -404,6 +404,7 @@ private fun AddAreaDialog(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     var idInput by remember { mutableStateOf("") }
+    var nameInput by remember { mutableStateOf("") }
 
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
@@ -432,6 +433,25 @@ private fun AddAreaDialog(
                         .padding(vertical = 12.dp)
                         .padding(start = 16.dp)
                 )
+                Text(
+                    "${stringResource(R.string.title)}:",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                TextField(
+                    nameInput,
+                    onValueChange = { nameInput = it },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.input_title),
+                            fontStyle = FontStyle.Italic,
+                            modifier = Modifier.alpha(.5f)
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .padding(start = 16.dp)
+                )
                 Row(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.fillMaxWidth()
@@ -439,7 +459,8 @@ private fun AddAreaDialog(
                     PtmFilledButton(
                         onClick = {
                             val id = idInput
-                            if (id.isEmpty()) {
+                            val name = nameInput
+                            if (id.isEmpty() || name.isEmpty()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
@@ -450,6 +471,7 @@ private fun AddAreaDialog(
                                 insertDiagnosticArea(
                                     DiagnosticArea(
                                         id = id,
+                                        name = name,
                                         diagnosticObject = diagnosticObject.id,
                                         dangerClass = "0"
                                     )

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "3d59cefee4926dcf6105d7ade595bd86",
+    "identityHash": "b44586c50e9136437524d903b224a489",
     "entities": [
       {
         "tableName": "diagnostic_reports",
@@ -51,7 +51,7 @@
             "notNull": true
           },
           {
-            "fieldPath": "location.altitude",
+            "fieldPath": "location.longitude",
             "columnName": "altitude",
             "affinity": "REAL",
             "notNull": true
@@ -144,11 +144,17 @@
       },
       {
         "tableName": "diagnostic_areas",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `diagnostic_object` TEXT NOT NULL, `danger_class` TEXT NOT NULL, `additional_info` TEXT, `last_latitude` REAL, `last_altitude` REAL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `diagnostic_object` TEXT NOT NULL, `danger_class` TEXT NOT NULL, `additional_info` TEXT, `last_latitude` REAL, `last_altitude` REAL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -175,7 +181,7 @@
             "affinity": "REAL"
           },
           {
-            "fieldPath": "lastLocation.altitude",
+            "fieldPath": "lastLocation.longitude",
             "columnName": "last_altitude",
             "affinity": "REAL"
           }
@@ -236,7 +242,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3d59cefee4926dcf6105d7ade595bd86')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b44586c50e9136437524d903b224a489')"
     ]
   }
 }

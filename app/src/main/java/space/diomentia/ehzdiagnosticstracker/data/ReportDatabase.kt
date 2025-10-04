@@ -105,6 +105,7 @@ data class DiagnosticObject(
 @Entity(tableName = "diagnostic_areas")
 data class DiagnosticArea(
     @PrimaryKey @ColumnInfo(name = "id") val id: String,
+    @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "diagnostic_object") val diagnosticObject: String,
     @ColumnInfo(name = "danger_class") val dangerClass: String,
     @Embedded(prefix = "last_") val lastLocation: Coordinates? = null,

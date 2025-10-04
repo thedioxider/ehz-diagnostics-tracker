@@ -223,7 +223,7 @@ private fun AreaInfo(
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            "${stringResource(R.string.area)} ${dArea?.diagnosticArea?.id}",
+            "${stringResource(R.string.area)} ${dArea?.diagnosticArea?.name}",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
