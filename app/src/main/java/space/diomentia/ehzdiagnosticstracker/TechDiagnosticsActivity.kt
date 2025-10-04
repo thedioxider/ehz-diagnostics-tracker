@@ -224,6 +224,18 @@ private fun Content() {
                         .padding(bottom = 16.dp)
                 )
 
+                AnimatedVisibility(state == UiState.Editor) {
+                    Text(
+                        AppState.CurrentDiagnosticSession.reportType?.let { reportType ->
+                            AppState.reportConfig.value?.reportTypes[reportType]?.name
+                        } ?: stringResource(R.string.unknown),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
+                }
+
                 AnimatedVisibility(state == UiState.Configuration) {
                     ReportConfiguration(Modifier.fillMaxWidth())
                 }
