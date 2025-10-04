@@ -125,6 +125,12 @@ private fun Content() {
             ?.getAreaById(id)
             ?.collectAsStateWithLifecycle(null)
     } ?: remember { mutableStateOf(null) }
+    val diagnosticPoint by AppState.CurrentDiagnosticSession.diagnosticPoint?.let { diagnosticPoint ->
+        AppState.reportDb
+            ?.diagnosticAreaDao()
+            ?.getPointById(diagnosticPoint)
+            ?.collectAsStateWithLifecycle(null)
+    } ?: remember { mutableStateOf(null) }
 
     if (AppState.CurrentDiagnosticSession.diagnosticPoint == null) activity?.finish()
     if (AppState.CurrentDiagnosticSession.reportType == null) state = UiState.Configuration
@@ -176,9 +182,7 @@ private fun Content() {
             ) {
                 Text(
                     "${stringResource(R.string.point)} ${
-                        AppState.CurrentDiagnosticSession.diagnosticPoint ?: stringResource(
-                            R.string.unknown
-                        )
+                        diagnosticPoint?.point?.inventoryId ?: stringResource(R.string.unknown)
                     }",
                     style = MaterialTheme.typography.titleLarge,
                     fontSize = 36.sp,
