@@ -7,7 +7,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -180,9 +179,10 @@ private fun Content(
             ) {
                 items(profiles) { profile ->
                     ProfileItem(profile) {
-                        if (AppState.profileSession != profile) {
-                            authorizeRequest = profile
-                        } else {
+                        if (AppState.adminSession) {
+                            AppState.profileSession = profile
+                        }
+                        if (AppState.profileSession == profile) {
                             activity?.run {
                                 startActivity(
                                     Intent(
@@ -192,27 +192,36 @@ private fun Content(
                                 )
                                 finish()
                             }
+                        } else {
+                            authorizeRequest = profile
                         }
                     }
                 }
                 item {
-                    AnimatedVisibility(AppState.adminSession) {
-                        PtmFilledButton(
-                            onClick = { addUserRequest = true },
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Add,
-                                    contentDescription = stringResource(R.string.add_profile)
-                                )
-                                Text(
-                                    stringResource(R.string.add_profile),
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
+                    PtmFilledButton(
+                        onClick = {
+                            if (!AppState.adminSession) {
+                                coroutineScope?.launch {
+                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                    snackbarHostState.showSnackbar(context.getString(R.string.authorize_as_admin))
+                                }
+                                return@PtmFilledButton
                             }
+                            addUserRequest = true
+                        },
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Add,
+                                contentDescription = stringResource(R.string.add_profile)
+                            )
+                            Text(
+                                stringResource(R.string.add_profile),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
                         }
                     }
                 }
