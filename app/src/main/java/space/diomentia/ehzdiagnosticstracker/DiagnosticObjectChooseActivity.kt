@@ -319,7 +319,7 @@ private fun AddObjectDialog(
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
                 Text(
-                    "${stringResource(R.string.id)}:",
+                    "${stringResource(R.string.registration_number)}:",
                     style = MaterialTheme.typography.titleSmall
                 )
                 TextField(
@@ -327,7 +327,7 @@ private fun AddObjectDialog(
                     onValueChange = { idInput = it },
                     placeholder = {
                         Text(
-                            stringResource(R.string.input_id),
+                            stringResource(R.string.input_registration_number),
                             fontStyle = FontStyle.Italic,
                             maxLines = 1,
                             modifier = Modifier.alpha(.5f)
@@ -419,7 +419,7 @@ private fun AddAreaDialog(
                     .padding(16.dp)
             ) {
                 Text(
-                    "${stringResource(R.string.id)}:",
+                    "${stringResource(R.string.registration_number)}:",
                     style = MaterialTheme.typography.titleSmall
                 )
                 TextField(
@@ -427,7 +427,7 @@ private fun AddAreaDialog(
                     onValueChange = { idInput = it },
                     placeholder = {
                         Text(
-                            stringResource(R.string.input_id),
+                            stringResource(R.string.input_registration_number),
                             fontStyle = FontStyle.Italic,
                             maxLines = 1,
                             modifier = Modifier.alpha(.5f)

@@ -102,4 +102,6 @@
     <string name="show_area_on_map_short">Показать на карте</string>
     <string name="authorize_as_admin">Необходимо авторизоваться как администратор</string>
     <string name="profile">Профиль</string>
+    <string name="registration_number">Регистрационный номер</string>
+    <string name="input_registration_number">Введите регистрационный номер</string>
 </resources>
