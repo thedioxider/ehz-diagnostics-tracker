@@ -227,6 +227,11 @@ private fun AreaInfo(
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
+        Text(
+            "${stringResource(R.string.profile)}: ${AppState.profileSession?.name}",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleSmall
+        )
     }
 }
 

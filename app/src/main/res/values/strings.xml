@@ -101,4 +101,5 @@
     <string name="show_area_on_map">Показать участок на карте</string>
     <string name="show_area_on_map_short">Показать на карте</string>
     <string name="authorize_as_admin">Необходимо авторизоваться как администратор</string>
+    <string name="profile">Профиль</string>
 </resources>
