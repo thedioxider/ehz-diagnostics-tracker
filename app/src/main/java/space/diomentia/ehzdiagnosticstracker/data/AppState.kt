@@ -192,7 +192,7 @@ object AppState {
             AppState.reportDb?.diagnosticAreaDao()?.run {
                 diagnosticArea?.let {
                     val area = getAreaByIdOnce(it)
-                    updateArea(
+                    updateDiagnosticArea(
                         area.copy(
                             lastLocation = Coordinates(
                                 latitude = location.latitude,

@@ -105,4 +105,6 @@
     <string name="profile">Профиль</string>
     <string name="registration_number">Регистрационный номер</string>
     <string name="input_registration_number">Введите регистрационный номер</string>
+    <string name="edit_object">Изменить объект</string>
+    <string name="edit_area">Изменить участок</string>
 </resources>
