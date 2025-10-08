@@ -107,12 +107,14 @@ private fun Content() {
                             }
                         }
                     },
-                    actions = {
-                        ActionButton(
-                            rememberVectorPainter(Icons.Outlined.Add),
-                            label = stringResource(R.string.create_object)
-                        ) { createObjectRequest = true }
-                    }
+                    actions = if (AppState.adminSession)
+                        { ->
+                            ActionButton(
+                                rememberVectorPainter(Icons.Outlined.Add),
+                                label = stringResource(R.string.create_object)
+                            ) { createObjectRequest = true }
+                        }
+                    else null
                 )
             }
         ) { innerPadding ->
