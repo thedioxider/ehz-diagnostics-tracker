@@ -421,6 +421,16 @@ private fun MenuActionButtonsRow(
             .weight(1f)
         MenuActionButton(
             actionButtonModifier,
+            buttonHeight = rowHeight,
+            description = stringResource(R.string.diagnostic_points),
+            icon = painterResource(R.drawable.ic_edit_location)
+        ) {
+            context.startActivity(
+                Intent(context, DiagnosticPointsActivity::class.java)
+            )
+        }
+        MenuActionButton(
+            actionButtonModifier,
             enabled = areaLastLocation != null,
             buttonHeight = rowHeight,
             description = stringResource(R.string.show_area_on_map),

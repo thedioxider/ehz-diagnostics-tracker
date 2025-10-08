@@ -196,9 +196,15 @@ interface DiagnosticAreaDao {
     @Update
     fun updateDiagnosticArea(area: DiagnosticArea)
 
+    @Update
+    fun updateDiagnosticPoint(point: DiagnosticPoint)
+
     @Delete
     fun deleteDiagnosticObject(diagnosticObject: DiagnosticObject)
 
     @Delete
     fun deleteDiagnosticArea(area: DiagnosticArea)
+
+    @Delete
+    fun deleteDiagnosticPoint(point: DiagnosticPoint)
 }

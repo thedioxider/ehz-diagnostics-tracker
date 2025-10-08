@@ -105,6 +105,11 @@
     <string name="profile">Профиль</string>
     <string name="registration_number">Регистрационный номер</string>
     <string name="input_registration_number">Введите регистрационный номер</string>
-    <string name="edit_object">Изменить объект</string>
-    <string name="edit_area">Изменить участок</string>
+    <string name="edit_object">Редактировать объект</string>
+    <string name="edit_area">Редактировать участок</string>
+    <string name="edit_point">Редактировать точку</string>
+    <string name="diagnostic_points">Точки диагностирования</string>
+    <string name="create_point">Создать точку</string>
+    <string name="inventory_number">Инвентарный номер</string>
+    <string name="input_inventory_number">Введите инвентарный номер</string>
 </resources>
