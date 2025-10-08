@@ -37,6 +37,7 @@
     <string name="apply">Готово</string>
     <string name="edit_report_type">Изменить состав работ</string>
     <string name="create_object">Создать объект</string>
+    <string name="create_area">Создать участок</string>
     <string name="location">Местоположение</string>
     <string name="unknown">неизвестно</string>
     <string name="something_wrong">Что-то пошло не так</string>

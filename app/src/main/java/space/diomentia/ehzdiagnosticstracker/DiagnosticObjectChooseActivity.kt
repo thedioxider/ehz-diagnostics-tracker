@@ -419,6 +419,11 @@ private fun AddAreaDialog(
                     .padding(16.dp)
             ) {
                 Text(
+                    stringResource(R.string.create_area),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                Text(
                     "${stringResource(R.string.registration_number)}:",
                     style = MaterialTheme.typography.titleSmall
                 )
