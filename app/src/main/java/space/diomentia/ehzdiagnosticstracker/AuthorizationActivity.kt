@@ -320,6 +320,8 @@ private fun AddUserDialog(
     val snackbarHostState = LocalSnackbarHostState.current
     var nameInput by remember { mutableStateOf("") }
     var nameError by remember { mutableStateOf(false) }
+    var secondnameInput by remember { mutableStateOf("") }
+    var secondnameError by remember { mutableStateOf(false) }
     var passwordInput by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
 
@@ -344,6 +346,29 @@ private fun AddUserDialog(
                     placeholder = {
                         Text(
                             stringResource(R.string.input_name),
+                            fontStyle = FontStyle.Italic,
+                            modifier = Modifier.alpha(.5f)
+                        )
+                    },
+                    isError = nameError,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .padding(start = 16.dp)
+                )
+                Text(
+                    "${stringResource(R.string.secondname)}:",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                TextField(
+                    secondnameInput,
+                    onValueChange = {
+                        secondnameError = false
+                        secondnameInput = it
+                    },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.input_secondname),
                             fontStyle = FontStyle.Italic,
                             modifier = Modifier.alpha(.5f)
                         )
@@ -387,10 +412,12 @@ private fun AddUserDialog(
                     PtmFilledButton(
                         onClick = {
                             val name = nameInput
+                            val secondname = secondnameInput
                             val hashword = PasswordHash.encrypt(passwordInput)?.hash
                             if (
                                 (hashword == null).also { passwordError = it }
                                 || (!Profile.checkName(name)).also { nameError = it }
+                                || (!Profile.checkName(secondname)).also { secondnameError = it }
                             ) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
@@ -401,7 +428,7 @@ private fun AddUserDialog(
                             AppState.profileDb?.profileDao()?.run {
                                 createProfile(
                                     Profile(
-                                        name = name,
+                                        name = "$secondname $name",
                                         hashword = hashword!!
                                     )
                                 )
@@ -409,7 +436,7 @@ private fun AddUserDialog(
                             onDismissRequest()
                         }
                     ) {
-                        Text(stringResource(R.string.login))
+                        Text(stringResource(R.string.create))
                     }
                     PtmFilledButton(
                         onClick = onDismissRequest,
