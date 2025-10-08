@@ -158,14 +158,16 @@ private fun Content(
                             )
                         }
                         authorizeRequest = null
-                        activity?.run {
-                            startActivity(
-                                Intent(
-                                    context,
-                                    DiagnosticObjectChooseActivity::class.java
+                        if (success) {
+                            activity?.run {
+                                startActivity(
+                                    Intent(
+                                        context,
+                                        DiagnosticObjectChooseActivity::class.java
+                                    )
                                 )
-                            )
-                            finish()
+                                finish()
+                            }
                         }
                     }
                 )

@@ -93,7 +93,7 @@ object AppState {
 
     fun loginProfile(profile: Profile, password: String) =
         (PasswordHash.encrypt(password) == PasswordHash.fromHash(profile.hashword)).also {
-            if (it) profileSession = profile else profileSession = null
+            profileSession = if (it) profile else null
         }
 
     private inline fun <reified T> lazyFileFetch(
