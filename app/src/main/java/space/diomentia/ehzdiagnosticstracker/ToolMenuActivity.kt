@@ -479,6 +479,7 @@ private fun DiagnosticsTypeSelector(
                         stringResource(R.string.diagnostics_type),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
                         modifier = Modifier.fillMaxWidth()
                     )
                 },

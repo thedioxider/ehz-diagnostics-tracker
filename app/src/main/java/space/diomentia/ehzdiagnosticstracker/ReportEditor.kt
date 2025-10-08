@@ -310,6 +310,7 @@ private fun ReportField(
                         Text(
                             stringResource(R.string.input_value),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },

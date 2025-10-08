@@ -329,6 +329,7 @@ private fun AddObjectDialog(
                         Text(
                             stringResource(R.string.input_id),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -348,6 +349,7 @@ private fun AddObjectDialog(
                         Text(
                             stringResource(R.string.input_title),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -427,6 +429,7 @@ private fun AddAreaDialog(
                         Text(
                             stringResource(R.string.input_id),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -446,6 +449,7 @@ private fun AddAreaDialog(
                         Text(
                             stringResource(R.string.input_title),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },

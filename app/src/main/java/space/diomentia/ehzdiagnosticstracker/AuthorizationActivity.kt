@@ -261,6 +261,7 @@ private fun AuthorizeDialog(
                         Text(
                             stringResource(R.string.input_password),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -358,6 +359,7 @@ private fun AddUserDialog(
                         Text(
                             stringResource(R.string.input_name),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -381,6 +383,7 @@ private fun AddUserDialog(
                         Text(
                             stringResource(R.string.input_secondname),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -404,6 +407,7 @@ private fun AddUserDialog(
                         Text(
                             stringResource(R.string.input_password),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
