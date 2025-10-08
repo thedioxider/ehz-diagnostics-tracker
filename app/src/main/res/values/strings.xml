@@ -37,6 +37,7 @@
     <string name="apply">Готово</string>
     <string name="edit_report_type">Изменить состав работ</string>
     <string name="create_object">Создать объект</string>
+    <string name="create_area">Создать участок</string>
     <string name="location">Местоположение</string>
     <string name="unknown">неизвестно</string>
     <string name="something_wrong">Что-то пошло не так</string>
@@ -71,6 +72,7 @@
     <string name="version">Версия</string>
     <string name="authorize">Авторизоваться</string>
     <string name="login">Войти</string>
+    <string name="create">Создать</string>
     <string name="login_as">Войти как</string>
     <string name="administrator">Администратор</string>
     <string name="auth_success">Авторизация успешна</string>
@@ -81,7 +83,9 @@
     <string name="change_password_fail">Не удалось сменить пароль</string>
     <string name="add_profile">Добавить профиль</string>
     <string name="name">Имя</string>
+    <string name="secondname">Фамилия</string>
     <string name="input_name">Введите имя</string>
+    <string name="input_secondname">Введите фамилию</string>
     <string name="input_id">Введите идентификатор</string>
     <string name="submit">Принять</string>
     <string name="password">Пароль</string>
@@ -97,4 +101,15 @@
     <string name="report_by">Отчёт составил</string>
     <string name="show_area_on_map">Показать участок на карте</string>
     <string name="show_area_on_map_short">Показать на карте</string>
+    <string name="authorize_as_admin">Необходимо авторизоваться как администратор</string>
+    <string name="profile">Профиль</string>
+    <string name="registration_number">Регистрационный номер</string>
+    <string name="input_registration_number">Введите регистрационный номер</string>
+    <string name="edit_object">Редактировать объект</string>
+    <string name="edit_area">Редактировать участок</string>
+    <string name="edit_point">Редактировать точку</string>
+    <string name="diagnostic_points">Точки диагностирования</string>
+    <string name="create_point">Создать точку</string>
+    <string name="inventory_number">Инвентарный номер</string>
+    <string name="input_inventory_number">Введите инвентарный номер</string>
 </resources>

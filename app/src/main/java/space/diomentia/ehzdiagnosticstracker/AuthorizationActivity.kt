@@ -7,7 +7,6 @@ import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -159,14 +158,16 @@ private fun Content(
                             )
                         }
                         authorizeRequest = null
-                        activity?.run {
-                            startActivity(
-                                Intent(
-                                    context,
-                                    DiagnosticObjectChooseActivity::class.java
+                        if (success) {
+                            activity?.run {
+                                startActivity(
+                                    Intent(
+                                        context,
+                                        DiagnosticObjectChooseActivity::class.java
+                                    )
                                 )
-                            )
-                            finish()
+                                finish()
+                            }
                         }
                     }
                 )
@@ -180,9 +181,10 @@ private fun Content(
             ) {
                 items(profiles) { profile ->
                     ProfileItem(profile) {
-                        if (AppState.profileSession != profile) {
-                            authorizeRequest = profile
-                        } else {
+                        if (AppState.adminSession) {
+                            AppState.profileSession = profile
+                        }
+                        if (AppState.profileSession == profile) {
                             activity?.run {
                                 startActivity(
                                     Intent(
@@ -192,27 +194,36 @@ private fun Content(
                                 )
                                 finish()
                             }
+                        } else {
+                            authorizeRequest = profile
                         }
                     }
                 }
                 item {
-                    AnimatedVisibility(AppState.adminSession) {
-                        PtmFilledButton(
-                            onClick = { addUserRequest = true },
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Add,
-                                    contentDescription = stringResource(R.string.add_profile)
-                                )
-                                Text(
-                                    stringResource(R.string.add_profile),
-                                    modifier = Modifier.padding(start = 8.dp)
-                                )
+                    PtmFilledButton(
+                        onClick = {
+                            if (!AppState.adminSession) {
+                                coroutineScope?.launch {
+                                    snackbarHostState.currentSnackbarData?.dismiss()
+                                    snackbarHostState.showSnackbar(context.getString(R.string.authorize_as_admin))
+                                }
+                                return@PtmFilledButton
                             }
+                            addUserRequest = true
+                        },
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Add,
+                                contentDescription = stringResource(R.string.add_profile)
+                            )
+                            Text(
+                                stringResource(R.string.add_profile),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
                         }
                     }
                 }
@@ -250,6 +261,7 @@ private fun AuthorizeDialog(
                         Text(
                             stringResource(R.string.input_password),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -320,6 +332,8 @@ private fun AddUserDialog(
     val snackbarHostState = LocalSnackbarHostState.current
     var nameInput by remember { mutableStateOf("") }
     var nameError by remember { mutableStateOf(false) }
+    var secondnameInput by remember { mutableStateOf("") }
+    var secondnameError by remember { mutableStateOf(false) }
     var passwordInput by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
 
@@ -345,6 +359,31 @@ private fun AddUserDialog(
                         Text(
                             stringResource(R.string.input_name),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
+                            modifier = Modifier.alpha(.5f)
+                        )
+                    },
+                    isError = nameError,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier
+                        .padding(vertical = 12.dp)
+                        .padding(start = 16.dp)
+                )
+                Text(
+                    "${stringResource(R.string.secondname)}:",
+                    style = MaterialTheme.typography.titleSmall
+                )
+                TextField(
+                    secondnameInput,
+                    onValueChange = {
+                        secondnameError = false
+                        secondnameInput = it
+                    },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.input_secondname),
+                            fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -368,6 +407,7 @@ private fun AddUserDialog(
                         Text(
                             stringResource(R.string.input_password),
                             fontStyle = FontStyle.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -387,10 +427,12 @@ private fun AddUserDialog(
                     PtmFilledButton(
                         onClick = {
                             val name = nameInput
+                            val secondname = secondnameInput
                             val hashword = PasswordHash.encrypt(passwordInput)?.hash
                             if (
                                 (hashword == null).also { passwordError = it }
                                 || (!Profile.checkName(name)).also { nameError = it }
+                                || (!Profile.checkName(secondname)).also { secondnameError = it }
                             ) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
@@ -401,7 +443,7 @@ private fun AddUserDialog(
                             AppState.profileDb?.profileDao()?.run {
                                 createProfile(
                                     Profile(
-                                        name = name,
+                                        name = "$secondname $name",
                                         hashword = hashword!!
                                     )
                                 )
@@ -409,7 +451,7 @@ private fun AddUserDialog(
                             onDismissRequest()
                         }
                     ) {
-                        Text(stringResource(R.string.login))
+                        Text(stringResource(R.string.create))
                     }
                     PtmFilledButton(
                         onClick = onDismissRequest,

@@ -227,6 +227,11 @@ private fun AreaInfo(
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
+        Text(
+            "${stringResource(R.string.profile)}: ${AppState.profileSession?.name}",
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleSmall
+        )
     }
 }
 
@@ -416,6 +421,16 @@ private fun MenuActionButtonsRow(
             .weight(1f)
         MenuActionButton(
             actionButtonModifier,
+            buttonHeight = rowHeight,
+            description = stringResource(R.string.diagnostic_points),
+            icon = painterResource(R.drawable.ic_edit_location)
+        ) {
+            context.startActivity(
+                Intent(context, DiagnosticPointsActivity::class.java)
+            )
+        }
+        MenuActionButton(
+            actionButtonModifier,
             enabled = areaLastLocation != null,
             buttonHeight = rowHeight,
             description = stringResource(R.string.show_area_on_map),
@@ -474,6 +489,7 @@ private fun DiagnosticsTypeSelector(
                         stringResource(R.string.diagnostics_type),
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
                         modifier = Modifier.fillMaxWidth()
                     )
                 },

@@ -75,7 +75,7 @@ object AppState {
         }
     }
 
-    var adminSession by mutableStateOf(true)
+    var adminSession by mutableStateOf(false)
         private set
 
     suspend fun elevateToAdmin(context: Context, password: String): Boolean {
@@ -90,11 +90,10 @@ object AppState {
     }
 
     var profileSession by mutableStateOf<Profile?>(null)
-        private set
 
     fun loginProfile(profile: Profile, password: String) =
         (PasswordHash.encrypt(password) == PasswordHash.fromHash(profile.hashword)).also {
-            if (it) profileSession = profile else profileSession = null
+            profileSession = if (it) profile else null
         }
 
     private inline fun <reified T> lazyFileFetch(
@@ -193,7 +192,7 @@ object AppState {
             AppState.reportDb?.diagnosticAreaDao()?.run {
                 diagnosticArea?.let {
                     val area = getAreaByIdOnce(it)
-                    updateArea(
+                    updateDiagnosticArea(
                         area.copy(
                             lastLocation = Coordinates(
                                 latitude = location.latitude,

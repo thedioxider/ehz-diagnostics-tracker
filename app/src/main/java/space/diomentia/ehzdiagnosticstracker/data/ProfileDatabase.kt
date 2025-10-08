@@ -33,11 +33,7 @@ data class Profile(
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") val id: Long = 0
 ) {
     companion object {
-        fun checkName(name: String): Boolean = Regex("^\\w+( \\w+){1,2}$").matches(name)
-    }
-
-    init {
-        if (!checkName(name)) throw IllegalArgumentException("wrong name format used")
+        fun checkName(name: String): Boolean = Regex("^[\\w-.]+$").matches(name)
     }
 }
 

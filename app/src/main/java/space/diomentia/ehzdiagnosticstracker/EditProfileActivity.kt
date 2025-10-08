@@ -197,6 +197,7 @@ private fun Content() {
                                 Text(
                                     stringResource(R.string.input_name),
                                     fontStyle = FontStyle.Italic,
+                                    maxLines = 1,
                                     modifier = Modifier.alpha(.5f)
                                 )
                             },
@@ -300,6 +301,7 @@ private fun ProfilePasswordChangeDialog(
                         Text(
                             stringResource(R.string.input_password),
                             fontStyle = FontStyle.Companion.Italic,
+                            maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
@@ -360,6 +362,7 @@ private fun AdminPasswordChangeDialog(
                         Text(
                             stringResource(R.string.input_password),
                             fontStyle = FontStyle.Companion.Italic,
+                            maxLines = 1,
                             modifier = Modifier.Companion.alpha(.5f)
                         )
                     },
