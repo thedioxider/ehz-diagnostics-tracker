@@ -59,6 +59,7 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.PasswordHash
 import space.diomentia.ehzdiagnosticstracker.data.Profile
+import space.diomentia.ehzdiagnosticstracker.data.ProfileDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
@@ -93,10 +94,10 @@ private fun Content(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     var adminPasswordRequest by remember { mutableStateOf(false) }
-    val profiles by AppState.profileDb
-        ?.profileDao()
-        ?.getProfiles()
-        ?.collectAsStateWithLifecycle(emptyList()) ?: profiles
+    val profiles by ProfileDatabase.getInstance()
+        .profileDao()
+        .getProfiles()
+        .collectAsStateWithLifecycle(emptyList())
 
     PtmTheme {
         Scaffold(
@@ -465,15 +466,14 @@ private fun AddUserDialog(
                                 }
                                 return@PtmFilledButton
                             }
-                            AppState.profileDb?.profileDao()?.run {
-                                createProfile(
+                            ProfileDatabase.getInstance(context).profileDao()
+                                .createProfile(
                                     Profile(
                                         name = name,
                                         surname = surname,
                                         hashword = hashword!!
                                     )
                                 )
-                            }
                             onDismissRequest()
                         }
                     ) {

@@ -73,6 +73,7 @@ import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObjectWithAreas
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
@@ -102,16 +103,16 @@ class ToolMenuActivity : ComponentActivity() {
                 LocalCoroutineScope provides rememberCoroutineScope(),
                 LocalSnackbarHostState provides snackbarHostState,
                 LocalDiagnosticObject provides (AppState.CurrentDiagnosticSession.diagnosticObject?.let {
-                    AppState.reportDb
-                        ?.diagnosticAreaDao()
-                        ?.getObjectById(it)
-                        ?.collectAsStateWithLifecycle(null)
+                    ReportDatabase.getInstance()
+                        .diagnosticAreaDao()
+                        .getObjectById(it)
+                        .collectAsStateWithLifecycle(null)
                 } ?: remember { mutableStateOf(null) }),
                 LocalDiagnosticArea provides (AppState.CurrentDiagnosticSession.diagnosticArea?.let {
-                    AppState.reportDb
-                        ?.diagnosticAreaDao()
-                        ?.getAreaById(it)
-                        ?.collectAsStateWithLifecycle(null)
+                    ReportDatabase.getInstance()
+                        .diagnosticAreaDao()
+                        .getAreaById(it)
+                        .collectAsStateWithLifecycle(null)
                 } ?: remember { mutableStateOf(null) })
             ) {
                 Content()

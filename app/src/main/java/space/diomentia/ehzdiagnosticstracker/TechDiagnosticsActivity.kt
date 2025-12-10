@@ -51,6 +51,7 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
 import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -114,22 +115,22 @@ private fun Content() {
     val snackbarHostState = LocalSnackbarHostState.current
     var state by LocalUiState.current
     val diagnosticObject by AppState.CurrentDiagnosticSession.diagnosticObject?.let { id ->
-        AppState.reportDb
-            ?.diagnosticAreaDao()
-            ?.getObjectById(id)
-            ?.collectAsStateWithLifecycle(null)
+        ReportDatabase.getInstance()
+            .diagnosticAreaDao()
+            .getObjectById(id)
+            .collectAsStateWithLifecycle(null)
     } ?: remember { mutableStateOf(null) }
     val diagnosticArea by AppState.CurrentDiagnosticSession.diagnosticArea?.let { id ->
-        AppState.reportDb
-            ?.diagnosticAreaDao()
-            ?.getAreaById(id)
-            ?.collectAsStateWithLifecycle(null)
+        ReportDatabase.getInstance()
+            .diagnosticAreaDao()
+            .getAreaById(id)
+            .collectAsStateWithLifecycle(null)
     } ?: remember { mutableStateOf(null) }
     val diagnosticPoint by AppState.CurrentDiagnosticSession.diagnosticPoint?.let { diagnosticPoint ->
-        AppState.reportDb
-            ?.diagnosticAreaDao()
-            ?.getPointById(diagnosticPoint)
-            ?.collectAsStateWithLifecycle(null)
+        ReportDatabase.getInstance()
+            .diagnosticAreaDao()
+            .getPointById(diagnosticPoint)
+            .collectAsStateWithLifecycle(null)
     } ?: remember { mutableStateOf(null) }
 
     if (AppState.CurrentDiagnosticSession.diagnosticPoint == null) activity?.finish()

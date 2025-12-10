@@ -47,6 +47,7 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.PasswordHash
 import space.diomentia.ehzdiagnosticstracker.data.Profile
+import space.diomentia.ehzdiagnosticstracker.data.ProfileDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -135,17 +136,12 @@ private fun Content() {
                     onApply = { password ->
                         val hashword = PasswordHash.encrypt(password)
                         if (hashword == null) return@ProfilePasswordChangeDialog
-                        val success = AppState.profileDb
-                            ?.profileDao()
-                            ?.updateProfile(profile.copy(hashword = hashword.hash)) != null
+                        ProfileDatabase.getInstance(context)
+                            .profileDao()
+                            .updateProfile(profile.copy(hashword = hashword.hash))
                         coroutineScope?.launch {
                             snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(
-                                if (success)
-                                    context.getString(R.string.profile_saved)
-                                else
-                                    context.getString(R.string.profile_save_fail)
-                            )
+                            snackbarHostState.showSnackbar(context.getString(R.string.profile_saved))
                         }
                     },
                     onDismissRequest = { profilePasswordChangeRequest = null }
@@ -251,17 +247,12 @@ private fun Content() {
                                 val name = nameInput
                                 if (Profile.checkName(name).also { nameError = it })
                                     return@PtmFilledButton
-                                val success = AppState.profileDb
-                                    ?.profileDao()
-                                    ?.updateProfile(profile.copy(name = name)) != null
+                                ProfileDatabase.getInstance(context)
+                                    .profileDao()
+                                    .updateProfile(profile.copy(name = name))
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(
-                                        if (success)
-                                            context.getString(R.string.profile_saved)
-                                        else
-                                            context.getString(R.string.profile_save_fail)
-                                    )
+                                    snackbarHostState.showSnackbar(context.getString(R.string.profile_saved))
                                 }
                             }
                         ) {
@@ -427,10 +418,8 @@ private fun DeleteProfileDialog(
     profile: Profile,
     onDismissRequest: () -> Unit
 ) {
-    LocalContext.current
+    val context = LocalContext.current
     val activity = LocalActivity.current
-    LocalCoroutineScope.current
-    LocalSnackbarHostState.current
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
             Column(
@@ -447,15 +436,13 @@ private fun DeleteProfileDialog(
                 )
                 PtmFilledButton(
                     onClick = {
-                        if (AppState.profileDb
-                                ?.profileDao()
-                                ?.deleteProfile(profile) != null
-                        ) {
-                            onDismissRequest()
-                            activity?.run {
-                                setResult(EditProfileActivity.RESULT_PROFILE_DELETED)
-                                finish()
-                            }
+                        ProfileDatabase.getInstance(context)
+                            .profileDao()
+                            .deleteProfile(profile)
+                        onDismissRequest()
+                        activity?.run {
+                            setResult(EditProfileActivity.RESULT_PROFILE_DELETED)
+                            finish()
                         }
                     }
                 ) {

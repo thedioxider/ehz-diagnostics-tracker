@@ -28,7 +28,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -50,6 +50,7 @@ import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
@@ -80,9 +81,8 @@ class ReportHistoryActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Content(
-    reports: MutableState<List<DiagnosticReportWithData>> = mutableStateOf(emptyList())
-) {
+private fun Content() {
+    val context = LocalContext.current
     val activity = LocalActivity.current
 
     PtmTheme {
@@ -119,7 +119,7 @@ private fun Content(
                 ReportDeleteDialog(
                     onDismissRequest = { reportDelete = null },
                     onAcceptRequest = {
-                        AppState.reportDb?.diagnosticReportDao()?.run {
+                        ReportDatabase.getInstance(context).diagnosticReportDao().run {
                             deleteData(*it.data.toTypedArray())
                             deleteReport(it.report)
                             reportDelete = null
@@ -129,17 +129,16 @@ private fun Content(
             }
 
             val history by AppState.CurrentDiagnosticSession.diagnosticArea?.let {
-                AppState.reportDb
-                    ?.diagnosticAreaDao()
-                    ?.getAreaPoints(it)
-                    ?.collectAsStateWithLifecycle(emptyList())
+                ReportDatabase.getInstance()
+                    .diagnosticAreaDao()
+                    .getAreaPoints(it)
+                    .collectAsStateWithLifecycle(emptyList())
             } ?: remember { mutableStateOf(emptyList()) }
             history.forEach { point ->
-                val reports by AppState.reportDb
-                    ?.diagnosticAreaDao()
-                    ?.getPointReports(point.point.id)
-                    ?.collectAsStateWithLifecycle(emptyList())
-                    ?: reports
+                val reports by ReportDatabase.getInstance()
+                    .diagnosticAreaDao()
+                    .getPointReports(point.point.id)
+                    .collectAsStateWithLifecycle(emptyList())
                 if (reports.isEmpty()) {
                     Box(
                         contentAlignment = Alignment.Center,
@@ -182,11 +181,10 @@ private fun ReportItem(
                 LocalDateTime.now()
             )
         )
-    val diagnosticPoint by AppState.reportDb
-        ?.diagnosticAreaDao()
-        ?.getPointById(report.report.diagnosticPoint)
-        ?.collectAsStateWithLifecycle(null)
-        ?: remember { mutableStateOf(null) }
+    val diagnosticPoint by ReportDatabase.getInstance()
+        .diagnosticAreaDao()
+        .getPointById(report.report.diagnosticPoint)
+        .collectAsStateWithLifecycle(null)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -370,7 +368,7 @@ private val previewReports = listOf(
 @Preview
 @Composable
 private fun ContentPreview() {
-    PtmTheme { Content(remember { mutableStateOf(previewReports) }) }
+    PtmTheme { Content() }
 }
 
 @Preview

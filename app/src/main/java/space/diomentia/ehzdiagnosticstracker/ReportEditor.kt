@@ -374,6 +374,7 @@ private fun ReportField(
 private fun SaveButton(
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val activity = LocalActivity.current
     val reportConfig = AppState.reportConfig.value ?: return
     val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
@@ -392,7 +393,7 @@ private fun SaveButton(
     PtmFilledButton(
         enabled = enabled,
         onClick = {
-            AppState.CurrentDiagnosticSession.insertToDb()
+            AppState.CurrentDiagnosticSession.reportToDb(context)
             activity?.run {
                 setResult(Activity.RESULT_OK)
                 finish()

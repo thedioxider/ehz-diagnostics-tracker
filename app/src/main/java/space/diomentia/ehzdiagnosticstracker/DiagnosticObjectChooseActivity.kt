@@ -58,6 +58,7 @@ import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
@@ -119,11 +120,10 @@ private fun Content() {
                 )
             }
         ) { innerPadding ->
-            val diagnosticObjects by AppState.reportDb
-                ?.diagnosticAreaDao()
-                ?.getAllObjects()
-                ?.collectAsStateWithLifecycle(emptyList())
-                ?: remember { mutableStateOf(emptyList()) }
+            val diagnosticObjects by ReportDatabase.getInstance()
+                .diagnosticAreaDao()
+                .getAllObjects()
+                .collectAsStateWithLifecycle(emptyList())
 
             if (createObjectRequest) {
                 AddObjectDialog { createObjectRequest = false }
@@ -159,10 +159,10 @@ private fun Content() {
             }
 
             val selectedObjectAreas by AppState.CurrentDiagnosticSession.diagnosticObject?.let {
-                AppState.reportDb
-                    ?.diagnosticAreaDao()
-                    ?.getObjectAreas(it)
-                    ?.collectAsStateWithLifecycle(emptyList())
+                ReportDatabase.getInstance()
+                    .diagnosticAreaDao()
+                    .getObjectAreas(it)
+                    .collectAsStateWithLifecycle(emptyList())
             } ?: remember { mutableStateOf(emptyList()) }
             FullscreenLazyColumn(innerPadding) {
                 items(diagnosticObjects) { diagnosticObject ->
@@ -415,15 +415,14 @@ private fun AddObjectDialog(
                                 }
                                 return@PtmFilledButton
                             }
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                insertDiagnosticObject(
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .insertDiagnosticObject(
                                     DiagnosticObject(
                                         id = id,
                                         inventoryId = id,
                                         name = name
                                     )
                                 )
-                            }
                             onDismissRequest()
                         }
                     ) {
@@ -508,11 +507,10 @@ private fun EditObjectDialog(
                                 }
                                 return@PtmFilledButton
                             }
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                updateDiagnosticObject(
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .updateDiagnosticObject(
                                     diagnosticObject.copy(name = nameInput)
                                 )
-                            }
                             onDismissRequest()
                         }
                     ) {
@@ -520,9 +518,8 @@ private fun EditObjectDialog(
                     }
                     PtmFilledButton(
                         onClick = {
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                deleteDiagnosticObject(diagnosticObject)
-                            }
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .deleteDiagnosticObject(diagnosticObject)
                         }
                     ) {
                         Text(stringResource(R.string.delete))
@@ -618,8 +615,8 @@ private fun AddAreaDialog(
                                 }
                                 return@PtmFilledButton
                             }
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                insertDiagnosticArea(
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .insertDiagnosticArea(
                                     DiagnosticArea(
                                         id = id,
                                         name = name,
@@ -627,7 +624,6 @@ private fun AddAreaDialog(
                                         dangerClass = "0"
                                     )
                                 )
-                            }
                             onDismissRequest()
                         }
                     ) {
@@ -712,11 +708,10 @@ private fun EditAreaDialog(
                                 }
                                 return@PtmFilledButton
                             }
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                updateDiagnosticArea(
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .updateDiagnosticArea(
                                     diagnosticArea.copy(name = nameInput)
                                 )
-                            }
                             onDismissRequest()
                         }
                     ) {
@@ -724,9 +719,8 @@ private fun EditAreaDialog(
                     }
                     PtmFilledButton(
                         onClick = {
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                deleteDiagnosticArea(diagnosticArea)
-                            }
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .deleteDiagnosticArea(diagnosticArea)
                         }
                     ) {
                         Text(stringResource(R.string.delete))

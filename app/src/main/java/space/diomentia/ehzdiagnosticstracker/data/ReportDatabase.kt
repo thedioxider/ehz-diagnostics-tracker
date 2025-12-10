@@ -1,6 +1,8 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
-import androidx.room.AutoMigration
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -13,13 +15,12 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
-
-const val REPORT_DATABASE_NAME = "report-db"
 
 @Database(
     version = 3,
@@ -29,14 +30,30 @@ const val REPORT_DATABASE_NAME = "report-db"
         DiagnosticObject::class,
         DiagnosticArea::class,
         DiagnosticPoint::class
-    ],
-    autoMigrations = [
-        AutoMigration(from = 1, to = 2)
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
     abstract fun diagnosticReportDao(): DiagnosticReportDao
     abstract fun diagnosticAreaDao(): DiagnosticAreaDao
+
+    companion object {
+        const val DB_NAME = "report-db"
+
+        @Volatile
+        private var INSTANCE: ReportDatabase? = null
+
+        fun getInstance(context: Context) = synchronized(this) {
+            INSTANCE ?: Room
+                .databaseBuilder(context, ReportDatabase::class.java, DB_NAME)
+                // TODO: get rid of this crutch
+                .allowMainThreadQueries()
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .build()
+        }
+
+        @Composable
+        fun getInstance() = getInstance(LocalContext.current)
+    }
 }
 
 @Serializable

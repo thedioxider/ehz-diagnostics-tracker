@@ -55,6 +55,7 @@ import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
@@ -122,10 +123,10 @@ private fun Content() {
             }
         ) { innerPadding ->
             val diagnosticPoints by AppState.CurrentDiagnosticSession.diagnosticArea?.let { area ->
-                AppState.reportDb
-                    ?.diagnosticAreaDao()
-                    ?.getAreaPoints(area)
-                    ?.collectAsStateWithLifecycle(emptyList())
+                ReportDatabase.getInstance()
+                    .diagnosticAreaDao()
+                    .getAreaPoints(area)
+                    .collectAsStateWithLifecycle(emptyList())
             } ?: remember { mutableStateOf(emptyList()) }
 
             if (createPointRequest) {
@@ -293,8 +294,8 @@ private fun AddPointDialog(
                                 }
                                 return@PtmFilledButton
                             }
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                insertDiagnosticPoint(
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .insertDiagnosticPoint(
                                     DiagnosticPoint(
                                         id = id,
                                         inventoryId = inventoryNumber,
@@ -302,7 +303,6 @@ private fun AddPointDialog(
                                         diagnosticArea = area
                                     )
                                 )
-                            }
                             onDismissRequest()
                         }
                     ) {
@@ -387,11 +387,10 @@ private fun EditPointDialog(
                                 }
                                 return@PtmFilledButton
                             }
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                updateDiagnosticPoint(
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .updateDiagnosticPoint(
                                     diagnosticPoint.copy(inventoryId = inventoryNumber)
                                 )
-                            }
                             onDismissRequest()
                         }
                     ) {
@@ -399,9 +398,8 @@ private fun EditPointDialog(
                     }
                     PtmFilledButton(
                         onClick = {
-                            AppState.reportDb?.diagnosticAreaDao()?.run {
-                                deleteDiagnosticPoint(diagnosticPoint)
-                            }
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
+                                .deleteDiagnosticPoint(diagnosticPoint)
                         }
                     ) {
                         Text(stringResource(R.string.delete))

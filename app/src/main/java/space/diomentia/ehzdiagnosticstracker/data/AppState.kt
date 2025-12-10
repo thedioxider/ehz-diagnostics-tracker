@@ -16,7 +16,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.room.Room
 import com.charleskorn.kaml.InvalidPropertyValueException
 import com.charleskorn.kaml.Yaml
 import kotlinx.coroutines.launch
@@ -35,23 +34,14 @@ object AppState {
     var inspectionMode = true
     var dataDir: File? = null
     var resources: Resources? = null
-    var reportDb: ReportDatabase? = null
-    var profileDb: ProfileDatabase? = null
     var packageInfo: PackageInfo? = null
 
     fun init(context: Context) {
         inspectionMode = false
         dataDir = context.dataDir
         resources = context.resources
-        reportDb = Room.databaseBuilder(context, ReportDatabase::class.java, REPORT_DATABASE_NAME)
-            // TODO: get rid of this crutch
-            .allowMainThreadQueries()
-            .build()
-        profileDb =
-            Room.databaseBuilder(context, ProfileDatabase::class.java, PROFILE_DATABASE_NAME)
-                .allowMainThreadQueries()
-                .addMigrations(ProfileDatabase.MIGRATION_1_2)
-                .build()
+        val reportDb = ReportDatabase.getInstance(context)
+
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
 
         val initialAreaEntries = Yaml.default.decodeFromString<InitialAreaEntries>(
@@ -61,18 +51,18 @@ object AppState {
         )
         initialAreaEntries.diagnosticObjects.forEach {
             reportDb
-                ?.diagnosticAreaDao()
-                ?.insertDiagnosticObject(it)
+                .diagnosticAreaDao()
+                .insertDiagnosticObject(it)
         }
         initialAreaEntries.diagnosticAreas.forEach {
             reportDb
-                ?.diagnosticAreaDao()
-                ?.insertDiagnosticArea(it)
+                .diagnosticAreaDao()
+                .insertDiagnosticArea(it)
         }
         initialAreaEntries.diagnosticPoints.forEach {
             reportDb
-                ?.diagnosticAreaDao()
-                ?.insertDiagnosticPoint(it)
+                .diagnosticAreaDao()
+                .insertDiagnosticPoint(it)
         }
     }
 
@@ -150,8 +140,8 @@ object AppState {
             data.forEach { (_, v) -> (v as MutableState<Any?>).value = null }
         }
 
-        fun insertToDb(): Boolean {
-            val reportDb = reportDb
+        fun reportToDb(context: Context): Boolean {
+            val reportDb = ReportDatabase.getInstance(context)
             val reportConfig = reportConfig.value
             val dPoint = diagnosticPoint
             val diagnosticType = reportType
@@ -162,7 +152,6 @@ object AppState {
                 || diagnosticType == null
                 || location == null
                 || reportConfig == null
-                || reportDb == null
                 || inspector == null
             ) return false
             (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
@@ -175,7 +164,7 @@ object AppState {
                 this@CurrentDiagnosticSession.diagnosticType.toString(),
                 reportConfig.reportTypes[diagnosticType].id,
                 Coordinates(location.latitude, location.altitude),
-                inspector.name
+                "${inspector.surname} ${inspector.name}"
             )
             val reportId = reportDb.diagnosticReportDao().insertReport(report)
             val dataEntries = data
@@ -190,7 +179,7 @@ object AppState {
                 .toTypedArray()
             reportDb.diagnosticReportDao().insertData(*dataEntries)
             reset()
-            AppState.reportDb?.diagnosticAreaDao()?.run {
+            reportDb.diagnosticAreaDao().run {
                 diagnosticArea?.let {
                     val area = getAreaByIdOnce(it)
                     updateDiagnosticArea(
