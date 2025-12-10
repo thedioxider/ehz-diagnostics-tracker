@@ -83,9 +83,9 @@
     <string name="change_password_fail">Не удалось сменить пароль</string>
     <string name="add_profile">Добавить профиль</string>
     <string name="name">Имя</string>
-    <string name="secondname">Фамилия</string>
+    <string name="surname">Фамилия</string>
     <string name="input_name">Введите имя</string>
-    <string name="input_secondname">Введите фамилию</string>
+    <string name="input_surname">Введите фамилию</string>
     <string name="input_id">Введите идентификатор</string>
     <string name="submit">Принять</string>
     <string name="password">Пароль</string>
@@ -98,6 +98,7 @@
     <string name="delete">Удалить</string>
     <string name="profile_deleted">Профиль удалён</string>
     <string name="change_account">Сменить аккаунт</string>
+    <string name="admin_authorized">Успешная авторизация в качестве администратора</string>
     <string name="report_by">Отчёт составил</string>
     <string name="show_area_on_map">Показать участок на карте</string>
     <string name="show_area_on_map_short">Показать на карте</string>
@@ -112,4 +113,6 @@
     <string name="create_point">Создать точку</string>
     <string name="inventory_number">Инвентарный номер</string>
     <string name="input_inventory_number">Введите инвентарный номер</string>
+    <string name="name_only_letters">Имя и фамилия могут содержать только буквы</string>
+    <string name="password_symbols">Пароль может содержать в себе только буквы, цифры и специальные символы</string>
 </resources>

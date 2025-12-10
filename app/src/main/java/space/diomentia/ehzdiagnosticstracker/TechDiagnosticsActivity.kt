@@ -210,11 +210,7 @@ private fun Content() {
                         .fillMaxWidth()
                 )
                 Text(
-                    "${stringResource(R.string.report_by)} ${
-                        AppState.profileSession?.name ?: stringResource(
-                            R.string.unknown
-                        )
-                    }",
+                    "${stringResource(R.string.report_by)} " + AppState.profileSession?.let { "${it.surname} ${it.name[0]}." },
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(top = 8.dp)

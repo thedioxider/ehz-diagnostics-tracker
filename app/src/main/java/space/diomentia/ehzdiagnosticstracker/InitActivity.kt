@@ -42,7 +42,7 @@ class InitActivity : ComponentActivity() {
         AppState.init(this)
         setupEdgeToEdge(this)
         setContent {
-            if (LocalDate.now() < LocalDate.of(2025, 11, 1)) {
+            if (LocalDate.now() < LocalDate.of(2026, 1, 1)) {
                 Content()
             } else {
                 NowYouPayUs()

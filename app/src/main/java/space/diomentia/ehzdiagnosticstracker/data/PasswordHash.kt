@@ -4,8 +4,10 @@ import java.security.MessageDigest
 
 class PasswordHash private constructor(val hash: String) {
     companion object {
+        const val SPECIAL_SYMBOLS = "!@#$%^&*()-=+/,.\"';:?`~[]{}"
+
         fun checkInput(password: String): Boolean = Regex(
-            "^[\\w!@#$%^&*()\\-=+/,.\"';:?`~\\[\\]{}]+$"
+            "^[\\w0-9!@#$%^&*()\\-=+/,.\"';:?`~\\[\\]{}]+$"
         ).matches(password)
 
         fun encrypt(password: String): PasswordHash? {

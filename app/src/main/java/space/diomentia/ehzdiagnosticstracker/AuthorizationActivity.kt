@@ -40,6 +40,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -105,7 +107,19 @@ private fun Content(
                     actions = {
                         ActionButton(
                             painterResource(R.drawable.ic_manage_accounts),
-                            label = "${stringResource(R.string.login_as)} ${stringResource(R.string.administrator)}"
+                            label = "${stringResource(R.string.login_as)} ${stringResource(R.string.administrator)}",
+                            tint = if (AppState.adminSession)
+                                MaterialTheme.colorScheme.background
+                            else
+                                MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .background(
+                                    color = if (AppState.adminSession)
+                                        MaterialTheme.colorScheme.primary
+                                    else
+                                        Color.Transparent,
+                                    shape = RectangleShape
+                                )
                         ) { adminPasswordRequest = true }
                         if (AppState.adminSession == true) {
                             val editorLauncher = rememberLauncherForActivityResult(
@@ -144,7 +158,7 @@ private fun Content(
             var authorizeRequest by remember { mutableStateOf<Profile?>(null) }
             authorizeRequest?.let { profile ->
                 AuthorizeDialog(
-                    profile.name,
+                    profile,
                     onDismissRequest = { authorizeRequest = null },
                     onLogin = { password ->
                         val success = AppState.loginProfile(profile, password)
@@ -234,7 +248,7 @@ private fun Content(
 
 @Composable
 private fun AuthorizeDialog(
-    name: String,
+    profile: Profile,
     onDismissRequest: () -> Unit,
     onLogin: (String) -> Unit
 ) {
@@ -249,7 +263,8 @@ private fun AuthorizeDialog(
                     .padding(16.dp)
             ) {
                 Text(
-                    "${stringResource(R.string.login_as)} $name",
+                    "${stringResource(R.string.login_as)} ${profile.surname}" +
+                            if (profile.name.isNotBlank()) " ${profile.name[0]}." else "",
                     style = MaterialTheme.typography.titleMedium
                 )
                 TextField(
@@ -309,7 +324,7 @@ private fun AdminAuthorizeDialog(
             snackbarHostState.currentSnackbarData?.dismiss()
             snackbarHostState.showSnackbar(
                 if (success)
-                    "${context.getString(R.string.auth_success)}!"
+                    context.getString(R.string.admin_authorized)
                 else
                     "${context.getString(R.string.auth_fail)}..."
             )
@@ -318,7 +333,11 @@ private fun AdminAuthorizeDialog(
         onDismissRequest()
     }
     AuthorizeDialog(
-        name = stringResource(R.string.administrator),
+        profile = Profile(
+            surname = stringResource(R.string.administrator),
+            name = "",
+            hashword = ""
+        ),
         onDismissRequest = onDismissRequest
     ) { adminPasswordInput = it }
 }
@@ -332,8 +351,8 @@ private fun AddUserDialog(
     val snackbarHostState = LocalSnackbarHostState.current
     var nameInput by remember { mutableStateOf("") }
     var nameError by remember { mutableStateOf(false) }
-    var secondnameInput by remember { mutableStateOf("") }
-    var secondnameError by remember { mutableStateOf(false) }
+    var surnameInput by remember { mutableStateOf("") }
+    var surnameError by remember { mutableStateOf(false) }
     var passwordInput by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf(false) }
 
@@ -370,18 +389,18 @@ private fun AddUserDialog(
                         .padding(start = 16.dp)
                 )
                 Text(
-                    "${stringResource(R.string.secondname)}:",
+                    "${stringResource(R.string.surname)}:",
                     style = MaterialTheme.typography.titleSmall
                 )
                 TextField(
-                    secondnameInput,
+                    surnameInput,
                     onValueChange = {
-                        secondnameError = false
-                        secondnameInput = it
+                        surnameError = false
+                        surnameInput = it
                     },
                     placeholder = {
                         Text(
-                            stringResource(R.string.input_secondname),
+                            stringResource(R.string.input_surname),
                             fontStyle = FontStyle.Italic,
                             maxLines = 1,
                             modifier = Modifier.alpha(.5f)
@@ -427,23 +446,30 @@ private fun AddUserDialog(
                     PtmFilledButton(
                         onClick = {
                             val name = nameInput
-                            val secondname = secondnameInput
+                            val surname = surnameInput
                             val hashword = PasswordHash.encrypt(passwordInput)?.hash
                             if (
                                 (hashword == null).also { passwordError = it }
                                 || (!Profile.checkName(name)).also { nameError = it }
-                                || (!Profile.checkName(secondname)).also { secondnameError = it }
+                                || (!Profile.checkName(surname)).also { surnameError = it }
                             ) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
+                                    snackbarHostState.showSnackbar(
+                                        when {
+                                            nameError || surnameError -> context.getString(R.string.name_only_letters)
+                                            hashword == null -> "${context.getString(R.string.password_symbols)}: ${PasswordHash.SPECIAL_SYMBOLS}"
+                                            else -> context.getString(R.string.wrong_profile_input)
+                                        }
+                                    )
                                 }
                                 return@PtmFilledButton
                             }
                             AppState.profileDb?.profileDao()?.run {
                                 createProfile(
                                     Profile(
-                                        name = "$secondname $name",
+                                        name = name,
+                                        surname = surname,
                                         hashword = hashword!!
                                     )
                                 )
@@ -488,13 +514,13 @@ private fun ProfileItem(
                 .background(
                     color = if (AppState.profileSession == profile)
                         MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.background,
+                    else Color.Transparent,
                     shape = CircleShape
                 )
                 .size(96.dp)
         )
         Text(
-            profile.name,
+            "${profile.surname} ${profile.name}",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.weight(1f)
         )
@@ -507,7 +533,7 @@ private fun ProfileItem(
 private fun ContentPreview() = Content(remember {
     mutableStateOf(
         listOf(
-            Profile("Name Secondname", "")
+            Profile("Name", "Secondname", "")
         )
     )
 })
@@ -515,8 +541,15 @@ private fun ContentPreview() = Content(remember {
 @Preview
 @Composable
 private fun AuthorizeDialogPreview() =
-    PtmTheme { AuthorizeDialog(stringResource(R.string.administrator), {}) {} }
+    PtmTheme {
+        AuthorizeDialog(Profile("Name", "Secondname", ""), {}) {}
+    }
+
+@Preview
+@Composable
+private fun AddUserDialogPreview() =
+    PtmTheme { AddUserDialog {} }
 
 @Preview(showBackground = true)
 @Composable
-private fun ProfileItemPreview() = PtmTheme { ProfileItem(Profile("Name Secondname", "")) {} }
+private fun ProfileItemPreview() = PtmTheme { ProfileItem(Profile("Name", "Secondname", "")) {} }

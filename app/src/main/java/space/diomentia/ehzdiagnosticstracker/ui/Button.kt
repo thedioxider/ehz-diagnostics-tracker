@@ -12,6 +12,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonColors
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.ripple
@@ -125,11 +126,13 @@ fun ActionButton(
     icon: Painter,
     modifier: Modifier = Modifier,
     label: String? = null,
+    tint: Color = LocalContentColor.current,
     action: () -> Unit
 ) {
     Icon(
         icon,
         contentDescription = label,
+        tint = tint,
         modifier = Modifier
             .size(48.dp)
             .clickableWithLabel(

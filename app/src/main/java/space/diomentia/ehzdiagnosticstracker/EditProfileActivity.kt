@@ -166,17 +166,19 @@ private fun Content() {
             ) {
                 val profile = AppState.profileSession
                     ?: if (inspectionMode)
-                        Profile("Name Secondname", "")
+                        Profile("Name", "Secondname", "")
                     else null
                 profile?.let { profile ->
                     Text(
-                        profile.name,
+                        "${profile.surname} ${profile.name}",
                         style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                     )
 
                     var nameInput by remember { mutableStateOf(profile.name) }
                     var nameError by remember { mutableStateOf(false) }
+                    var surnameInput by remember { mutableStateOf(profile.surname) }
+                    var surnameError by remember { mutableStateOf(false) }
                     Column(
                         horizontalAlignment = Alignment.Start,
                         modifier = Modifier
@@ -202,6 +204,31 @@ private fun Content() {
                                 )
                             },
                             isError = nameError,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .padding(start = 16.dp)
+                        )
+                        Text(
+                            stringResource(R.string.surname),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        TextField(
+                            surnameInput,
+                            onValueChange = {
+                                surnameError = false
+                                surnameInput = it
+                            },
+                            placeholder = {
+                                Text(
+                                    stringResource(R.string.input_surname),
+                                    fontStyle = FontStyle.Italic,
+                                    maxLines = 1,
+                                    modifier = Modifier.alpha(.5f)
+                                )
+                            },
+                            isError = surnameError,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             modifier = Modifier
                                 .fillMaxWidth()

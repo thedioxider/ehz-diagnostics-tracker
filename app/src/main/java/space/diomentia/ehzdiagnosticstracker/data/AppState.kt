@@ -50,6 +50,7 @@ object AppState {
         profileDb =
             Room.databaseBuilder(context, ProfileDatabase::class.java, PROFILE_DATABASE_NAME)
                 .allowMainThreadQueries()
+                .addMigrations(ProfileDatabase.MIGRATION_1_2)
                 .build()
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
 
