@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
 @Database(
-    version = 4,
+    version = 5,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
@@ -33,7 +33,7 @@ import kotlinx.serialization.Serializable
         DiagnosticPoint::class
     ],
     autoMigrations = [
-        AutoMigration(from = 3, to = 4)
+        AutoMigration(from = 3, to = 5)
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
@@ -79,7 +79,11 @@ data class DiagnosticReport(
     @ColumnInfo(name = "report_type") val reportType: String,
     @Embedded val location: Coordinates,
     @ColumnInfo(name = "inspector") val inspector: String,
-    @ColumnInfo(name = "validated", defaultValue = "0") val validated: Boolean,
+    /**
+     * A validation ID is known when a report point is scanned (via QR or NFC). Can be used for
+     * verification of indeed reaching the point and for identification the same point on server side.
+     */
+    @ColumnInfo(name = "validation_id") val validation: String? = null,
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") val id: Long = 0
 )
 
