@@ -359,6 +359,7 @@ private val previewReports = listOf(
             "85c906f60dff0f735be9ac84411d71e867e7104f",
             Coordinates(25.94825038, 220.4249238),
             "Me Me",
+            true,
             5
         ),
         listOf()

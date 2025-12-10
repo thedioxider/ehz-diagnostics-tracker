@@ -268,6 +268,7 @@ private fun ScanQrButton(
         }
         AppState.CurrentDiagnosticSession.reset()
         AppState.CurrentDiagnosticSession.diagnosticPoint = foundPoint.id
+        AppState.CurrentDiagnosticSession.validated = true
         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
         activity?.run {
             val intent = Intent(context, TechDiagnosticsActivity::class.java)

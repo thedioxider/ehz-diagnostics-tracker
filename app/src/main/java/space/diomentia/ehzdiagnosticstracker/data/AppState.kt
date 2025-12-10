@@ -130,6 +130,7 @@ object AppState {
         var diagnosticType by mutableIntStateOf(0)
         var reportType by mutableStateOf<Int?>(null)
         var location by mutableStateOf<Location?>(null)
+        var validated by mutableStateOf(false)
         var data = mutableMapOf<String, MutableState<out Any?>>()
 
         fun reset() {
@@ -137,6 +138,7 @@ object AppState {
             diagnosticPoint = null
             reportType = null
             location = null
+            validated = false
             data.forEach { (_, v) -> (v as MutableState<Any?>).value = null }
         }
 
@@ -164,7 +166,8 @@ object AppState {
                 this@CurrentDiagnosticSession.diagnosticType.toString(),
                 reportConfig.reportTypes[diagnosticType].id,
                 Coordinates(location.latitude, location.altitude),
-                "${inspector.surname} ${inspector.name}"
+                "${inspector.surname} ${inspector.name}",
+                validated
             )
             val reportId = reportDb.diagnosticReportDao().insertReport(report)
             val dataEntries = data

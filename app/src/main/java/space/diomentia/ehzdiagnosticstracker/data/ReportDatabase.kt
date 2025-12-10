@@ -3,6 +3,7 @@ package space.diomentia.ehzdiagnosticstracker.data
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.room.AutoMigration
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -23,13 +24,16 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
 @Database(
-    version = 3,
+    version = 4,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
         DiagnosticObject::class,
         DiagnosticArea::class,
         DiagnosticPoint::class
+    ],
+    autoMigrations = [
+        AutoMigration(from = 3, to = 4)
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
@@ -75,6 +79,7 @@ data class DiagnosticReport(
     @ColumnInfo(name = "report_type") val reportType: String,
     @Embedded val location: Coordinates,
     @ColumnInfo(name = "inspector") val inspector: String,
+    @ColumnInfo(name = "validated", defaultValue = "0") val validated: Boolean,
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") val id: Long = 0
 )
 
