@@ -185,18 +185,7 @@ private fun Content() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 AreaInfo()
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    ScanQrButton(
-                        modifier = Modifier.size(200.dp)
-                    )
-                    ContinueEditingButton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
-                    )
-                }
+                MainAction()
                 MenuActionButtonsRow(
                     Modifier
                         .fillMaxWidth()
@@ -232,6 +221,25 @@ private fun AreaInfo(
             "${stringResource(R.string.profile)}: " + AppState.profileSession?.let { "${it.surname} ${it.name[0]}." },
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.titleSmall
+        )
+    }
+}
+
+@Composable
+private fun MainAction(
+    modifier: Modifier = Modifier
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.then(modifier)
+    ) {
+        ScanQrButton(
+            modifier = Modifier.size(200.dp)
+        )
+        ContinueEditingButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
         )
     }
 }
