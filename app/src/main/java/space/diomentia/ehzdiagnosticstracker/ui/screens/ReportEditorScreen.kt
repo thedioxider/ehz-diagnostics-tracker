@@ -192,7 +192,8 @@ fun ReportEditorScreen(
                             .fillMaxWidth()
                     )
                     Text(
-                        "${stringResource(R.string.report_by)} " + AppState.profileSession?.let { "${it.surname} ${it.name[0]}." },
+                        "${stringResource(R.string.report_by)} " + (reportSession.inspector
+                            ?: AppState.profileSession?.let { "${it.surname} ${it.name[0]}." }),
                         textAlign = TextAlign.Companion.Center,
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.Companion.padding(top = 8.dp)

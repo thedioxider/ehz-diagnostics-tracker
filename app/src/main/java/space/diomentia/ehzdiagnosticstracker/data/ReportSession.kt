@@ -18,7 +18,7 @@ data class ReportSession(
     val validationId: String? = null,
     val data: MutableMap<String, MutableState<String>> = mutableMapOf(),
     private val reportId: Long? = null,
-    private val inspector: String? = null
+    val inspector: String? = null
 ) {
     companion object {
         fun fromExisting(
