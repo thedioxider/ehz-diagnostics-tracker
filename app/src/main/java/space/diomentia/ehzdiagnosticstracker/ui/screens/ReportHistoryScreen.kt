@@ -123,32 +123,33 @@ fun ReportHistoryScreen(
                     .diagnosticAreaDao()
                     .getAreaPoints(diagnosticSession.diagnosticArea.id)
                     .collectAsStateWithLifecycle(emptyList())
-                history.forEach { point ->
-                    val reports by ReportDatabase.getInstance()
+                val reports = history.flatMap { point ->
+                    ReportDatabase.getInstance()
                         .diagnosticAreaDao()
                         .getPointReports(point.point.id)
                         .collectAsStateWithLifecycle(emptyList())
-                    if (reports.isEmpty()) {
-                        Box(
-                            contentAlignment = Alignment.Companion.Center,
-                            modifier = Modifier.Companion.fillMaxSize()
-                        ) {
-                            Text(
-                                stringResource(R.string.entries_not_found),
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.Companion.alpha(.3f)
-                            )
-                        }
-                        return@Scaffold
+                        .value
+                }
+                if (reports.isEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.Companion.Center,
+                        modifier = Modifier.Companion.fillMaxSize()
+                    ) {
+                        Text(
+                            stringResource(R.string.entries_not_found),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.Companion.alpha(.3f)
+                        )
                     }
-                    FullscreenLazyColumn(innerPadding) {
-                        items(reports) { report ->
-                            ReportItem(
-                                report,
-                                onLongClick = { reportDelete = report }
-                            ) {
-                                reportShowDetails = report
-                            }
+                    return@Scaffold
+                }
+                FullscreenLazyColumn(innerPadding) {
+                    items(reports) { report ->
+                        ReportItem(
+                            report,
+                            onLongClick = { reportDelete = report }
+                        ) {
+                            reportShowDetails = report
                         }
                     }
                 }
