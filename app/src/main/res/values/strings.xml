@@ -118,4 +118,6 @@
     <string name="edit">Изменить</string>
     <string name="delete_area">Удалить участок</string>
     <string name="delete_object">Удалить объект</string>
+    <string name="last_point_report">Последняя точка отчёта</string>
+    <string name="last_report_not_saved">Последний отчёт не сохранён!</string>
 </resources>

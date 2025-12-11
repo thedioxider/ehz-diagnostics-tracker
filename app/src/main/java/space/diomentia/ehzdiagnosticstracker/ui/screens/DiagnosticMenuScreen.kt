@@ -4,12 +4,14 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenuItem
@@ -37,11 +39,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
@@ -50,6 +54,8 @@ import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
@@ -65,9 +71,18 @@ fun DiagnosticMenuScreen(
     onChooseArea: () -> Unit,
     onSettings: () -> Unit,
     onPointList: () -> Unit,
-    onHistory: () -> Unit
+    onHistory: () -> Unit,
+    onEditReport: (ReportSession) -> Unit,
+    reportSession: ReportSession? = null
 ) {
+    val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
+    val history by ReportDatabase.getInstance()
+        .diagnosticAreaDao()
+        .getAreaPoints(diagnosticSession.diagnosticArea.id)
+        .collectAsStateWithLifecycle(emptyList())
+    val latestReport = history.flatMap { it.history }.maxByOrNull { it.timestamp }
+
     CompositionLocalProvider(
         LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
     ) {
@@ -122,9 +137,13 @@ fun DiagnosticMenuScreen(
                     )
                     DiagnosticsTypeSelector()
                     LastReport(
-                        modifier = Modifier.fillMaxWidth(),
-                        onHistory = onHistory,
-                        onPointList = onPointList
+                        reportSession = reportSession ?: latestReport?.let {
+                            ReportSession
+                                .fromExisting(context, diagnosticSession, latestReport.id)
+                        },
+                        onEditReport = onEditReport,
+                        saved = reportSession == null,
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
@@ -175,17 +194,17 @@ private fun MainActions(
         ) {
             MenuActionButton(
                 buttonHeight = 100.dp,
-                description = stringResource(R.string.diagnostic_points),
-                icon = painterResource(R.drawable.ic_edit_location)
-            ) {
-                onPointList()
-            }
-            MenuActionButton(
-                buttonHeight = 100.dp,
                 description = stringResource(R.string.diagnostics_history),
                 icon = painterResource(R.drawable.ic_history)
             ) {
                 onHistory()
+            }
+            MenuActionButton(
+                buttonHeight = 100.dp,
+                description = stringResource(R.string.diagnostic_points),
+                icon = painterResource(R.drawable.ic_edit_location)
+            ) {
+                onPointList()
             }
         }
     }
@@ -239,55 +258,79 @@ private fun MenuActionButton(
 
 @Composable
 private fun LastReport(
-    onPointList: () -> Unit,
-    onHistory: () -> Unit,
-    modifier: Modifier = Modifier
+    reportSession: ReportSession?,
+    saved: Boolean,
+    onEditReport: (ReportSession) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val diagnosticSession by LocalDiagnosticSession.current
     val areaLastLocation = diagnosticSession.diagnosticArea.lastLocation
     val rowHeight = 80.dp
 
-    Row(
-        verticalAlignment = Alignment.Companion.Top,
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        modifier = Modifier.Companion
-            .then(modifier)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.then(modifier)
     ) {
-        val actionButtonModifier = Modifier
-            .weight(1f)
-        MenuActionButton(
-            actionButtonModifier,
-            buttonHeight = rowHeight,
-            description = stringResource(R.string.diagnostic_points),
-            icon = painterResource(R.drawable.ic_edit_location)
-        ) {
-            onPointList()
-        }
-        MenuActionButton(
-            actionButtonModifier,
-            enabled = areaLastLocation != null,
-            buttonHeight = rowHeight,
-            description = stringResource(R.string.show_area_on_map),
-            shortDescription = stringResource(R.string.show_area_on_map_short),
-            icon = painterResource(R.drawable.ic_explore)
-        ) {
-            areaLastLocation?.let {
-                context.startActivity(
-                    Intent(
-                        Intent.ACTION_VIEW,
-                        "geo:0,0?q=${it.latitude},${it.longitude}".toUri()
-                    )
+        reportSession?.let { session ->
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "${stringResource(R.string.last_point_report)}: ${session.diagnosticPoint.inventoryId}",
+                    style = MaterialTheme.typography.titleLarge
                 )
+                if (!saved) {
+                    Text(
+                        stringResource(R.string.last_report_not_saved),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontStyle = FontStyle.Italic
+                    )
+                }
             }
         }
-        MenuActionButton(
-            actionButtonModifier,
-            buttonHeight = rowHeight,
-            description = stringResource(R.string.diagnostics_history),
-            icon = painterResource(R.drawable.ic_history)
+        Spacer(Modifier.height(24.dp))
+        Row(
+            verticalAlignment = Alignment.Companion.Top,
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            onHistory()
+            val actionButtonModifier = Modifier
+                .weight(1f)
+            MenuActionButton(
+                actionButtonModifier,
+                enabled = reportSession != null,
+                buttonHeight = rowHeight,
+                description = stringResource(R.string.continue_editing),
+                shortDescription = stringResource(R.string.continue_editing_short),
+                icon = rememberVectorPainter(Icons.Outlined.Edit)
+            ) {
+                onEditReport(reportSession!!)
+            }
+            MenuActionButton(
+                actionButtonModifier,
+                enabled = areaLastLocation != null,
+                buttonHeight = rowHeight,
+                description = stringResource(R.string.show_area_on_map),
+                shortDescription = stringResource(R.string.show_area_on_map_short),
+                icon = painterResource(R.drawable.ic_explore)
+            ) {
+                areaLastLocation?.let {
+                    context.startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            "geo:0,0?q=${it.latitude},${it.longitude}".toUri()
+                        )
+                    )
+                }
+            }
+            MenuActionButton(
+                actionButtonModifier,
+                buttonHeight = rowHeight,
+                description = stringResource(R.string.diagnostics_history),
+                icon = painterResource(R.drawable.ic_history)
+            ) {
+
+            }
         }
     }
 }
@@ -364,6 +407,6 @@ private fun DiagnosticMenuScreenPreview() {
     )
 
     PtmTheme {
-        DiagnosticMenuScreen(diagnosticSession, {}, {}, {}, {}, {})
+        DiagnosticMenuScreen(diagnosticSession, {}, {}, {}, {}, {}, {})
     }
 }

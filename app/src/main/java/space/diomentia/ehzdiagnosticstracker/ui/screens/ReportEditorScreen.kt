@@ -114,6 +114,7 @@ private val LocalUiState =
 @Composable
 fun ReportEditorScreen(
     reportSession: ReportSession,
+    onSaved: () -> Unit,
     onBack: () -> Unit
 ) {
     val snackbarHostState = LocalSnackbarHostState.current
@@ -228,6 +229,7 @@ fun ReportEditorScreen(
                     AnimatedVisibility(state == UiState.Editor)
                     {
                         ReportEditor(
+                            onSaved = onSaved,
                             onBack = onBack,
                             modifier = Modifier.Companion
                                 .fillMaxWidth()
@@ -378,6 +380,7 @@ private val LocalReportType = compositionLocalOf { 0 }
 
 @Composable
 private fun ReportEditor(
+    onSaved: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -434,6 +437,7 @@ private fun ReportEditor(
                 SaveButton(
                     onClick = {
                         reportSession.reportToDb(context)
+                        onSaved()
                         onBack()
                     },
                     modifier = Modifier.padding(16.dp)
@@ -736,7 +740,7 @@ private fun TechDiagnosticsScreenPreview() {
     LocalUiState.current.value = UiState.Editor
 
     PtmTheme {
-        ReportEditorScreen(_reportSession, {})
+        ReportEditorScreen(_reportSession, {}, {})
     }
 }
 
@@ -768,7 +772,7 @@ private fun ReportEditorPreview() {
         LocalReportSession provides remember { mutableStateOf(_reportSession) }
     ) {
         PtmTheme {
-            ReportEditor(onBack = {})
+            ReportEditor(onSaved = {}, onBack = {})
         }
     }
 }

@@ -3,13 +3,17 @@ package space.diomentia.ehzdiagnosticstracker
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.ui.screens.AuthorizationScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.DiagnosticMenuScreen
@@ -43,9 +47,10 @@ sealed class Screen(val route: String) {
 @Composable
 fun AppNavigation() {
     val context = LocalContext.current
+    val snackbarHostState = LocalSnackbarHostState.current
     val navController = rememberNavController()
-    var diagnosticSession: DiagnosticSession? = null
-    var reportSession: ReportSession? = null
+    var diagnosticSession: DiagnosticSession? by remember { mutableStateOf(null) }
+    var reportSession: ReportSession? by remember { mutableStateOf(null) }
 
     NavHost(
         navController,
@@ -109,6 +114,7 @@ fun AppNavigation() {
                     ) {
                         launchSingleTop = true
                     }
+                    snackbarHostState.currentSnackbarData?.dismiss()
                 }
             )
         }
@@ -184,7 +190,12 @@ fun AppNavigation() {
                         navController.navigate(Screen.Diagnostics.Points.route) {
                             launchSingleTop = true
                         }
-                    }
+                    },
+                    onEditReport = { mReportSession ->
+                        reportSession = mReportSession
+                        navController.navigate(Screen.Diagnostics.ReportEditor.route)
+                    },
+                    reportSession = reportSession
                 )
             }
 
@@ -243,10 +254,11 @@ fun AppNavigation() {
                     }
                     return@composable
                 }
-                ReportEditorScreen(mReportSession) {
-                    navController.popBackStack()
-                    reportSession = null
-                }
+                ReportEditorScreen(
+                    mReportSession,
+                    onSaved = { reportSession = null },
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }
