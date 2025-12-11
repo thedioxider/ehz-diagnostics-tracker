@@ -1,15 +1,33 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
 import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
+
+sealed class ReportFieldValue {
+    data class Text(val value: String?) : ReportFieldValue()
+    data class Bool(val value: Boolean?) : ReportFieldValue() {
+        companion object {
+            fun fromString(raw: String?) = when (raw) {
+                "0", "false" -> false
+                "1", "true" -> true
+                else -> null
+            }
+        }
+    }
+
+    data class Integer(val value: Int?) : ReportFieldValue()
+    data class Decimal(val value: Double?) : ReportFieldValue()
+    data class Photo(val value: Any?) : ReportFieldValue()
+    data class Raw(val value: String?) : ReportFieldValue()
+}
 
 @Serializable
-enum class ParameterType(val kClass: KClass<*>) {
-    Text(String::class),
-    Bool(Boolean::class),
-    Integer(Int::class),
-    Decimal(Float::class),
-    Photo(Any::class),
+enum class ParameterType {
+    Text,
+    Bool,
+    Integer,
+    Decimal,
+    Photo,
+    Raw,
 }
 
 @Serializable

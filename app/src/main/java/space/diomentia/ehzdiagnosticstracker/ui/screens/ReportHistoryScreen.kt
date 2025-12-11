@@ -1,10 +1,5 @@
-package space.diomentia.ehzdiagnosticstracker
+package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.app.Activity.RESULT_CANCELED
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,11 +19,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,19 +30,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
@@ -57,98 +58,87 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
-import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-class ReportHistoryActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setupEdgeToEdge(this)
-        val snackbarHostState = SnackbarHostState()
-
-        setContent {
-            CompositionLocalProvider(
-                LocalSnackbarHostState provides snackbarHostState
-            ) {
-                Content()
-            }
-        }
-    }
-}
-
 @Composable
-private fun Content(
-    reports: MutableState<List<DiagnosticReportWithData>> = mutableStateOf(emptyList())
+fun ReportHistoryScreen(
+    diagnosticSession: DiagnosticSession,
+    onEditReport: (DiagnosticReport) -> Unit,
+    onBack: () -> Unit
 ) {
-    val activity = LocalActivity.current
+    val context = LocalContext.current
 
-    PtmTheme {
-        Scaffold(
-            snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
-            topBar = {
-                PtmTopBar(title = {
-                    Text(stringResource(R.string.diagnostics_history))
-                })
-            },
-            bottomBar = {
-                PtmBottomBar(
-                    navigation = {
-                        ActionButton(
-                            icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
-                            label = stringResource(R.string.back)
-                        ) {
-                            activity?.run {
-                                setResult(RESULT_CANCELED)
-                                finish()
+    CompositionLocalProvider(
+        LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
+    ) {
+        PtmTheme {
+            Scaffold(
+                snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
+                topBar = {
+                    PtmTopBar(title = {
+                        Text(stringResource(R.string.diagnostics_history))
+                    })
+                },
+                bottomBar = {
+                    PtmBottomBar(
+                        navigation = {
+                            ActionButton(
+                                icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                                label = stringResource(R.string.back)
+                            ) {
+                                onBack()
                             }
                         }
-                    }
-                )
-            }
-        ) { innerPadding ->
-            var reportShowDetails by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
-            reportShowDetails?.let {
-                ReportDetailsDialog(it) { reportShowDetails = null }
-            }
+                    )
+                }
+            ) { innerPadding ->
+                var reportShowDetails by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
+                reportShowDetails?.let {
+                    ReportDetailsDialog(
+                        it,
+                        onEditReport = onEditReport,
+                        onDismissRequest = { reportShowDetails = null }
+                    )
+                }
 
-            var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
-            reportDelete?.let {
-                ReportDeleteDialog(
-                    onDismissRequest = { reportDelete = null },
-                    onAcceptRequest = {
-                        AppState.reportDb?.diagnosticReportDao()?.run {
-                            deleteData(*it.data.toTypedArray())
-                            deleteReport(it.report)
-                            reportDelete = null
+                var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
+                reportDelete?.let {
+                    ReportDeleteDialog(
+                        onDismissRequest = { reportDelete = null },
+                        onAcceptRequest = {
+                            ReportDatabase.Companion.getInstance(context).diagnosticReportDao()
+                                .run {
+                                    deleteData(*it.data.toTypedArray())
+                                    deleteReport(it.report)
+                                    reportDelete = null
+                                }
                         }
-                    }
-                )
-            }
+                    )
+                }
 
-            val history by AppState.CurrentDiagnosticSession.diagnosticArea?.let {
-                AppState.reportDb
-                    ?.diagnosticAreaDao()
-                    ?.getAreaPoints(it)
-                    ?.collectAsStateWithLifecycle(emptyList())
-            } ?: remember { mutableStateOf(emptyList()) }
-            history.forEach { point ->
-                val reports by AppState.reportDb
-                    ?.diagnosticAreaDao()
-                    ?.getPointReports(point.point.id)
-                    ?.collectAsStateWithLifecycle(emptyList())
-                    ?: reports
+                val history by ReportDatabase.getInstance()
+                    .diagnosticAreaDao()
+                    .getAreaPoints(diagnosticSession.diagnosticArea.id)
+                    .collectAsStateWithLifecycle(emptyList())
+                val reports = history.flatMap { point ->
+                    ReportDatabase.getInstance()
+                        .diagnosticAreaDao()
+                        .getPointReports(point.point.id)
+                        .collectAsStateWithLifecycle(emptyList())
+                        .value
+                }
                 if (reports.isEmpty()) {
                     Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                        contentAlignment = Alignment.Companion.Center,
+                        modifier = Modifier.Companion.fillMaxSize()
                     ) {
                         Text(
                             stringResource(R.string.entries_not_found),
                             style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.alpha(.3f)
+                            modifier = Modifier.Companion.alpha(.3f)
                         )
                     }
                     return@Scaffold
@@ -182,15 +172,14 @@ private fun ReportItem(
                 LocalDateTime.now()
             )
         )
-    val diagnosticPoint by AppState.reportDb
-        ?.diagnosticAreaDao()
-        ?.getPointById(report.report.diagnosticPoint)
-        ?.collectAsStateWithLifecycle(null)
-        ?: remember { mutableStateOf(null) }
+    val diagnosticPoint by ReportDatabase.Companion.getInstance()
+        .diagnosticAreaDao()
+        .getPointById(report.report.diagnosticPoint)
+        .collectAsStateWithLifecycle(null)
 
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
+        verticalAlignment = Alignment.Companion.CenterVertically,
+        modifier = Modifier.Companion
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -201,8 +190,8 @@ private fun ReportItem(
             .then(modifier)
     ) {
         Column(
-            horizontalAlignment = Alignment.Start,
-            modifier = Modifier
+            horizontalAlignment = Alignment.Companion.Start,
+            modifier = Modifier.Companion
                 .fillMaxHeight()
                 .weight(1f)
         ) {
@@ -213,7 +202,7 @@ private fun ReportItem(
             Text(
                 "${stringResource(R.string.point)} ${diagnosticPoint?.point?.inventoryId}",
                 style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .padding(top = 4.dp)
                     .alpha(.7f)
             )
@@ -225,6 +214,7 @@ private fun ReportItem(
 @Composable
 private fun ReportDetailsDialog(
     report: DiagnosticReportWithData,
+    onEditReport: (DiagnosticReport) -> Unit,
     onDismissRequest: () -> Unit
 ) {
     val parameters = AppState.reportConfig.value
@@ -243,17 +233,17 @@ private fun ReportDetailsDialog(
     fun DataEntryItem(entry: ReportDataEntry) {
         val parameter = parameters?.get(entry.characteristic)
         val value = when (parameter?.type) {
-            ParameterType.Bool -> when (entry.value) {
-                "true" -> stringResource(R.string.is_true)
-                "false" -> stringResource(R.string.is_false)
+            ParameterType.Bool -> when (ReportFieldValue.Bool.fromString(entry.value)) {
+                true -> stringResource(R.string.is_true)
+                false -> stringResource(R.string.is_false)
                 else -> stringResource(R.string.unknown)
             }
 
             ParameterType.Integer, ParameterType.Decimal,
-            ParameterType.Photo, ParameterType.Text, null -> entry.value
+            ParameterType.Photo, ParameterType.Text, ParameterType.Raw, null -> entry.value
         } + (parameter?.unit?.let { " $it" } ?: "")
         Column(
-            modifier = Modifier
+            modifier = Modifier.Companion
                 .padding(vertical = 16.dp)
         ) {
             Text(
@@ -262,7 +252,7 @@ private fun ReportDetailsDialog(
             )
             Text(
                 value,
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .padding(top = 8.dp, start = 24.dp)
             )
         }
@@ -271,14 +261,14 @@ private fun ReportDetailsDialog(
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.Companion.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
+                modifier = Modifier.Companion
                     .padding(horizontal = 16.dp)
             ) {
                 LazyColumn(
-                    horizontalAlignment = Alignment.Start,
-                    modifier = Modifier
+                    horizontalAlignment = Alignment.Companion.Start,
+                    modifier = Modifier.Companion
                         .fillMaxWidth()
                         .weight(1f, fill = false)
                 ) {
@@ -287,26 +277,42 @@ private fun ReportDetailsDialog(
                             Text(
                                 it,
                                 style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(top = 16.dp)
+                                modifier = Modifier.Companion.padding(top = 16.dp)
                             )
                         }
                     }
                     item {
                         Text(
                             "${stringResource(R.string.report_by)} ${report.report.inspector}",
-                            modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
+                            modifier = Modifier.Companion.padding(top = 16.dp, bottom = 24.dp)
                         )
                     }
                     items(report.data) { entry ->
                         DataEntryItem(entry)
                     }
                 }
-                PtmFilledButton(
-                    onDismissRequest,
+                Column(
                     modifier = Modifier
-                        .padding(vertical = 8.dp)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.End
                 ) {
-                    Text(stringResource(R.string.close))
+                    PtmFilledButton(
+                        {
+                            onEditReport(report.report)
+                            onDismissRequest()
+                        },
+                        modifier = Modifier.Companion
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Text(stringResource(R.string.edit))
+                    }
+                    PtmFilledButton(
+                        onDismissRequest,
+                        modifier = Modifier.Companion
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Text(stringResource(R.string.close))
+                    }
                 }
             }
         }
@@ -321,28 +327,28 @@ private fun ReportDeleteDialog(
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
             Column(
-                horizontalAlignment = Alignment.End,
-                modifier = Modifier
+                horizontalAlignment = Alignment.Companion.End,
+                modifier = Modifier.Companion
                     .fillMaxWidth()
                     .padding(24.dp)
             ) {
                 Text(
                     stringResource(R.string.question_delete_report),
                     style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Start,
-                    modifier = Modifier
+                    textAlign = TextAlign.Companion.Start,
+                    modifier = Modifier.Companion
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
                 )
                 PtmFilledButton(
                     onAcceptRequest,
-                    modifier = Modifier.padding(4.dp)
+                    modifier = Modifier.Companion.padding(4.dp)
                 ) {
                     Text(stringResource(R.string.remove))
                 }
                 PtmFilledButton(
                     onDismissRequest,
-                    modifier = Modifier.padding(4.dp)
+                    modifier = Modifier.Companion.padding(4.dp)
                 ) {
                     Text(stringResource(R.string.cancel))
                 }
@@ -361,6 +367,7 @@ private val previewReports = listOf(
             "85c906f60dff0f735be9ac84411d71e867e7104f",
             Coordinates(25.94825038, 220.4249238),
             "Me Me",
+            null,
             5
         ),
         listOf()
@@ -369,15 +376,17 @@ private val previewReports = listOf(
 
 @Preview
 @Composable
-private fun ContentPreview() {
-    PtmTheme { Content(remember { mutableStateOf(previewReports) }) }
-}
+private fun ReportHistoryScreenPreview() = ReportHistoryScreen(
+    DiagnosticSession(
+        diagnosticObject = DiagnosticObject("", "", "Test Object"),
+        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+    ), {}, {})
 
 @Preview
 @Composable
 private fun ReportViewDialogPreview() {
     PtmTheme {
-        ReportDetailsDialog(previewReports.first()) {}
+        ReportDetailsDialog(previewReports.first(), {}) {}
     }
 }
 

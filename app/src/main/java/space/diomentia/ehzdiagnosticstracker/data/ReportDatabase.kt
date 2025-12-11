@@ -1,5 +1,8 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
+import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.room.AutoMigration
 import androidx.room.ColumnInfo
 import androidx.room.Dao
@@ -13,16 +16,15 @@ import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Relation
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
-const val REPORT_DATABASE_NAME = "report-db"
-
 @Database(
-    version = 3,
+    version = 5,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
@@ -31,12 +33,31 @@ const val REPORT_DATABASE_NAME = "report-db"
         DiagnosticPoint::class
     ],
     autoMigrations = [
-        AutoMigration(from = 1, to = 2)
+        AutoMigration(from = 3, to = 5)
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
     abstract fun diagnosticReportDao(): DiagnosticReportDao
     abstract fun diagnosticAreaDao(): DiagnosticAreaDao
+
+    companion object {
+        const val DB_NAME = "report-db"
+
+        @Volatile
+        private var INSTANCE: ReportDatabase? = null
+
+        fun getInstance(context: Context) = synchronized(this) {
+            INSTANCE ?: Room
+                .databaseBuilder(context, ReportDatabase::class.java, DB_NAME)
+                // TODO: get rid of this crutch
+                .allowMainThreadQueries()
+                .fallbackToDestructiveMigration(dropAllTables = true)
+                .build()
+        }
+
+        @Composable
+        fun getInstance() = getInstance(LocalContext.current)
+    }
 }
 
 @Serializable
@@ -58,6 +79,11 @@ data class DiagnosticReport(
     @ColumnInfo(name = "report_type") val reportType: String,
     @Embedded val location: Coordinates,
     @ColumnInfo(name = "inspector") val inspector: String,
+    /**
+     * A validation ID is known when a report point is scanned (via QR or NFC). Can be used for
+     * verification of indeed reaching the point and for identification the same point on server side.
+     */
+    @ColumnInfo(name = "validation_id") val validation: String? = null,
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") val id: Long = 0
 )
 
@@ -79,10 +105,17 @@ interface DiagnosticReportDao {
     @Query("SELECT * FROM diagnostic_reports ORDER BY timestamp DESC")
     fun getAllReports(): Flow<List<DiagnosticReportWithData>>
 
+    @Transaction
+    @Query("SELECT * FROM diagnostic_reports WHERE id = :id")
+    fun getReportByIdOnce(id: Long): DiagnosticReportWithData?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertReport(report: DiagnosticReport): Long
 
-    @Insert
+    @Update
+    fun updateReport(report: DiagnosticReport)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertData(vararg data: ReportDataEntry)
 
     @Delete
@@ -168,6 +201,10 @@ interface DiagnosticAreaDao {
     @Transaction
     @Query("SELECT * FROM diagnostic_points WHERE id = :id")
     fun getPointById(id: String): Flow<DiagnosticPointWithHistory>
+
+    @Transaction
+    @Query("SELECT * FROM diagnostic_points WHERE id = :id")
+    fun getPointByIdOnce(id: String): DiagnosticPointWithHistory?
 
     @Transaction
     @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject ORDER BY id ASC")

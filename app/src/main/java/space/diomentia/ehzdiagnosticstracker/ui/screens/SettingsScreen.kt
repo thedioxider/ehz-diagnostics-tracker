@@ -1,22 +1,15 @@
-package space.diomentia.ehzdiagnosticstracker
+package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.app.Activity
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.setContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
@@ -26,30 +19,13 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.SettingsOption
-import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
-class SettingsActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setupEdgeToEdge(this)
-        val snackbarHostState = SnackbarHostState()
-
-        setContent {
-            CompositionLocalProvider(
-                LocalSnackbarHostState provides snackbarHostState
-            ) {
-                Content()
-            }
-        }
-    }
-}
-
 @Composable
-private fun Content() {
-    val activity = LocalActivity.current
+fun SettingsScreen(
+    onBack: () -> Unit
+) {
     val snackbarHostState = LocalSnackbarHostState.current
-    LocalLayoutDirection.current
 
     val reportConfigChooser =
         AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
@@ -66,10 +42,7 @@ private fun Content() {
                             icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
-                            activity?.run {
-                                setResult(Activity.RESULT_CANCELED)
-                                finish()
-                            }
+                            onBack()
                         }
                     }
                 )
@@ -92,6 +65,4 @@ private fun Content() {
 
 @Preview
 @Composable
-private fun ContentPreview() {
-    Content()
-}
+private fun SettingsScreenPreview() = SettingsScreen({})

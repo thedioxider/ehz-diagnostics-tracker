@@ -3,7 +3,6 @@ package space.diomentia.ehzdiagnosticstracker.data
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.res.Resources
-import android.location.Location
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,11 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.room.Room
 import com.charleskorn.kaml.InvalidPropertyValueException
 import com.charleskorn.kaml.Yaml
 import kotlinx.coroutines.launch
@@ -25,8 +22,6 @@ import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppPreferences.getPreference
 import java.io.File
 import java.io.FileOutputStream
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 @Stable
 object AppState {
@@ -35,22 +30,14 @@ object AppState {
     var inspectionMode = true
     var dataDir: File? = null
     var resources: Resources? = null
-    var reportDb: ReportDatabase? = null
-    var profileDb: ProfileDatabase? = null
     var packageInfo: PackageInfo? = null
 
     fun init(context: Context) {
         inspectionMode = false
         dataDir = context.dataDir
         resources = context.resources
-        reportDb = Room.databaseBuilder(context, ReportDatabase::class.java, REPORT_DATABASE_NAME)
-            // TODO: get rid of this crutch
-            .allowMainThreadQueries()
-            .build()
-        profileDb =
-            Room.databaseBuilder(context, ProfileDatabase::class.java, PROFILE_DATABASE_NAME)
-                .allowMainThreadQueries()
-                .build()
+        val reportDb = ReportDatabase.getInstance(context)
+
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
 
         val initialAreaEntries = Yaml.default.decodeFromString<InitialAreaEntries>(
@@ -60,18 +47,18 @@ object AppState {
         )
         initialAreaEntries.diagnosticObjects.forEach {
             reportDb
-                ?.diagnosticAreaDao()
-                ?.insertDiagnosticObject(it)
+                .diagnosticAreaDao()
+                .insertDiagnosticObject(it)
         }
         initialAreaEntries.diagnosticAreas.forEach {
             reportDb
-                ?.diagnosticAreaDao()
-                ?.insertDiagnosticArea(it)
+                .diagnosticAreaDao()
+                .insertDiagnosticArea(it)
         }
         initialAreaEntries.diagnosticPoints.forEach {
             reportDb
-                ?.diagnosticAreaDao()
-                ?.insertDiagnosticPoint(it)
+                .diagnosticAreaDao()
+                .insertDiagnosticPoint(it)
         }
     }
 
@@ -130,81 +117,6 @@ object AppState {
         REPORT_CONFIG_FILENAME,
         R.raw.report_conf
     )
-
-    object CurrentDiagnosticSession {
-        var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        var diagnosticObject by mutableStateOf<String?>(null)
-        var diagnosticArea by mutableStateOf<String?>(null)
-        var diagnosticPoint by mutableStateOf<String?>(null)
-        var diagnosticType by mutableIntStateOf(0)
-        var reportType by mutableStateOf<Int?>(null)
-        var location by mutableStateOf<Location?>(null)
-        var data = mutableMapOf<String, MutableState<out Any?>>()
-
-        fun reset() {
-            dateTime = LocalDateTime.now()
-            diagnosticPoint = null
-            reportType = null
-            location = null
-            data.forEach { (_, v) -> (v as MutableState<Any?>).value = null }
-        }
-
-        fun insertToDb(): Boolean {
-            val reportDb = reportDb
-            val reportConfig = reportConfig.value
-            val dPoint = diagnosticPoint
-            val diagnosticType = reportType
-            val location = location
-            val inspector = profileSession
-            val data = data
-            if (dPoint == null
-                || diagnosticType == null
-                || location == null
-                || reportConfig == null
-                || reportDb == null
-                || inspector == null
-            ) return false
-            (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
-                .asSequence()
-                .map { it.id }
-                .toSet()
-            val report = DiagnosticReport(
-                dPoint,
-                dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
-                this@CurrentDiagnosticSession.diagnosticType.toString(),
-                reportConfig.reportTypes[diagnosticType].id,
-                Coordinates(location.latitude, location.altitude),
-                inspector.name
-            )
-            val reportId = reportDb.diagnosticReportDao().insertReport(report)
-            val dataEntries = data
-                .filter { (_, v) -> v.value != null }
-                .map { (k, v) ->
-                    ReportDataEntry(
-                        report = reportId,
-                        characteristic = k,
-                        value = v.value.toString()
-                    )
-                }
-                .toTypedArray()
-            reportDb.diagnosticReportDao().insertData(*dataEntries)
-            reset()
-            AppState.reportDb?.diagnosticAreaDao()?.run {
-                diagnosticArea?.let {
-                    val area = getAreaByIdOnce(it)
-                    updateDiagnosticArea(
-                        area.copy(
-                            lastLocation = Coordinates(
-                                latitude = location.latitude,
-                                longitude = location.longitude
-                            )
-                        )
-                    )
-                }
-            }
-            return true
-        }
-    }
 
     @Composable
     inline fun <reified T> localYamlConfigCopyLauncher(

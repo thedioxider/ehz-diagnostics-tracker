@@ -1,16 +1,20 @@
 package space.diomentia.ehzdiagnosticstracker
 
-import android.app.Activity.RESULT_CANCELED
-import android.app.Activity.RESULT_OK
+import android.Manifest
+import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Column
@@ -18,23 +22,28 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import space.diomentia.ehzdiagnosticstracker.ScanIdActivity.Companion.QR_DATA
+import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.BarcodeAnalyzer
+import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -43,9 +52,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.util.concurrent.Executors
-import androidx.camera.core.Preview as CameraPreview
+import kotlin.time.ExperimentalTime
 
-class ScanIdActivity : ComponentActivity() {
+
+class ScanIdQrActivity : ComponentActivity() {
     companion object {
         const val QR_DATA = "qr_data"
     }
@@ -54,16 +64,44 @@ class ScanIdActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setupEdgeToEdge(this)
         setContent {
-            Content()
+            CompositionLocalProvider(
+                LocalCoroutineScope provides rememberCoroutineScope(),
+                LocalSnackbarHostState provides SnackbarHostState()
+            ) {
+                ScanIdQrScreen()
+            }
         }
     }
 }
 
-@Preview
+@OptIn(ExperimentalTime::class)
 @Composable
-private fun Content() {
+private fun ScanIdQrScreen() {
+    val context = LocalContext.current
     val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = LocalCoroutineScope.current
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { success ->
+        if (!success) {
+            activity?.run {
+                setResult(Activity.RESULT_CANCELED)
+                finish()
+            }
+        }
+    }
+    LaunchedEffect(Unit) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
     PtmTheme {
         Scaffold(
             topBar = {
@@ -79,7 +117,7 @@ private fun Content() {
                             label = stringResource(R.string.back)
                         ) {
                             activity?.run {
-                                setResult(RESULT_CANCELED)
+                                setResult(Activity.RESULT_CANCELED)
                                 finish()
                             }
                         }
@@ -88,20 +126,36 @@ private fun Content() {
             },
             snackbarHost = { PtmSnackbarHost(snackbarHostState) }
         ) { innerPadding ->
+            var pingWrongFormat = 0L
             // stop blaming me for not using padding
             // just gimme my borderless camera!!
             @Suppress("UNUSED_EXPRESSION")
             if (false) innerPadding
             Column {
                 BarcodeCameraPreview(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.Companion.fillMaxSize()
                 ) { data ->
-                    activity?.run {
-                        val intent = Intent().also {
-                            it.putExtra(QR_DATA, data)
+                    if (data.isNotBlank() && data.all { c -> c.isLetterOrDigit() }) {
+                        activity?.run {
+                            val intent = Intent().also {
+                                it.putExtra(ScanIdQrActivity.QR_DATA, data)
+                            }
+                            setResult(Activity.RESULT_OK, intent)
+                            finish()
                         }
-                        setResult(RESULT_OK, intent)
-                        finish()
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar("a")
+                        }
+                    } else {
+                        val t = System.currentTimeMillis()
+                        if (t - pingWrongFormat > 5000) {
+                            coroutineScope?.launch {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                snackbarHostState.showSnackbar(context.getString(R.string.qr_no_id))
+                            }
+                            pingWrongFormat = t
+                        }
                     }
                 }
             }
@@ -121,7 +175,7 @@ private fun BarcodeCameraPreview(
     val context = LocalContext.current
     val mainExecutor = remember(context) { ContextCompat.getMainExecutor(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
-    var preview by remember { mutableStateOf<CameraPreview?>(null) }
+    var preview by remember { mutableStateOf<Preview?>(null) }
 
     AndroidView(
         modifier = modifier,
@@ -141,10 +195,10 @@ private fun BarcodeCameraPreview(
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build()
             val cameraExecutor = Executors.newSingleThreadExecutor()
-            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+            val cameraProviderFuture = ProcessCameraProvider.Companion.getInstance(context)
 
             cameraProviderFuture.addListener({
-                preview = CameraPreview.Builder().build().also {
+                preview = Preview.Builder().build().also {
                     it.surfaceProvider = previewView.surfaceProvider
                 }
                 val cameraProvider = cameraProviderFuture.get()
@@ -171,3 +225,8 @@ private fun BarcodeCameraPreview(
         }
     )
 }
+
+
+@androidx.compose.ui.tooling.preview.Preview
+@Composable
+private fun ScanIdScreenPreview() = ScanIdQrScreen()
