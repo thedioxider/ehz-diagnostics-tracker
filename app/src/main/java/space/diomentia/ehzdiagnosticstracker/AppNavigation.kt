@@ -162,14 +162,14 @@ fun AppNavigation() {
                 DiagnosticMenuScreen(
                     diagnosticSession = mDiagnosticSession,
                     onAuthorize = {
+                        navController.popBackStack()
                         navController.navigate(Screen.Authorization.route) {
-                            popUpTo(Screen.Authorization.route) { inclusive = false }
                             launchSingleTop = true
                         }
                     },
                     onChooseArea = {
+                        navController.popBackStack()
                         navController.navigate(Screen.DiagnosticObjects.route) {
-                            popUpTo(Screen.DiagnosticObjects.route) { inclusive = false }
                             launchSingleTop = true
                         }
                         diagnosticSession = null
@@ -193,7 +193,7 @@ fun AppNavigation() {
                         reportSession = mReportSession
                         navController.navigate(Screen.Diagnostics.ReportEditor.route)
                     },
-                    reportSession = reportSession
+                    reportSession = remember { reportSession }
                 )
             }
 
