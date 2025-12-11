@@ -245,7 +245,7 @@ private fun AddPointDialog(
                         .padding(start = 16.dp)
                 )
                 Text(
-                    "${stringResource(R.string.inventory_number)}:",
+                    "${stringResource(R.string.name)}:",
                     style = MaterialTheme.typography.titleSmall
                 )
                 TextField(
@@ -253,7 +253,7 @@ private fun AddPointDialog(
                     onValueChange = { inventoryNumberInput = it.filter { c -> c.isDigit() } },
                     placeholder = {
                         Text(
-                            stringResource(R.string.input_inventory_number),
+                            stringResource(R.string.input_name),
                             fontStyle = FontStyle.Companion.Italic,
                             maxLines = 1,
                             modifier = Modifier.Companion.alpha(.5f)
@@ -343,7 +343,7 @@ private fun EditPointDialog(
                         .padding(start = 16.dp)
                 )
                 Text(
-                    "${stringResource(R.string.inventory_number)}:",
+                    "${stringResource(R.string.name)}:",
                     style = MaterialTheme.typography.titleSmall
                 )
                 TextField(
@@ -351,7 +351,7 @@ private fun EditPointDialog(
                     onValueChange = { inventoryNumberInput = it },
                     placeholder = {
                         Text(
-                            stringResource(R.string.input_inventory_number),
+                            stringResource(R.string.input_name),
                             fontStyle = FontStyle.Companion.Italic,
                             maxLines = 1,
                             modifier = Modifier.Companion.alpha(.5f)

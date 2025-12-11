@@ -99,7 +99,7 @@
     <string name="profile_deleted">Профиль удалён</string>
     <string name="change_account">Сменить аккаунт</string>
     <string name="admin_authorized">Успешная авторизация в качестве администратора</string>
-    <string name="report_by">Отчёт составил</string>
+    <string name="report_by">Отчёт составил(а)</string>
     <string name="show_area_on_map">Показать участок на карте</string>
     <string name="show_area_on_map_short">Показать на карте</string>
     <string name="authorize_as_admin">Необходимо авторизоваться как администратор</string>
