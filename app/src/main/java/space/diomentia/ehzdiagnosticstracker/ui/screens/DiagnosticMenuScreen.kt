@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Settings
@@ -325,11 +326,17 @@ private fun LastReport(
             }
             MenuActionButton(
                 actionButtonModifier,
+                enabled = reportSession != null,
                 buttonHeight = rowHeight,
-                description = stringResource(R.string.diagnostics_history),
-                icon = painterResource(R.drawable.ic_history)
+                description = stringResource(R.string.new_report_there),
+                icon = rememberVectorPainter(Icons.Outlined.Add)
             ) {
-
+                onEditReport(
+                    ReportSession(
+                        diagnosticSession = diagnosticSession,
+                        diagnosticPoint = reportSession!!.diagnosticPoint
+                    )
+                )
             }
         }
     }
