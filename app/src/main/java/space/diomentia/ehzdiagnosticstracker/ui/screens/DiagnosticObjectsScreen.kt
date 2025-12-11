@@ -340,7 +340,7 @@ private fun AddObjectDialog(
                 )
                 TextField(
                     idInput,
-                    onValueChange = { idInput = it },
+                    onValueChange = { idInput = it.filter { c -> c.isLetter() || c.isDigit() } },
                     placeholder = {
                         Text(
                             stringResource(R.string.input_registration_number),
@@ -380,16 +380,16 @@ private fun AddObjectDialog(
                 ) {
                     PtmFilledButton(
                         onClick = {
-                            val id = idInput
-                            val name = nameInput
-                            if (id.isEmpty() || name.isEmpty()) {
+                            val id = idInput.trim()
+                            val name = nameInput.trim()
+                            if (id.isBlank() || name.isBlank()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
                                 }
                                 return@PtmFilledButton
                             }
-                            ReportDatabase.Companion.getInstance(context).diagnosticAreaDao()
+                            ReportDatabase.getInstance(context).diagnosticAreaDao()
                                 .insertDiagnosticObject(
                                     DiagnosticObject(
                                         id = id,
@@ -473,8 +473,8 @@ private fun EditObjectDialog(
                 ) {
                     PtmFilledButton(
                         onClick = {
-                            val name = nameInput
-                            if (name.isEmpty()) {
+                            val name = nameInput.trim()
+                            if (name.isBlank()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
@@ -540,7 +540,7 @@ private fun AddAreaDialog(
                 )
                 TextField(
                     idInput,
-                    onValueChange = { idInput = it },
+                    onValueChange = { idInput = it.filter { c -> c.isLetter() || c.isDigit() } },
                     placeholder = {
                         Text(
                             stringResource(R.string.input_registration_number),
@@ -580,9 +580,9 @@ private fun AddAreaDialog(
                 ) {
                     PtmFilledButton(
                         onClick = {
-                            val id = idInput
-                            val name = nameInput
-                            if (id.isEmpty() || name.isEmpty()) {
+                            val id = idInput.trim()
+                            val name = nameInput.trim()
+                            if (id.isBlank() || name.isBlank()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
@@ -674,8 +674,8 @@ private fun EditAreaDialog(
                 ) {
                     PtmFilledButton(
                         onClick = {
-                            val name = nameInput
-                            if (name.isEmpty()) {
+                            val name = nameInput.trim()
+                            if (name.isBlank()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
                                     snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))

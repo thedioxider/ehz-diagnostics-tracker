@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -220,7 +221,7 @@ private fun AddPointDialog(
                 )
                 TextField(
                     idInput,
-                    onValueChange = { idInput = it },
+                    onValueChange = { idInput = it.filter { c -> c.isLetter() || c.isDigit() } },
                     placeholder = {
                         Text(
                             stringResource(R.string.input_id),
@@ -240,7 +241,7 @@ private fun AddPointDialog(
                 )
                 TextField(
                     inventoryNumberInput,
-                    onValueChange = { inventoryNumberInput = it },
+                    onValueChange = { inventoryNumberInput = it.filter { c -> c.isDigit() } },
                     placeholder = {
                         Text(
                             stringResource(R.string.input_inventory_number),
@@ -249,8 +250,11 @@ private fun AddPointDialog(
                             modifier = Modifier.Companion.alpha(.5f)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Companion.Next
+                    ),
+                    modifier = Modifier
                         .padding(vertical = 12.dp)
                         .padding(start = 16.dp)
                 )

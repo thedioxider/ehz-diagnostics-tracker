@@ -160,7 +160,7 @@ fun EditProfileScreen(
                             nameInput,
                             onValueChange = {
                                 nameError = false
-                                nameInput = it
+                                nameInput = it.filter { c -> c.isLetter() }
                             },
                             placeholder = {
                                 Text(
@@ -185,7 +185,7 @@ fun EditProfileScreen(
                             surnameInput,
                             onValueChange = {
                                 surnameError = false
-                                surnameInput = it
+                                surnameInput = it.filter { c -> c.isLetter() }
                             },
                             placeholder = {
                                 Text(

@@ -316,7 +316,7 @@ private fun AddUserDialog(
                     nameInput,
                     onValueChange = {
                         nameError = false
-                        nameInput = it
+                        nameInput = it.filter { c -> c.isLetter() }
                     },
                     placeholder = {
                         Text(
@@ -340,7 +340,7 @@ private fun AddUserDialog(
                     surnameInput,
                     onValueChange = {
                         surnameError = false
-                        surnameInput = it
+                        surnameInput = it.filter { c -> c.isLetter() }
                     },
                     placeholder = {
                         Text(
