@@ -116,4 +116,6 @@
     <string name="name_only_letters">Имя и фамилия могут содержать только буквы</string>
     <string name="password_symbols">Пароль может содержать в себе только буквы, цифры и специальные символы</string>
     <string name="edit">Изменить</string>
+    <string name="delete_area">Удалить участок</string>
+    <string name="delete_object">Удалить объект</string>
 </resources>

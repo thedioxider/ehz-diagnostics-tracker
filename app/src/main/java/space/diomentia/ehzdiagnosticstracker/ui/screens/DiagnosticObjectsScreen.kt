@@ -128,13 +128,31 @@ fun DiagnosticObjectsScreen(
             }
 
             var editObjectRequest by remember { mutableStateOf<DiagnosticObject?>(null) }
+            var deleteObjectRequest: DiagnosticObject? by remember { mutableStateOf(null) }
             editObjectRequest?.let { diagnosticObject ->
-                EditObjectDialog(diagnosticObject) { editObjectRequest = null }
+                EditObjectDialog(
+                    diagnosticObject,
+                    onDelete = { deleteObjectRequest = diagnosticObject },
+                    onDismissRequest = { editObjectRequest = null }
+                )
             }
 
             var editAreaRequest by remember { mutableStateOf<DiagnosticArea?>(null) }
+            var deleteAreaRequest: DiagnosticArea? by remember { mutableStateOf(null) }
             editAreaRequest?.let { diagnosticArea ->
-                EditAreaDialog(diagnosticArea) { editAreaRequest = null }
+                EditAreaDialog(
+                    diagnosticArea,
+                    onDelete = { deleteAreaRequest = diagnosticArea },
+                    onDismissRequest = { editAreaRequest = null }
+                )
+            }
+
+            deleteObjectRequest?.let { diagnosticObject ->
+                DeleteObjectDialog(diagnosticObject) { deleteObjectRequest = null }
+            }
+
+            deleteAreaRequest?.let { diagnosticArea ->
+                DeleteAreaDialog(diagnosticArea) { deleteAreaRequest = null }
             }
 
             val selectedObjectAreas by selectedDiagnosticObject?.let {
@@ -417,6 +435,7 @@ private fun AddObjectDialog(
 @Composable
 private fun EditObjectDialog(
     diagnosticObject: DiagnosticObject,
+    onDelete: () -> Unit,
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
@@ -492,8 +511,8 @@ private fun EditObjectDialog(
                     }
                     PtmFilledButton(
                         onClick = {
-                            ReportDatabase.Companion.getInstance(context).diagnosticAreaDao()
-                                .deleteDiagnosticObject(diagnosticObject)
+                            onDelete()
+                            onDismissRequest()
                         }
                     ) {
                         Text(stringResource(R.string.delete))
@@ -618,6 +637,7 @@ private fun AddAreaDialog(
 @Composable
 private fun EditAreaDialog(
     diagnosticArea: DiagnosticArea,
+    onDelete: () -> Unit,
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
@@ -693,8 +713,8 @@ private fun EditAreaDialog(
                     }
                     PtmFilledButton(
                         onClick = {
-                            ReportDatabase.Companion.getInstance(context).diagnosticAreaDao()
-                                .deleteDiagnosticArea(diagnosticArea)
+                            onDelete()
+                            onDismissRequest()
                         }
                     ) {
                         Text(stringResource(R.string.delete))
@@ -705,6 +725,98 @@ private fun EditAreaDialog(
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteObjectDialog(
+    diagnosticObject: DiagnosticObject,
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    Dialog(onDismissRequest) {
+        BorderedDialogContainer {
+            Column(
+                horizontalAlignment = Alignment.Companion.End,
+                modifier = Modifier.Companion
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "${stringResource(R.string.delete_object)}:\n${diagnosticObject.name}?",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.Companion
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+                PtmFilledButton(
+                    onClick = {
+                        ReportDatabase.getInstance(context)
+                            .diagnosticAreaDao()
+                            .deleteDiagnosticObject(diagnosticObject)
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
+                        }
+                        onDismissRequest()
+                    }
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+                PtmFilledButton(
+                    onClick = onDismissRequest
+                ) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeleteAreaDialog(
+    diagnosticArea: DiagnosticArea,
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    Dialog(onDismissRequest) {
+        BorderedDialogContainer {
+            Column(
+                horizontalAlignment = Alignment.Companion.End,
+                modifier = Modifier.Companion
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "${stringResource(R.string.delete_area)}:\n${diagnosticArea.name}?",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.Companion
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+                PtmFilledButton(
+                    onClick = {
+                        ReportDatabase.getInstance(context)
+                            .diagnosticAreaDao()
+                            .deleteDiagnosticArea(diagnosticArea)
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
+                        }
+                        onDismissRequest()
+                    }
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+                PtmFilledButton(
+                    onClick = onDismissRequest
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }
