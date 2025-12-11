@@ -126,8 +126,17 @@ fun DiagnosticPointsScreen(
                 }
 
                 var editPointRequest by remember { mutableStateOf<DiagnosticPoint?>(null) }
+                var deletePointRequest: DiagnosticPoint? by remember { mutableStateOf(null) }
                 editPointRequest?.let { diagnosticPoint ->
-                    EditPointDialog(diagnosticPoint) { editPointRequest = null }
+                    EditPointDialog(
+                        diagnosticPoint,
+                        onDelete = { deletePointRequest = diagnosticPoint },
+                        onDismissRequest = { editPointRequest = null }
+                    )
+                }
+
+                deletePointRequest?.let { diagnosticPoint ->
+                    DeletePointDialog(diagnosticPoint) { deletePointRequest = null }
                 }
 
                 FullscreenLazyColumn(innerPadding) {
@@ -302,6 +311,7 @@ private fun AddPointDialog(
 @Composable
 private fun EditPointDialog(
     diagnosticPoint: DiagnosticPoint,
+    onDelete: () -> Unit,
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
@@ -377,8 +387,8 @@ private fun EditPointDialog(
                     }
                     PtmFilledButton(
                         onClick = {
-                            ReportDatabase.Companion.getInstance(context).diagnosticAreaDao()
-                                .deleteDiagnosticPoint(diagnosticPoint)
+                            onDelete()
+                            onDismissRequest()
                         }
                     ) {
                         Text(stringResource(R.string.delete))
@@ -389,6 +399,52 @@ private fun EditPointDialog(
                     ) {
                         Text(stringResource(R.string.cancel))
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeletePointDialog(
+    diagnosticPoint: DiagnosticPoint,
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    Dialog(onDismissRequest) {
+        BorderedDialogContainer {
+            Column(
+                horizontalAlignment = Alignment.Companion.End,
+                modifier = Modifier.Companion
+                    .padding(16.dp)
+            ) {
+                Text(
+                    "${stringResource(R.string.delete_object)}:\n${diagnosticPoint.inventoryId}?",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.Companion
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                )
+                PtmFilledButton(
+                    onClick = {
+                        ReportDatabase.getInstance(context)
+                            .diagnosticAreaDao()
+                            .deleteDiagnosticPoint(diagnosticPoint)
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
+                        }
+                        onDismissRequest()
+                    }
+                ) {
+                    Text(stringResource(R.string.delete))
+                }
+                PtmFilledButton(
+                    onClick = onDismissRequest
+                ) {
+                    Text(stringResource(R.string.cancel))
                 }
             }
         }
