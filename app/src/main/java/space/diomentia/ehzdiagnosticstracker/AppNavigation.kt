@@ -4,12 +4,11 @@ import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.navigation.NavType
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.ui.screens.AuthorizationScreen
@@ -28,33 +27,22 @@ sealed class Screen(val route: String) {
     object Initial : Screen("initial")
     object OutOfService : Screen("out_of_service")
     object Authorization : Screen("authorization")
-    object ProfileEdit : Screen("profile_edit") {
-        // TODO: don't depend on app state
-        // fun createRoute(profileId: Long) = "profile_edit/$profileId"
-    }
 
+    // TODO: don't depend on app state
+    object ProfileEdit : Screen("profile_edit")
     object DiagnosticObjects : Screen("diagnostic_objects")
     object Settings : Screen("settings")
-
-    object Diagnostics : Screen("diagnostics/{areaId}") {
-        fun createRoute(areaId: String) =
-            "diagnostics/$areaId"
-
+    object Diagnostics : Screen("diagnostics") {
         object Menu : Screen("diagnostics_menu")
         object Points : Screen("diagnostics_points")
         object History : Screen("diagnostics_history")
-        object EditReport : Screen("edit_report") {
-            // fun createRoute(pointId: String, reportId: Long) = "edit_report/$pointId/$reportId"
-        }
-
-        object ReportEditor : Screen("create_report") {
-            // fun createRoute(pointId: String) = "create_report/$pointId"
-        }
+        object ReportEditor : Screen("report_editor")
     }
 }
 
 @Composable
 fun AppNavigation() {
+    val context = LocalContext.current
     val navController = rememberNavController()
     var diagnosticSession: DiagnosticSession? = null
     var reportSession: ReportSession? = null
@@ -142,7 +130,7 @@ fun AppNavigation() {
                 },
                 onAreaChosen = { diagnosticObject, diagnosticArea ->
                     diagnosticSession = DiagnosticSession(diagnosticObject, diagnosticArea)
-                    navController.navigate(Screen.Diagnostics.createRoute(diagnosticArea.id)) {
+                    navController.navigate(Screen.Diagnostics.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
@@ -157,10 +145,7 @@ fun AppNavigation() {
 
         navigation(
             route = Screen.Diagnostics.route,
-            startDestination = Screen.Diagnostics.Menu.route,
-            arguments = listOf(
-                navArgument("areaId") { type = NavType.StringType }
-            )
+            startDestination = Screen.Diagnostics.Menu.route
         ) {
             composable(Screen.Diagnostics.Menu.route) {
                 val mDiagnosticSession = remember { diagnosticSession }
@@ -213,6 +198,16 @@ fun AppNavigation() {
                 }
                 ReportHistoryScreen(
                     diagnosticSession = mDiagnosticSession,
+                    onEditReport = { report ->
+                        reportSession = ReportSession.fromExisting(
+                            context = context,
+                            diagnosticSession = mDiagnosticSession,
+                            reportId = report.id
+                        )
+                        navController.navigate(Screen.Diagnostics.ReportEditor.route) {
+                            popUpTo(Screen.Diagnostics.Menu.route) { inclusive = false }
+                        }
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }

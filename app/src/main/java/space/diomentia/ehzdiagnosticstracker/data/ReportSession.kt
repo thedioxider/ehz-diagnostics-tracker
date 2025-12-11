@@ -17,7 +17,8 @@ data class ReportSession(
     val location: Coordinates? = null,
     val validationId: String? = null,
     val data: MutableMap<String, MutableState<String>> = mutableMapOf(),
-    private val reportId: Long? = null
+    private val reportId: Long? = null,
+    private val inspector: String? = null
 ) {
     companion object {
         fun fromExisting(
@@ -47,7 +48,8 @@ data class ReportSession(
                     *report.data.map { it.characteristic to mutableStateOf(it.value) }
                         .toTypedArray()
                 ),
-                reportId = report.report.id
+                reportId = report.report.id,
+                inspector = report.report.inspector
             )
         }
     }
@@ -74,7 +76,7 @@ data class ReportSession(
             diagnosticsType = diagnosticSession.diagnosticType.toString(),
             reportType = reportConfig.reportTypes[diagnosticType].id,
             location = Coordinates(location.latitude, location.longitude),
-            inspector = "${inspector.surname} ${inspector.name}",
+            inspector = this.inspector ?: "${inspector.surname} ${inspector.name}",
             validation = validationId
         )
         val newReportId = if (reportId != null) {

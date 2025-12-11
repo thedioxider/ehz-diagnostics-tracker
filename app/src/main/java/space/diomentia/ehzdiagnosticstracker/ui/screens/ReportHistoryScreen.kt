@@ -66,6 +66,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun ReportHistoryScreen(
     diagnosticSession: DiagnosticSession,
+    onEditReport: (DiagnosticReport) -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -96,7 +97,11 @@ fun ReportHistoryScreen(
             ) { innerPadding ->
                 var reportShowDetails by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
                 reportShowDetails?.let {
-                    ReportDetailsDialog(it) { reportShowDetails = null }
+                    ReportDetailsDialog(
+                        it,
+                        onEditReport = onEditReport,
+                        onDismissRequest = { reportShowDetails = null }
+                    )
                 }
 
                 var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
@@ -119,7 +124,7 @@ fun ReportHistoryScreen(
                     .getAreaPoints(diagnosticSession.diagnosticArea.id)
                     .collectAsStateWithLifecycle(emptyList())
                 history.forEach { point ->
-                    val reports by ReportDatabase.Companion.getInstance()
+                    val reports by ReportDatabase.getInstance()
                         .diagnosticAreaDao()
                         .getPointReports(point.point.id)
                         .collectAsStateWithLifecycle(emptyList())
@@ -208,6 +213,7 @@ private fun ReportItem(
 @Composable
 private fun ReportDetailsDialog(
     report: DiagnosticReportWithData,
+    onEditReport: (DiagnosticReport) -> Unit,
     onDismissRequest: () -> Unit
 ) {
     val parameters = AppState.reportConfig.value
@@ -284,12 +290,28 @@ private fun ReportDetailsDialog(
                         DataEntryItem(entry)
                     }
                 }
-                PtmFilledButton(
-                    onDismissRequest,
-                    modifier = Modifier.Companion
-                        .padding(vertical = 8.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.End
                 ) {
-                    Text(stringResource(R.string.close))
+                    PtmFilledButton(
+                        {
+                            onEditReport(report.report)
+                            onDismissRequest()
+                        },
+                        modifier = Modifier.Companion
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Text(stringResource(R.string.edit))
+                    }
+                    PtmFilledButton(
+                        onDismissRequest,
+                        modifier = Modifier.Companion
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Text(stringResource(R.string.close))
+                    }
                 }
             }
         }
@@ -357,13 +379,13 @@ private fun ReportHistoryScreenPreview() = ReportHistoryScreen(
     DiagnosticSession(
         diagnosticObject = DiagnosticObject("", "", "Test Object"),
         diagnosticArea = DiagnosticArea("", "Test Area", "", "")
-    ), {})
+    ), {}, {})
 
 @Preview
 @Composable
 private fun ReportViewDialogPreview() {
     PtmTheme {
-        ReportDetailsDialog(previewReports.first()) {}
+        ReportDetailsDialog(previewReports.first(), {}) {}
     }
 }
 
