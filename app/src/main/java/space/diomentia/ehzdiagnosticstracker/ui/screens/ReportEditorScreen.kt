@@ -1,11 +1,9 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
 import android.Manifest
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.icu.text.DecimalFormatSymbols
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -68,7 +66,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.LocationServices
@@ -76,13 +73,20 @@ import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.Coordinates
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
+import space.diomentia.ehzdiagnosticstracker.data.LocalReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
-import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
 import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
+import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -100,11 +104,7 @@ private enum class UiState {
     Editor;
 
     companion object {
-        fun canOpenEditor(): Boolean {
-            return with(AppState.CurrentDiagnosticSession) {
-                diagnosticPoint != null && reportType != null
-            }
-        }
+        fun canOpenEditor(reportSession: ReportSession) = reportSession.reportType != null
     }
 }
 
@@ -112,34 +112,19 @@ private val LocalUiState =
     compositionLocalOf<MutableState<UiState>> { mutableStateOf(UiState.Configuration) }
 
 @Composable
-fun ReportEditorScreen() {
-    val activity = LocalActivity.current
+fun ReportEditorScreen(
+    reportSession: ReportSession,
+    onBack: () -> Unit
+) {
     val snackbarHostState = LocalSnackbarHostState.current
-    val diagnosticObject by AppState.CurrentDiagnosticSession.diagnosticObject?.let { id ->
-        ReportDatabase.Companion.getInstance()
-            .diagnosticAreaDao()
-            .getObjectById(id)
-            .collectAsStateWithLifecycle(null)
-    } ?: remember { mutableStateOf(null) }
-    val diagnosticArea by AppState.CurrentDiagnosticSession.diagnosticArea?.let { id ->
-        ReportDatabase.Companion.getInstance()
-            .diagnosticAreaDao()
-            .getAreaById(id)
-            .collectAsStateWithLifecycle(null)
-    } ?: remember { mutableStateOf(null) }
-    val diagnosticPoint by AppState.CurrentDiagnosticSession.diagnosticPoint?.let { diagnosticPoint ->
-        ReportDatabase.Companion.getInstance()
-            .diagnosticAreaDao()
-            .getPointById(diagnosticPoint)
-            .collectAsStateWithLifecycle(null)
-    } ?: remember { mutableStateOf(null) }
 
     CompositionLocalProvider(
-        LocalUiState provides remember { mutableStateOf(if (UiState.canOpenEditor()) UiState.Editor else UiState.Configuration) }
+        LocalUiState provides remember { mutableStateOf(if (UiState.canOpenEditor(reportSession)) UiState.Editor else UiState.Configuration) },
+        LocalReportSession provides remember { mutableStateOf(reportSession) }
     ) {
         var state by LocalUiState.current
-        if (AppState.CurrentDiagnosticSession.diagnosticPoint == null) activity?.finish()
-        if (AppState.CurrentDiagnosticSession.reportType == null) state = UiState.Configuration
+        val reportSession by LocalReportSession.current
+        if (reportSession.reportType == null) state = UiState.Configuration
         PtmTheme {
             Scaffold(
                 topBar = {
@@ -156,10 +141,7 @@ fun ReportEditorScreen() {
                                 icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                                 label = stringResource(R.string.back)
                             ) {
-                                activity?.run {
-                                    setResult(Activity.RESULT_CANCELED)
-                                    finish()
-                                }
+                                onBack()
                             }
                         }
                     )
@@ -187,9 +169,7 @@ fun ReportEditorScreen() {
                     modifier = Modifier.Companion.padding(horizontal = 16.dp)
                 ) {
                     Text(
-                        "${stringResource(R.string.point)} ${
-                            diagnosticPoint?.point?.inventoryId ?: stringResource(R.string.unknown)
-                        }",
+                        "${stringResource(R.string.point)} ${reportSession.diagnosticPoint.inventoryId}",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 36.sp,
                         textAlign = TextAlign.Companion.Center,
@@ -198,19 +178,14 @@ fun ReportEditorScreen() {
                             .padding(top = 24.dp)
                     )
                     Text(
-                        diagnosticObject?.diagnosticObject?.name
-                            ?: stringResource(R.string.unknown),
+                        reportSession.diagnosticSession.diagnosticObject.name,
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Companion.Center,
                         modifier = Modifier.Companion
                             .fillMaxWidth()
                     )
                     Text(
-                        "${stringResource(R.string.area)} ${
-                            diagnosticArea?.diagnosticArea?.name ?: stringResource(
-                                R.string.unknown
-                            )
-                        }",
+                        "${stringResource(R.string.area)} ${reportSession.diagnosticSession.diagnosticArea.name}",
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Companion.Center,
                         modifier = Modifier.Companion
@@ -223,7 +198,7 @@ fun ReportEditorScreen() {
                         modifier = Modifier.Companion.padding(top = 8.dp)
                     )
                     Text(
-                        AppState.CurrentDiagnosticSession.dateTime
+                        reportSession.dateTime
                             .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.Companion
@@ -233,7 +208,7 @@ fun ReportEditorScreen() {
 
                     AnimatedVisibility(state == UiState.Editor) {
                         Text(
-                            AppState.CurrentDiagnosticSession.reportType?.let { reportType ->
+                            reportSession.reportType?.let { reportType ->
                                 AppState.reportConfig.value?.reportTypes[reportType]?.name
                             } ?: stringResource(R.string.unknown),
                             style = MaterialTheme.typography.titleLarge,
@@ -252,7 +227,8 @@ fun ReportEditorScreen() {
                     AnimatedVisibility(state == UiState.Editor)
                     {
                         ReportEditor(
-                            Modifier.Companion
+                            onBack = onBack,
+                            modifier = Modifier.Companion
                                 .fillMaxWidth()
                                 .padding(top = 16.dp)
                         )
@@ -270,6 +246,7 @@ private fun ReportTypesList(
     modifier: Modifier = Modifier
 ) {
     val reportConfig = AppState.reportConfig.value
+    var reportSession by LocalReportSession.current
     if (reportConfig == null) {
         Text(
             stringResource(R.string.no_report_configuration),
@@ -305,14 +282,14 @@ private fun ReportTypesList(
                         interactionSource = interactionSource,
                         indication = null
                     ) {
-                        AppState.CurrentDiagnosticSession.reportType = i
+                        reportSession = reportSession.copy(reportType = i)
                         state = UiState.Editor
                     }
                     .padding(start = 16.dp)
                     .padding(vertical = 12.dp)
             ) {
                 Icon(
-                    if (AppState.CurrentDiagnosticSession.reportType == i)
+                    if (reportSession.reportType == i)
                         painterResource(R.drawable.ic_radio_button_checked)
                     else
                         painterResource(R.drawable.ic_radio_button_unchecked),
@@ -354,8 +331,9 @@ private fun ApplyButton(
     modifier: Modifier = Modifier
 ) {
     var state by LocalUiState.current
+    var reportSession by LocalReportSession.current
     val enabled = when (state) {
-        UiState.Configuration -> UiState.canOpenEditor()
+        UiState.Configuration -> UiState.canOpenEditor(reportSession)
         UiState.Editor -> true
     }
     PtmTheme {
@@ -395,52 +373,21 @@ private fun ApplyButton(
     }
 }
 
-
-@Preview(showBackground = true)
-@Composable
-private fun TechDiagnosticsScreenPreview() {
-    AppState.reportConfig.value = ReportConfig(
-        listOf(
-            ReportType(
-                "foo0",
-                "Test", listOf(
-                    ReportParameter(
-                        "bar0",
-                        "Very long and wordy parameter name with like lots of words in it " +
-                                "and that's why it doesn't even fit the screen",
-                        ParameterType.Bool
-                    ),
-                    ReportParameter(
-                        "bar1",
-                        "Some other parameter",
-                        ParameterType.Decimal,
-                        "kV"
-                    )
-                )
-            )
-        )
-    )
-    AppState.CurrentDiagnosticSession.reportType = 0
-    LocalUiState.current.value = UiState.Editor
-
-    PtmTheme {
-        ReportEditorScreen()
-    }
-}
-
 private val LocalReportType = compositionLocalOf { 0 }
 
 @Composable
 private fun ReportEditor(
+    onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    var reportSession by LocalReportSession.current
     var diagnosticType by remember {
         mutableIntStateOf(
-            AppState.CurrentDiagnosticSession.reportType ?: 0
+            reportSession.reportType ?: 0
         )
     }
-    diagnosticType = AppState.CurrentDiagnosticSession.reportType ?: diagnosticType
+    diagnosticType = reportSession.reportType ?: diagnosticType
 
     CompositionLocalProvider(
         LocalCoroutineScope provides rememberCoroutineScope(),
@@ -470,18 +417,9 @@ private fun ReportEditor(
 
                 AppState.reportConfig.value?.reportTypes[diagnosticType]?.parameters?.forEachIndexed { i, parameter ->
                     val value = remember {
-                        AppState.CurrentDiagnosticSession.data[parameter.id]
-                            ?: when (parameter.type) {
-                                ParameterType.Text, ParameterType.Photo -> mutableStateOf<String?>(
-                                    null
-                                )
-
-                                ParameterType.Integer -> mutableStateOf<Int?>(null)
-                                ParameterType.Decimal -> mutableStateOf<Float?>(null)
-                                ParameterType.Bool -> mutableStateOf<Boolean?>(null)
-                            }.also {
-                                AppState.CurrentDiagnosticSession.data[parameter.id] = it
-                            }
+                        reportSession.data[parameter.id] ?: mutableStateOf("").also {
+                            reportSession.data[parameter.id] = it
+                        }
                     }
                     ReportField(
                         parameter,
@@ -492,7 +430,13 @@ private fun ReportEditor(
                     )
                 }
 
-                SaveButton(Modifier.padding(16.dp))
+                SaveButton(
+                    onClick = {
+                        reportSession.reportToDb(context)
+                        onBack()
+                    },
+                    modifier = Modifier.padding(16.dp)
+                )
             }
         }
     }
@@ -506,6 +450,7 @@ private fun LocationField(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     val locationProvider = LocalLocationProvider.current
+    var reportSession by LocalReportSession.current
 
     var isSyncingLocation by remember { mutableStateOf(true) }
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
@@ -539,7 +484,8 @@ private fun LocationField(
             .build()
         locationProvider?.getCurrentLocation(currentLocationRequest, null)
             ?.addOnSuccessListener {
-                AppState.CurrentDiagnosticSession.location = it
+                reportSession =
+                    reportSession.copy(location = Coordinates(it.latitude, it.longitude))
             }
             ?.addOnFailureListener {
                 coroutineScope?.launch {
@@ -560,7 +506,7 @@ private fun LocationField(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
-        val location = AppState.CurrentDiagnosticSession.location
+        val location = reportSession.location
         PtmFilledButton(
             enabled = location != null,
             onClick = {
@@ -604,10 +550,7 @@ private fun LocationField(
 @Composable
 private fun ReportField(
     parameter: ReportParameter,
-    // FIXME: using * type seems to be a pretty bad solution.
-    //   need to come up with something more failsafe and neat.
-    //   but so far it is used only locally in this file, so it should be ok.
-    value: MutableState<out Any?>,
+    value: MutableState<String>,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -627,22 +570,27 @@ private fun ReportField(
                     .padding(vertical = 4.dp)
             )
             if (parameter.type == ParameterType.Bool) {
-                @Suppress("UNCHECKED_CAST")
-                var v by value as MutableState<Boolean?>
+                var v by value
                 FilledTonalIconButton(
-                    onClick = { v = v != true },
+                    onClick = {
+                        v = when (ReportFieldValue.Bool.fromString(v)) {
+                            true -> "false"
+                            false -> "true"
+                            else -> "true"
+                        }
+                    },
                     shape = RectangleShape,
                     modifier = Modifier
                         .padding(horizontal = 16.dp)
                         .border(BorderStroke(6.dp, MaterialTheme.colorScheme.primary))
                 ) {
                     Icon(
-                        if (v == true) Icons.Outlined.Check else Icons.Outlined.Close,
+                        if (ReportFieldValue.Bool.fromString(v) == true) Icons.Outlined.Check else Icons.Outlined.Close,
                         contentDescription = null,
                         modifier = Modifier
                             .fillMaxSize(.8f)
                             .aspectRatio(1f)
-                            .alpha(if (v != null) 1f else 0f)
+                            .alpha(if (v != "") 1f else 0f)
                     )
                 }
             }
@@ -687,38 +635,30 @@ private fun ReportField(
             }
         }
         when (parameter.type) {
-            ParameterType.Text, ParameterType.Photo -> {
-                @Suppress("UNCHECKED_CAST")
-                var v by value as MutableState<String?>
-                ParamField(value = v ?: "") { v = it }
+            ParameterType.Text, ParameterType.Raw, ParameterType.Photo -> {
+                var v by value
+                ParamField(value = v) { v = it }
             }
 
             ParameterType.Integer -> {
-                @Suppress("UNCHECKED_CAST")
-                var v by value as MutableState<Int?>
-                var text by remember { mutableStateOf(v?.toString() ?: "") }
+                var v by value
                 ParamField(
-                    value = text,
+                    value = v,
                     keyboardType = KeyboardType.Companion.Number
                 ) {
-                    text = it.filter { it.isDigit() }
-                    v = text.toIntOrNull()
+                    v = it.filter { it.isDigit() }
                 }
             }
 
             ParameterType.Decimal -> {
-                @Suppress("UNCHECKED_CAST")
-                var v by value as MutableState<Float?>
-                var text by remember { mutableStateOf(v?.toString() ?: "") }
+                var v by value
                 ParamField(
-                    value = text,
+                    value = v,
                     keyboardType = KeyboardType.Companion.Decimal
                 ) {
-                    text =
-                        it.filter {
-                            it.isDigit() || it == DecimalFormatSymbols.getInstance().decimalSeparator
-                        }
-                    v = text.toFloatOrNull()
+                    v = it.filter {
+                        it.isDigit() || it == DecimalFormatSymbols.getInstance().decimalSeparator
+                    }
                 }
             }
 
@@ -729,10 +669,10 @@ private fun ReportField(
 
 @Composable
 private fun SaveButton(
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val activity = LocalActivity.current
+    val reportSession by LocalReportSession.current
     val reportConfig = AppState.reportConfig.value ?: return
     val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
     remember(derivedReportType) {
@@ -741,21 +681,13 @@ private fun SaveButton(
             .map { it.id }
             .toSet()
     }
-    val enabled = with(AppState.CurrentDiagnosticSession) {
-        diagnosticPoint != null
-                && reportType != null
-                && location != null
+    val enabled = with(reportSession) {
+        reportType != null && location != null
     }
 
     PtmFilledButton(
         enabled = enabled,
-        onClick = {
-            AppState.CurrentDiagnosticSession.reportToDb(context)
-            activity?.run {
-                setResult(Activity.RESULT_OK)
-                finish()
-            }
-        },
+        onClick = onClick,
         modifier = modifier
     ) {
         Icon(
@@ -767,6 +699,45 @@ private fun SaveButton(
     }
 }
 
+
+private val _reportSession = ReportSession(
+    diagnosticSession = DiagnosticSession(
+        diagnosticObject = DiagnosticObject("", "", "Test Object"),
+        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+    ),
+    diagnosticPoint = DiagnosticPoint("", "", "", "")
+)
+
+@Preview(showBackground = true)
+@Composable
+private fun TechDiagnosticsScreenPreview() {
+    AppState.reportConfig.value = ReportConfig(
+        listOf(
+            ReportType(
+                "foo0",
+                "Test", listOf(
+                    ReportParameter(
+                        "bar0",
+                        "Very long and wordy parameter name with like lots of words in it " +
+                                "and that's why it doesn't even fit the screen",
+                        ParameterType.Bool
+                    ),
+                    ReportParameter(
+                        "bar1",
+                        "Some other parameter",
+                        ParameterType.Decimal,
+                        "kV"
+                    )
+                )
+            )
+        )
+    )
+    LocalUiState.current.value = UiState.Editor
+
+    PtmTheme {
+        ReportEditorScreen(_reportSession, {})
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
@@ -792,26 +763,11 @@ private fun ReportEditorPreview() {
             )
         )
     )
-    AppState.CurrentDiagnosticSession.reportType = 0
-
-    PtmTheme {
-        ReportEditor()
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun ReportFieldPreview() {
-    PtmTheme {
-        ReportField(
-            ReportParameter(
-                "foo0",
-                "Very long and wordy parameter name with like lots of words in it " +
-                        "and that's why it doesn't even fit the screen",
-                ParameterType.Decimal,
-                unit = "kV"
-            ),
-            remember { mutableStateOf<Float?>(1f) }
-        )
+    CompositionLocalProvider(
+        LocalReportSession provides remember { mutableStateOf(_reportSession) }
+    ) {
+        PtmTheme {
+            ReportEditor(onBack = {})
+        }
     }
 }

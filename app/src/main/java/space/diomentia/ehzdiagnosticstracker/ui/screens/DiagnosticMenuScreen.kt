@@ -1,15 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.Manifest
-import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,9 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenuItem
@@ -33,7 +23,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -42,28 +31,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticViewModel
-import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
-import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticViewModel
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -73,23 +57,19 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import java.time.LocalDateTime
 
 @Composable
 fun DiagnosticMenuScreen(
-    viewModel: DiagnosticViewModel = hiltViewModel(),
+    diagnosticSession: DiagnosticSession,
     onAuthorize: () -> Unit,
     onChooseArea: () -> Unit,
     onSettings: () -> Unit,
     onPointList: () -> Unit,
-    onHistory: () -> Unit,
-    onCreateReport: (String) -> Unit,
-    onEditReport: (String, Long) -> Unit
+    onHistory: () -> Unit
 ) {
     val snackbarHostState = LocalSnackbarHostState.current
-
     CompositionLocalProvider(
-        LocalDiagnosticViewModel provides viewModel
+        LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
     ) {
         PtmTheme {
             Scaffold(
@@ -136,13 +116,16 @@ fun DiagnosticMenuScreen(
                     horizontalAlignment = Alignment.Companion.CenterHorizontally
                 ) {
                     AreaInfo()
-                    MainAction()
-                    MenuActionButtonsRow(
+                    MainActions(
+                        onPointList = onPointList,
+                        onHistory = onHistory
+                    )
+                    DiagnosticsTypeSelector()
+                    LastReport(
                         modifier = Modifier.fillMaxWidth(),
                         onHistory = onHistory,
                         onPointList = onPointList
                     )
-                    DiagnosticsTypeSelector()
                 }
             }
         }
@@ -153,21 +136,19 @@ fun DiagnosticMenuScreen(
 private fun AreaInfo(
     modifier: Modifier = Modifier
 ) {
-    val vm = LocalDiagnosticViewModel.current
-    val dObject by vm.diagnosticObject.collectAsStateWithLifecycle(null)
-    val dArea by vm.diagnosticArea.collectAsStateWithLifecycle(null)
+    val diagnosticSession by LocalDiagnosticSession.current
 
     Column(
         horizontalAlignment = Alignment.Companion.CenterHorizontally,
         modifier = modifier
     ) {
         Text(
-            dObject?.diagnosticObject?.name ?: stringResource(R.string.unknown),
+            diagnosticSession.diagnosticObject.name,
             textAlign = TextAlign.Companion.Center,
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            "${stringResource(R.string.area)} ${dArea?.diagnosticArea?.name}",
+            "${stringResource(R.string.area)} ${diagnosticSession.diagnosticArea.name}",
             textAlign = TextAlign.Companion.Center,
             style = MaterialTheme.typography.headlineSmall
         )
@@ -180,24 +161,37 @@ private fun AreaInfo(
 }
 
 @Composable
-private fun MainAction(
-    modifier: Modifier = Modifier
+private fun MainActions(
+    modifier: Modifier = Modifier,
+    onPointList: () -> Unit,
+    onHistory: () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.Companion.CenterHorizontally,
-        modifier = Modifier.Companion.then(modifier)
+        modifier = Modifier.then(modifier)
     ) {
-        ScanQrButton(
-            modifier = Modifier.Companion.size(200.dp)
-        )
-        ContinueEditingButton(
-            modifier = Modifier.Companion
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-        )
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            MenuActionButton(
+                buttonHeight = 100.dp,
+                description = stringResource(R.string.diagnostic_points),
+                icon = painterResource(R.drawable.ic_edit_location)
+            ) {
+                onPointList()
+            }
+            MenuActionButton(
+                buttonHeight = 100.dp,
+                description = stringResource(R.string.diagnostics_history),
+                icon = painterResource(R.drawable.ic_history)
+            ) {
+                onHistory()
+            }
+        }
     }
 }
 
+/*
 @Composable
 private fun ScanQrButton(
     modifier: Modifier = Modifier
@@ -205,8 +199,7 @@ private fun ScanQrButton(
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val vm = LocalDiagnosticViewModel.current
-    val dArea by vm.diagnosticArea.collectAsStateWithLifecycle(null)
+    val diagnosticSession by LocalDiagnosticSession.current
 
     rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -222,7 +215,7 @@ private fun ScanQrButton(
             }
             return@rememberLauncherForActivityResult
         }
-        val foundPoint = dArea?.points?.find { it.id == id }
+        val foundPoint = diagnosticSession.diagnosticArea.points.find { it.id == id }
         if (foundPoint == null) {
             coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
@@ -230,10 +223,12 @@ private fun ScanQrButton(
             }
             return@rememberLauncherForActivityResult
         }
+        /*
         AppState.CurrentDiagnosticSession.reset()
         AppState.CurrentDiagnosticSession.diagnosticPoint = foundPoint.id
         AppState.CurrentDiagnosticSession.validationId = foundPoint.id
         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
+         */
         /* TODO
         activity?.run {
             val intent = Intent(context, TechDiagnosticsActivity::class.java)
@@ -280,7 +275,9 @@ private fun ScanQrButton(
         }
     }
 }
+ */
 
+/*
 @Composable
 private fun ContinueEditingButton(
     modifier: Modifier = Modifier
@@ -326,6 +323,7 @@ private fun ContinueEditingButton(
         )
     }
 }
+ */
 
 @Composable
 private fun MenuActionButton(
@@ -374,15 +372,14 @@ private fun MenuActionButton(
 }
 
 @Composable
-private fun MenuActionButtonsRow(
+private fun LastReport(
     onPointList: () -> Unit,
     onHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val vm = LocalDiagnosticViewModel.current
-    val dArea by vm.diagnosticArea.collectAsStateWithLifecycle(null)
-    val areaLastLocation = dArea?.diagnosticArea?.lastLocation
+    val diagnosticSession by LocalDiagnosticSession.current
+    val areaLastLocation = diagnosticSession.diagnosticArea.lastLocation
     val rowHeight = 80.dp
 
     Row(
@@ -391,7 +388,7 @@ private fun MenuActionButtonsRow(
         modifier = Modifier.Companion
             .then(modifier)
     ) {
-        val actionButtonModifier = Modifier.Companion
+        val actionButtonModifier = Modifier
             .weight(1f)
         MenuActionButton(
             actionButtonModifier,
@@ -434,6 +431,7 @@ private fun MenuActionButtonsRow(
 private fun DiagnosticsTypeSelector(
     modifier: Modifier = Modifier
 ) {
+    var diagnosticSession by LocalDiagnosticSession.current
     var expanded by remember { mutableStateOf(false) }
     val options = stringArrayResource(R.array.diagnostics_types)
     val colors = TextFieldDefaults.colors(
@@ -452,7 +450,7 @@ private fun DiagnosticsTypeSelector(
             modifier = modifier
         ) {
             TextField(
-                value = options[AppState.CurrentDiagnosticSession.diagnosticType],
+                value = options[diagnosticSession.diagnosticType],
                 colors = colors,
                 supportingText = {
                     Text(
@@ -479,7 +477,7 @@ private fun DiagnosticsTypeSelector(
                     DropdownMenuItem(
                         text = { Text(option) },
                         onClick = {
-                            AppState.CurrentDiagnosticSession.diagnosticType = i
+                            diagnosticSession = diagnosticSession.copy(diagnosticType = i)
                             expanded = false
                         }
                     )
@@ -492,10 +490,14 @@ private fun DiagnosticsTypeSelector(
 
 @Preview(showBackground = true)
 @Composable
-private fun ToolMenuScreenPreview() {
+private fun DiagnosticMenuScreenPreview() {
     AppState.reportConfig.value = ReportConfig(listOf())
+    val diagnosticSession = DiagnosticSession(
+        diagnosticObject = DiagnosticObject("", "", "Test Object"),
+        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+    )
 
     PtmTheme {
-        DiagnosticMenuScreen(hiltViewModel(), {}, {}, {}, {}, {}, {}, { _, _ -> })
+        DiagnosticMenuScreen(diagnosticSession, {}, {}, {}, {}, {})
     }
 }

@@ -26,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,14 +42,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
-import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticViewModel
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
+import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -62,76 +64,79 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
 fun DiagnosticPointsScreen(
-    viewModel: DiagnosticViewModel,
+    diagnosticSession: DiagnosticSession,
     onBack: () -> Unit,
-    onPointChosen: (String) -> Unit
+    onPointChosen: (DiagnosticPoint) -> Unit
 ) {
     var createPointRequest by remember { mutableStateOf(false) }
 
-    PtmTheme {
-        Scaffold(
-            snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
-            topBar = {
-                PtmTopBar(title = {
-                    Text(stringResource(R.string.diagnostic_points))
-                })
-            },
-            bottomBar = {
-                PtmBottomBar(
-                    navigation = {
-                        ActionButton(
-                            rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
-                            label = stringResource(R.string.back)
-                        ) {
-                            onBack()
+    CompositionLocalProvider(
+        LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
+    ) {
+        PtmTheme {
+            Scaffold(
+                snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
+                topBar = {
+                    PtmTopBar(title = {
+                        Text(stringResource(R.string.diagnostic_points))
+                    })
+                },
+                bottomBar = {
+                    PtmBottomBar(
+                        navigation = {
+                            ActionButton(
+                                rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                                label = stringResource(R.string.back)
+                            ) {
+                                onBack()
+                            }
+                        },
+                        actions = {
+                            ActionButton(
+                                rememberVectorPainter(Icons.Outlined.Add),
+                                label = stringResource(R.string.create_point)
+                            ) { createPointRequest = true }
                         }
-                    },
-                    actions = {
-                        ActionButton(
-                            rememberVectorPainter(Icons.Outlined.Add),
-                            label = stringResource(R.string.create_point)
-                        ) { createPointRequest = true }
-                    }
-                )
-            }
-        ) { innerPadding ->
-            val diagnosticPoints by AppState.CurrentDiagnosticSession.diagnosticArea?.let { area ->
-                ReportDatabase.Companion.getInstance()
-                    .diagnosticAreaDao()
-                    .getAreaPoints(area)
-                    .collectAsStateWithLifecycle(emptyList())
-            } ?: remember { mutableStateOf(emptyList()) }
-
-            if (createPointRequest) {
-                AddPointDialog { createPointRequest = false }
-            }
-
-            if (diagnosticPoints.isEmpty()) {
-                Box(
-                    contentAlignment = Alignment.Companion.Center,
-                    modifier = Modifier.Companion.fillMaxSize()
-                ) {
-                    Text(
-                        stringResource(R.string.entries_not_found),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.Companion.alpha(.3f)
                     )
                 }
-                return@Scaffold
-            }
+            ) { innerPadding ->
+                val diagnosticSession by LocalDiagnosticSession.current
+                val diagnosticPoints by ReportDatabase.Companion.getInstance()
+                    .diagnosticAreaDao()
+                    .getAreaPoints(diagnosticSession.diagnosticArea.id)
+                    .collectAsStateWithLifecycle(emptyList())
 
-            var editPointRequest by remember { mutableStateOf<DiagnosticPoint?>(null) }
-            editPointRequest?.let { diagnosticPoint ->
-                EditPointDialog(diagnosticPoint) { editPointRequest = null }
-            }
+                if (createPointRequest) {
+                    AddPointDialog { createPointRequest = false }
+                }
 
-            FullscreenLazyColumn(innerPadding) {
-                items(diagnosticPoints) { diagnosticPoint ->
-                    DiagnosticPointItem(
-                        diagnosticPoint.point,
-                        onClick = { onPointChosen(diagnosticPoint.point.id) },
-                        onEdit = { editPointRequest = diagnosticPoint.point }
-                    )
+                if (diagnosticPoints.isEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.Companion.Center,
+                        modifier = Modifier.Companion.fillMaxSize()
+                    ) {
+                        Text(
+                            stringResource(R.string.entries_not_found),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.Companion.alpha(.3f)
+                        )
+                    }
+                    return@Scaffold
+                }
+
+                var editPointRequest by remember { mutableStateOf<DiagnosticPoint?>(null) }
+                editPointRequest?.let { diagnosticPoint ->
+                    EditPointDialog(diagnosticPoint) { editPointRequest = null }
+                }
+
+                FullscreenLazyColumn(innerPadding) {
+                    items(diagnosticPoints) { diagnosticPoint ->
+                        DiagnosticPointItem(
+                            diagnosticPoint.point,
+                            onClick = { onPointChosen(diagnosticPoint.point) },
+                            onEdit = { editPointRequest = diagnosticPoint.point }
+                        )
+                    }
                 }
             }
         }
@@ -192,7 +197,7 @@ private fun AddPointDialog(
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val area = AppState.CurrentDiagnosticSession.diagnosticArea ?: throw error("no area selected")
+    val diagnosticSession by LocalDiagnosticSession.current
     var idInput by remember { mutableStateOf("") }
     var inventoryNumberInput by remember { mutableStateOf("") }
 
@@ -270,7 +275,7 @@ private fun AddPointDialog(
                                         id = id,
                                         inventoryId = inventoryNumber,
                                         registrationNumber = id,
-                                        diagnosticArea = area
+                                        diagnosticArea = diagnosticSession.diagnosticArea.id
                                     )
                                 )
                             onDismissRequest()
@@ -389,4 +394,8 @@ private fun EditPointDialog(
 
 @Preview
 @Composable
-private fun DiagnosticPointsScreenPreview() = DiagnosticPointsScreen(hiltViewModel(), {}, {})
+private fun DiagnosticPointsScreenPreview() = DiagnosticPointsScreen(
+    DiagnosticSession(
+        diagnosticObject = DiagnosticObject("", "", "Test Object"),
+        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+    ), {}, {})

@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,18 +36,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticViewModel
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
@@ -61,82 +65,85 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun ReportHistoryScreen(
-    viewModel: DiagnosticViewModel,
+    diagnosticSession: DiagnosticSession,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
-    PtmTheme {
-        Scaffold(
-            snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
-            topBar = {
-                PtmTopBar(title = {
-                    Text(stringResource(R.string.diagnostics_history))
-                })
-            },
-            bottomBar = {
-                PtmBottomBar(
-                    navigation = {
-                        ActionButton(
-                            icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
-                            label = stringResource(R.string.back)
-                        ) {
-                            onBack()
+    CompositionLocalProvider(
+        LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
+    ) {
+        PtmTheme {
+            Scaffold(
+                snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
+                topBar = {
+                    PtmTopBar(title = {
+                        Text(stringResource(R.string.diagnostics_history))
+                    })
+                },
+                bottomBar = {
+                    PtmBottomBar(
+                        navigation = {
+                            ActionButton(
+                                icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                                label = stringResource(R.string.back)
+                            ) {
+                                onBack()
+                            }
                         }
-                    }
-                )
-            }
-        ) { innerPadding ->
-            var reportShowDetails by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
-            reportShowDetails?.let {
-                ReportDetailsDialog(it) { reportShowDetails = null }
-            }
-
-            var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
-            reportDelete?.let {
-                ReportDeleteDialog(
-                    onDismissRequest = { reportDelete = null },
-                    onAcceptRequest = {
-                        ReportDatabase.Companion.getInstance(context).diagnosticReportDao().run {
-                            deleteData(*it.data.toTypedArray())
-                            deleteReport(it.report)
-                            reportDelete = null
-                        }
-                    }
-                )
-            }
-
-            val history by AppState.CurrentDiagnosticSession.diagnosticArea?.let {
-                ReportDatabase.Companion.getInstance()
-                    .diagnosticAreaDao()
-                    .getAreaPoints(it)
-                    .collectAsStateWithLifecycle(emptyList())
-            } ?: remember { mutableStateOf(emptyList()) }
-            history.forEach { point ->
-                val reports by ReportDatabase.Companion.getInstance()
-                    .diagnosticAreaDao()
-                    .getPointReports(point.point.id)
-                    .collectAsStateWithLifecycle(emptyList())
-                if (reports.isEmpty()) {
-                    Box(
-                        contentAlignment = Alignment.Companion.Center,
-                        modifier = Modifier.Companion.fillMaxSize()
-                    ) {
-                        Text(
-                            stringResource(R.string.entries_not_found),
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.Companion.alpha(.3f)
-                        )
-                    }
-                    return@Scaffold
+                    )
                 }
-                FullscreenLazyColumn(innerPadding) {
-                    items(reports) { report ->
-                        ReportItem(
-                            report,
-                            onLongClick = { reportDelete = report }
+            ) { innerPadding ->
+                var reportShowDetails by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
+                reportShowDetails?.let {
+                    ReportDetailsDialog(it) { reportShowDetails = null }
+                }
+
+                var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
+                reportDelete?.let {
+                    ReportDeleteDialog(
+                        onDismissRequest = { reportDelete = null },
+                        onAcceptRequest = {
+                            ReportDatabase.Companion.getInstance(context).diagnosticReportDao()
+                                .run {
+                                    deleteData(*it.data.toTypedArray())
+                                    deleteReport(it.report)
+                                    reportDelete = null
+                                }
+                        }
+                    )
+                }
+
+                val history by ReportDatabase.getInstance()
+                    .diagnosticAreaDao()
+                    .getAreaPoints(diagnosticSession.diagnosticArea.id)
+                    .collectAsStateWithLifecycle(emptyList())
+                history.forEach { point ->
+                    val reports by ReportDatabase.Companion.getInstance()
+                        .diagnosticAreaDao()
+                        .getPointReports(point.point.id)
+                        .collectAsStateWithLifecycle(emptyList())
+                    if (reports.isEmpty()) {
+                        Box(
+                            contentAlignment = Alignment.Companion.Center,
+                            modifier = Modifier.Companion.fillMaxSize()
                         ) {
-                            reportShowDetails = report
+                            Text(
+                                stringResource(R.string.entries_not_found),
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.Companion.alpha(.3f)
+                            )
+                        }
+                        return@Scaffold
+                    }
+                    FullscreenLazyColumn(innerPadding) {
+                        items(reports) { report ->
+                            ReportItem(
+                                report,
+                                onLongClick = { reportDelete = report }
+                            ) {
+                                reportShowDetails = report
+                            }
                         }
                     }
                 }
@@ -219,14 +226,14 @@ private fun ReportDetailsDialog(
     fun DataEntryItem(entry: ReportDataEntry) {
         val parameter = parameters?.get(entry.characteristic)
         val value = when (parameter?.type) {
-            ParameterType.Bool -> when (entry.value) {
-                "true" -> stringResource(R.string.is_true)
-                "false" -> stringResource(R.string.is_false)
+            ParameterType.Bool -> when (ReportFieldValue.Bool.fromString(entry.value)) {
+                true -> stringResource(R.string.is_true)
+                false -> stringResource(R.string.is_false)
                 else -> stringResource(R.string.unknown)
             }
 
             ParameterType.Integer, ParameterType.Decimal,
-            ParameterType.Photo, ParameterType.Text, null -> entry.value
+            ParameterType.Photo, ParameterType.Text, ParameterType.Raw, null -> entry.value
         } + (parameter?.unit?.let { " $it" } ?: "")
         Column(
             modifier = Modifier.Companion
@@ -346,7 +353,11 @@ private val previewReports = listOf(
 
 @Preview
 @Composable
-private fun ReportHistoryScreenPreview() = ReportHistoryScreen(hiltViewModel(), {})
+private fun ReportHistoryScreenPreview() = ReportHistoryScreen(
+    DiagnosticSession(
+        diagnosticObject = DiagnosticObject("", "", "Test Object"),
+        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+    ), {})
 
 @Preview
 @Composable

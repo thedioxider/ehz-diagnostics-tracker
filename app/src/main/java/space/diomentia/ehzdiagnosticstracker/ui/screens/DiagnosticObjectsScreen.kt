@@ -65,9 +65,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 @Composable
 fun DiagnosticObjectsScreen(
     onAuthorize: () -> Unit,
-    onAreaChosen: (DiagnosticArea) -> Unit
+    onAreaChosen: (DiagnosticObject, DiagnosticArea) -> Unit
 ) {
     var createObjectRequest by remember { mutableStateOf(false) }
+    var selectedDiagnosticObject: DiagnosticObject? by remember { mutableStateOf(null) }
 
     PtmTheme {
         Scaffold(
@@ -136,33 +137,31 @@ fun DiagnosticObjectsScreen(
                 EditAreaDialog(diagnosticArea) { editAreaRequest = null }
             }
 
-            val selectedObjectAreas by AppState.CurrentDiagnosticSession.diagnosticObject?.let {
-                ReportDatabase.Companion.getInstance()
+            val selectedObjectAreas by selectedDiagnosticObject?.let {
+                ReportDatabase.getInstance()
                     .diagnosticAreaDao()
-                    .getObjectAreas(it)
+                    .getObjectAreas(it.id)
                     .collectAsStateWithLifecycle(emptyList())
             } ?: remember { mutableStateOf(emptyList()) }
             FullscreenLazyColumn(innerPadding) {
                 items(diagnosticObjects) { diagnosticObject ->
                     AnimatedVisibility(
-                        AppState.CurrentDiagnosticSession.diagnosticObject == null
-                                || AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject.id
+                        selectedDiagnosticObject == null || selectedDiagnosticObject?.id == diagnosticObject.diagnosticObject.id
                     ) {
                         DiagnosticObjectItem(
                             diagnosticObject.diagnosticObject.name,
-                            onBack = if (AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject.id) { ->
-                                AppState.CurrentDiagnosticSession.diagnosticObject = null
+                            onBack = if (selectedDiagnosticObject?.id == diagnosticObject.diagnosticObject.id) { ->
+                                selectedDiagnosticObject = null
                             } else null,
-                            onClick = if (AppState.CurrentDiagnosticSession.diagnosticObject == null) { ->
-                                AppState.CurrentDiagnosticSession.diagnosticObject =
-                                    diagnosticObject.diagnosticObject.id
+                            onClick = if (selectedDiagnosticObject == null) { ->
+                                selectedDiagnosticObject = diagnosticObject.diagnosticObject
                             } else null,
                             onLongClick = {
                                 if (AppState.adminSession) {
                                     editObjectRequest = diagnosticObject.diagnosticObject
                                 }
                             },
-                            onNew = if (AppState.CurrentDiagnosticSession.diagnosticObject == diagnosticObject.diagnosticObject.id
+                            onNew = if (selectedDiagnosticObject?.id == diagnosticObject.diagnosticObject.id
                                 && AppState.adminSession
                             ) { ->
                                 addAreaRequest = diagnosticObject.diagnosticObject
@@ -171,7 +170,7 @@ fun DiagnosticObjectsScreen(
                     }
                 }
                 items(selectedObjectAreas) { area ->
-                    AnimatedVisibility(AppState.CurrentDiagnosticSession.diagnosticObject != null) {
+                    AnimatedVisibility(selectedDiagnosticObject != null) {
                         DiagnosticAreaItem(
                             area.diagnosticArea.name,
                             modifier = Modifier.Companion.padding(start = 64.dp),
@@ -181,9 +180,9 @@ fun DiagnosticObjectsScreen(
                                 }
                             }
                         ) {
-                            AppState.CurrentDiagnosticSession.diagnosticArea =
-                                area.diagnosticArea.id
-                            onAreaChosen(area.diagnosticArea)
+                            selectedDiagnosticObject?.let { diagnosticObject ->
+                                onAreaChosen(diagnosticObject, area.diagnosticArea)
+                            }
                         }
                     }
                 }
@@ -715,7 +714,7 @@ private fun EditAreaDialog(
 
 @Preview
 @Composable
-private fun DiagnosticObjectChooseScreenPreview() = DiagnosticObjectsScreen({}, {})
+private fun DiagnosticObjectChooseScreenPreview() = DiagnosticObjectsScreen({}, { _, _ -> })
 
 @Preview
 @Composable

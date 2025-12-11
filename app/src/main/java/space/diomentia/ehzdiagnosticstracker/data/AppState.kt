@@ -3,7 +3,6 @@ package space.diomentia.ehzdiagnosticstracker.data
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.res.Resources
-import android.location.Location
 import android.net.Uri
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -12,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -24,8 +22,6 @@ import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppPreferences.getPreference
 import java.io.File
 import java.io.FileOutputStream
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 @Stable
 object AppState {
@@ -121,83 +117,6 @@ object AppState {
         REPORT_CONFIG_FILENAME,
         R.raw.report_conf
     )
-
-    object CurrentDiagnosticSession {
-        var dateTime by mutableStateOf<LocalDateTime>(LocalDateTime.now())
-        var diagnosticObject by mutableStateOf<String?>(null)
-        var diagnosticArea by mutableStateOf<String?>(null)
-        var diagnosticPoint by mutableStateOf<String?>(null)
-        var diagnosticType by mutableIntStateOf(0)
-        var reportType by mutableStateOf<Int?>(null)
-        var location by mutableStateOf<Location?>(null)
-        var validationId by mutableStateOf<String?>(null)
-        var data = mutableMapOf<String, MutableState<out Any?>>()
-
-        fun reset() {
-            dateTime = LocalDateTime.now()
-            diagnosticPoint = null
-            reportType = null
-            location = null
-            validationId = null
-            data.forEach { (_, v) -> (v as MutableState<Any?>).value = null }
-        }
-
-        fun reportToDb(context: Context): Boolean {
-            val reportDb = ReportDatabase.getInstance(context)
-            val reportConfig = reportConfig.value
-            val dPoint = diagnosticPoint
-            val diagnosticType = reportType
-            val location = location
-            val inspector = profileSession
-            val data = data
-            if (dPoint == null
-                || diagnosticType == null
-                || location == null
-                || reportConfig == null
-                || inspector == null
-            ) return false
-            (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
-                .asSequence()
-                .map { it.id }
-                .toSet()
-            val report = DiagnosticReport(
-                dPoint,
-                dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
-                this@CurrentDiagnosticSession.diagnosticType.toString(),
-                reportConfig.reportTypes[diagnosticType].id,
-                Coordinates(location.latitude, location.altitude),
-                "${inspector.surname} ${inspector.name}",
-                validationId
-            )
-            val reportId = reportDb.diagnosticReportDao().insertReport(report)
-            val dataEntries = data
-                .filter { (_, v) -> v.value != null }
-                .map { (k, v) ->
-                    ReportDataEntry(
-                        report = reportId,
-                        characteristic = k,
-                        value = v.value.toString()
-                    )
-                }
-                .toTypedArray()
-            reportDb.diagnosticReportDao().insertData(*dataEntries)
-            reset()
-            reportDb.diagnosticAreaDao().run {
-                diagnosticArea?.let {
-                    val area = getAreaByIdOnce(it)
-                    updateDiagnosticArea(
-                        area.copy(
-                            lastLocation = Coordinates(
-                                latitude = location.latitude,
-                                longitude = location.longitude
-                            )
-                        )
-                    )
-                }
-            }
-            return true
-        }
-    }
 
     @Composable
     inline fun <reified T> localYamlConfigCopyLauncher(
