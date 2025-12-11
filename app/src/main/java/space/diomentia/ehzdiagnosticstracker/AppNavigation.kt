@@ -121,9 +121,7 @@ fun AppNavigation() {
 
         composable(Screen.ProfileEdit.route) {
             EditProfileScreen(
-                onBack = {
-                    navController.popBackStack()
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 

@@ -14,9 +14,11 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +35,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.ripple
@@ -51,6 +54,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
@@ -72,6 +76,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.ScanIdQrActivity
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
@@ -434,6 +439,8 @@ private fun ReportEditor(
                     )
                 }
 
+                ValidationField()
+
                 SaveButton(
                     onClick = {
                         reportSession.reportToDb(context)
@@ -547,6 +554,70 @@ private fun LocationField(
                 modifier = Modifier
                     .fillMaxSize(.8f)
                     .aspectRatio(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ValidationField(
+    modifier: Modifier = Modifier
+) {
+    // TODO: somehow it doesn't save into continue later, whatever
+    val context = LocalContext.current
+    var reportSession by LocalReportSession.current
+
+    val qrValidationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val data = result.data?.getStringExtra(ScanIdQrActivity.QR_DATA)
+        reportSession = reportSession.copy(validationId = data)
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth(1f)
+            .height(IntrinsicSize.Min)
+            .then(modifier)
+    ) {
+        PtmFilledButton(
+            onClick = {
+                qrValidationLauncher.launch(Intent(context, ScanIdQrActivity::class.java))
+            },
+            modifier = Modifier.weight(1f, fill = true)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_qr_code),
+                    contentDescription = stringResource(R.string.scan_id),
+                    modifier = Modifier.padding(end = 4.dp)
+                )
+                Text(stringResource(R.string.scan_id))
+            }
+        }
+        Surface(
+            color = if (reportSession.validationId?.isNotBlank() == true)
+                MaterialTheme.colorScheme.primary
+            else
+                Color.Gray,
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(start = 16.dp)
+        ) {
+            Icon(
+                if (reportSession.validationId?.isNotBlank() == true)
+                    Icons.Outlined.Check
+                else
+                    Icons.Outlined.Close,
+                tint = MaterialTheme.colorScheme.background,
+                contentDescription = null,
+                modifier = Modifier
+                    .aspectRatio(1f)
+                    .padding(8.dp)
             )
         }
     }
