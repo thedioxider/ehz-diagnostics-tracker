@@ -71,6 +71,7 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
@@ -433,6 +434,7 @@ private val LocalReportType = compositionLocalOf { 0 }
 private fun ReportEditor(
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     var diagnosticType by remember {
         mutableIntStateOf(
             AppState.CurrentDiagnosticSession.reportType ?: 0
@@ -442,7 +444,8 @@ private fun ReportEditor(
 
     CompositionLocalProvider(
         LocalCoroutineScope provides rememberCoroutineScope(),
-        LocalReportType provides diagnosticType
+        LocalReportType provides diagnosticType,
+        LocalLocationProvider provides LocationServices.getFusedLocationProviderClient(context)
     ) {
         PtmTheme {
             Column(

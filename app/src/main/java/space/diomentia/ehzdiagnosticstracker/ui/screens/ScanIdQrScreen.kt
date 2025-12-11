@@ -1,7 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
 import android.app.Activity
-import android.content.Intent
 import android.util.Log
 import android.view.ViewGroup
 import androidx.activity.compose.LocalActivity
@@ -30,7 +29,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import space.diomentia.ehzdiagnosticstracker.R
-import space.diomentia.ehzdiagnosticstracker.ScanIdActivity
 import space.diomentia.ehzdiagnosticstracker.data.BarcodeAnalyzer
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -76,6 +74,7 @@ fun ScanIdQrScreen() {
                 BarcodeCameraPreview(
                     modifier = Modifier.Companion.fillMaxSize()
                 ) { data ->
+                    /* TODO
                     activity?.run {
                         val intent = Intent().also {
                             it.putExtra(ScanIdActivity.Companion.QR_DATA, data)
@@ -83,6 +82,7 @@ fun ScanIdQrScreen() {
                         setResult(Activity.RESULT_OK, intent)
                         finish()
                     }
+                     */
                 }
             }
         }

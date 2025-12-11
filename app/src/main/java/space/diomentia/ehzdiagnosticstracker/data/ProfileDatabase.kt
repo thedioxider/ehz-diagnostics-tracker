@@ -90,6 +90,9 @@ interface ProfileDao {
     @Query("SELECT * FROM profiles")
     fun getProfiles(): Flow<List<Profile>>
 
+    @Query("SELECT * FROM profiles WHERE id = :id")
+    fun getProfileById(id: Long): Flow<Profile>
+
     @Insert
     fun createProfile(profile: Profile)
 

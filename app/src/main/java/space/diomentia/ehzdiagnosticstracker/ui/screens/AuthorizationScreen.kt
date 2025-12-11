@@ -1,9 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.content.Intent
-import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -47,8 +43,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
-import space.diomentia.ehzdiagnosticstracker.DiagnosticObjectChooseActivity
-import space.diomentia.ehzdiagnosticstracker.EditProfileActivity
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
@@ -66,9 +60,11 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
-fun AuthorizationScreen() {
+fun AuthorizationScreen(
+    onEditProfile: () -> Unit,
+    onAuthorized: () -> Unit
+) {
     val context = LocalContext.current
-    val activity = LocalActivity.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     var adminPasswordRequest by remember { mutableStateOf(false) }
@@ -101,26 +97,11 @@ fun AuthorizationScreen() {
                                 )
                         ) { adminPasswordRequest = true }
                         if (AppState.adminSession == true) {
-                            val editorLauncher = rememberLauncherForActivityResult(
-                                ActivityResultContracts.StartActivityForResult()
-                            ) { result ->
-                                if (result.resultCode == EditProfileActivity.Companion.RESULT_PROFILE_DELETED) {
-                                    coroutineScope?.launch {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                        snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
-                                    }
-                                }
-                            }
                             ActionButton(
                                 rememberVectorPainter(Icons.Outlined.Edit),
                                 label = stringResource(R.string.edit_profile)
                             ) {
-                                editorLauncher.launch(
-                                    Intent(
-                                        context,
-                                        EditProfileActivity::class.java
-                                    )
-                                )
+                                onEditProfile()
                             }
                         }
                     }
@@ -152,15 +133,7 @@ fun AuthorizationScreen() {
                         }
                         authorizeRequest = null
                         if (success) {
-                            activity?.run {
-                                startActivity(
-                                    Intent(
-                                        context,
-                                        DiagnosticObjectChooseActivity::class.java
-                                    )
-                                )
-                                finish()
-                            }
+                            onAuthorized()
                         }
                     }
                 )
@@ -178,15 +151,7 @@ fun AuthorizationScreen() {
                             AppState.profileSession = profile
                         }
                         if (AppState.profileSession == profile) {
-                            activity?.run {
-                                startActivity(
-                                    Intent(
-                                        context,
-                                        DiagnosticObjectChooseActivity::class.java
-                                    )
-                                )
-                                finish()
-                            }
+                            onAuthorized()
                         } else {
                             authorizeRequest = profile
                         }
@@ -510,7 +475,7 @@ private fun ProfileItem(
 
 @Preview
 @Composable
-private fun AuthorizationScreenPreview() = AuthorizationScreen()
+private fun AuthorizationScreenPreview() = AuthorizationScreen({}, {})
 
 @Preview
 @Composable

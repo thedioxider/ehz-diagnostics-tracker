@@ -8,5 +8,4 @@ import kotlinx.coroutines.CoroutineScope
 
 val LocalCoroutineScope = staticCompositionLocalOf<CoroutineScope?> { null }
 val LocalSnackbarHostState = staticCompositionLocalOf { SnackbarHostState() }
-val LocalLocationProvider =
-    compositionLocalOf<FusedLocationProviderClient?> { null }
+val LocalLocationProvider = compositionLocalOf<FusedLocationProviderClient?> { null }

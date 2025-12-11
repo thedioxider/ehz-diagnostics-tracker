@@ -1,7 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.app.Activity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,7 +33,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
-import space.diomentia.ehzdiagnosticstracker.EditProfileActivity
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppPreferences
 import space.diomentia.ehzdiagnosticstracker.data.AppState
@@ -56,10 +53,11 @@ import space.diomentia.ehzdiagnosticstracker.ui.SettingsOptionsDivider
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
-fun EditProfileScreen() {
+fun EditProfileScreen(
+    onBack: () -> Unit
+) {
     val inspectionMode = LocalInspectionMode.current
     val context = LocalContext.current
-    val activity = LocalActivity.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
@@ -74,10 +72,7 @@ fun EditProfileScreen() {
                             rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
-                            activity?.run {
-                                setResult(Activity.RESULT_CANCELED)
-                                finish()
-                            }
+                            onBack()
                         }
                     }
                 )
@@ -126,7 +121,7 @@ fun EditProfileScreen() {
 
             var profileDeleteRequest by remember { mutableStateOf<Profile?>(null) }
             profileDeleteRequest?.let { profile ->
-                DeleteProfileDialog(profile) { profileDeleteRequest = null }
+                DeleteProfileDialog(profile, onDelete = onBack) { profileDeleteRequest = null }
             }
 
             ScrollableColumn(
@@ -392,10 +387,12 @@ private fun AdminPasswordChangeDialog(
 @Composable
 private fun DeleteProfileDialog(
     profile: Profile,
+    onDelete: () -> Unit,
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
-    val activity = LocalActivity.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
             Column(
@@ -416,10 +413,11 @@ private fun DeleteProfileDialog(
                             .profileDao()
                             .deleteProfile(profile)
                         onDismissRequest()
-                        activity?.run {
-                            setResult(EditProfileActivity.Companion.RESULT_PROFILE_DELETED)
-                            finish()
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
                         }
+                        onDelete()
                     }
                 ) {
                     Text(stringResource(R.string.delete))
@@ -437,4 +435,4 @@ private fun DeleteProfileDialog(
 
 @Preview
 @Composable
-private fun EditProfileScreenPreview() = EditProfileScreen()
+private fun EditProfileScreenPreview() = EditProfileScreen {}

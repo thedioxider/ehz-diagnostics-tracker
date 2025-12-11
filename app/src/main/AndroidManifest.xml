@@ -23,24 +23,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.EHZDiagnosticsTracker"
+        android:name=".MainApplication"
         tools:targetApi="31">
         <activity
-            android:name=".InitActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ScanIdActivity" />
-        <activity android:name=".TechDiagnosticsActivity" />
-        <activity android:name=".SettingsActivity" />
-        <activity android:name=".ReportHistoryActivity" />
-        <activity android:name=".AuthorizationActivity" />
-        <activity android:name=".ToolMenuActivity" />
-        <activity android:name=".EditProfileActivity" />
-        <activity android:name=".DiagnosticObjectChooseActivity" />
-        <activity android:name="space.diomentia.ehzdiagnosticstracker.DiagnosticPointsActivity" />
     </application>
 
 </manifest>

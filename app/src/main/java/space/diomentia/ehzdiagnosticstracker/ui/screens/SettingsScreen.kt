@@ -1,14 +1,11 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.app.Activity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,10 +22,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.SettingsOption
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
-fun SettingsScreen() {
-    val activity = LocalActivity.current
+fun SettingsScreen(
+    onBack: () -> Unit
+) {
     val snackbarHostState = LocalSnackbarHostState.current
-    LocalLayoutDirection.current
 
     val reportConfigChooser =
         AppState.localYamlConfigCopyLauncher<ReportConfig>(AppState.REPORT_CONFIG_FILENAME) {
@@ -45,10 +42,7 @@ fun SettingsScreen() {
                             icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
-                            activity?.run {
-                                setResult(Activity.RESULT_CANCELED)
-                                finish()
-                            }
+                            onBack()
                         }
                     }
                 )
@@ -71,4 +65,4 @@ fun SettingsScreen() {
 
 @Preview
 @Composable
-private fun SettingsScreenPreview() = SettingsScreen()
+private fun SettingsScreenPreview() = SettingsScreen({})

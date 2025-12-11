@@ -1,7 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.app.Activity
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,12 +35,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticViewModel
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
@@ -60,9 +60,11 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 @Composable
-fun ReportHistoryScreen() {
+fun ReportHistoryScreen(
+    viewModel: DiagnosticViewModel,
+    onBack: () -> Unit
+) {
     val context = LocalContext.current
-    val activity = LocalActivity.current
 
     PtmTheme {
         Scaffold(
@@ -79,10 +81,7 @@ fun ReportHistoryScreen() {
                             icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
-                            activity?.run {
-                                setResult(Activity.RESULT_CANCELED)
-                                finish()
-                            }
+                            onBack()
                         }
                     }
                 )
@@ -347,7 +346,7 @@ private val previewReports = listOf(
 
 @Preview
 @Composable
-private fun ReportHistoryScreenPreview() = ReportHistoryScreen()
+private fun ReportHistoryScreenPreview() = ReportHistoryScreen(hiltViewModel(), {})
 
 @Preview
 @Composable

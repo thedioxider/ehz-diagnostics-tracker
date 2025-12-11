@@ -1,7 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import androidx.activity.compose.LocalActivity
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,12 +41,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
-import space.diomentia.ehzdiagnosticstracker.LocalAreaProvider
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticViewModel
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
@@ -62,8 +61,11 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
-fun DiagnosticPointsScreen() {
-    val activity = LocalActivity.current
+fun DiagnosticPointsScreen(
+    viewModel: DiagnosticViewModel,
+    onBack: () -> Unit,
+    onPointChosen: (String) -> Unit
+) {
     var createPointRequest by remember { mutableStateOf(false) }
 
     PtmTheme {
@@ -81,17 +83,15 @@ fun DiagnosticPointsScreen() {
                             rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                             label = stringResource(R.string.back)
                         ) {
-                            activity?.finish()
+                            onBack()
                         }
                     },
-                    actions = if (AppState.adminSession)
-                        { ->
-                            ActionButton(
-                                rememberVectorPainter(Icons.Outlined.Add),
-                                label = stringResource(R.string.create_point)
-                            ) { createPointRequest = true }
-                        }
-                    else null
+                    actions = {
+                        ActionButton(
+                            rememberVectorPainter(Icons.Outlined.Add),
+                            label = stringResource(R.string.create_point)
+                        ) { createPointRequest = true }
+                    }
                 )
             }
         ) { innerPadding ->
@@ -129,7 +129,8 @@ fun DiagnosticPointsScreen() {
                 items(diagnosticPoints) { diagnosticPoint ->
                     DiagnosticPointItem(
                         diagnosticPoint.point,
-                        onClick = { editPointRequest = diagnosticPoint.point }
+                        onClick = { onPointChosen(diagnosticPoint.point.id) },
+                        onEdit = { editPointRequest = diagnosticPoint.point }
                     )
                 }
             }
@@ -142,15 +143,13 @@ fun DiagnosticPointsScreen() {
 private fun DiagnosticPointItem(
     point: DiagnosticPoint,
     modifier: Modifier = Modifier,
-    onClick: (() -> Unit)
+    onClick: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.Companion.CenterVertically,
-        modifier = Modifier.Companion
-            .clickable(
-                enabled = AppState.adminSession,
-                onClick = onClick
-            )
+        modifier = Modifier
+            .clickable(onClick = onClick)
             .padding(24.dp)
             .padding()
             .defaultMinSize(minHeight = 36.dp)
@@ -160,7 +159,7 @@ private fun DiagnosticPointItem(
         Column(
             horizontalAlignment = Alignment.Companion.Start,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
         ) {
@@ -171,20 +170,18 @@ private fun DiagnosticPointItem(
             Text(
                 point.id,
                 style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.Companion.alpha(.75f)
+                modifier = Modifier.alpha(.75f)
             )
         }
-        AnimatedVisibility(AppState.adminSession) {
-            Icon(
-                Icons.Outlined.Edit,
-                contentDescription = null,
-                modifier = Modifier.Companion
-                    .clickable(onClick = onClick)
-                    .fillMaxHeight()
-                    .aspectRatio(1f)
-                    .padding(end = 12.dp)
-            )
-        }
+        Icon(
+            Icons.Outlined.Edit,
+            contentDescription = null,
+            modifier = Modifier.Companion
+                .clickable(onClick = onEdit)
+                .fillMaxHeight()
+                .aspectRatio(1f)
+                .padding(end = 12.dp)
+        )
     }
 }
 
@@ -195,7 +192,7 @@ private fun AddPointDialog(
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val area = LocalAreaProvider.current
+    val area = AppState.CurrentDiagnosticSession.diagnosticArea ?: throw error("no area selected")
     var idInput by remember { mutableStateOf("") }
     var inventoryNumberInput by remember { mutableStateOf("") }
 
@@ -392,4 +389,4 @@ private fun EditPointDialog(
 
 @Preview
 @Composable
-private fun DiagnosticPointsScreenPreview() = DiagnosticPointsScreen()
+private fun DiagnosticPointsScreenPreview() = DiagnosticPointsScreen(hiltViewModel(), {}, {})

@@ -1,7 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.content.Intent
-import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,7 +22,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import space.diomentia.ehzdiagnosticstracker.AuthorizationActivity
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
@@ -33,9 +30,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.SideArrowContainer
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
-fun InitScreen() {
-    val context = LocalContext.current
-    val activity = LocalActivity.current
+fun InitialScreen(
+    onAuthorize: () -> Unit
+) {
+    LocalContext.current
 
     PtmTheme {
         Scaffold(
@@ -76,12 +74,7 @@ fun InitScreen() {
                         }
                     }
                     PtmFilledButton(
-                        onClick = {
-                            activity?.run {
-                                startActivity(Intent(context, AuthorizationActivity::class.java))
-                                finish()
-                            }
-                        }
+                        onClick = onAuthorize
                     ) {
                         Text(
                             stringResource(R.string.authorize),
@@ -108,4 +101,4 @@ fun InitScreen() {
 
 @Preview
 @Composable
-private fun InitScreenPreview() = InitScreen()
+private fun InitScreenPreview() = InitialScreen {}

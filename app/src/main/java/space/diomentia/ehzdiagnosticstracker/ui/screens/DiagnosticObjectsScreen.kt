@@ -1,7 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.content.Intent
-import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -48,9 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
-import space.diomentia.ehzdiagnosticstracker.AuthorizationActivity
 import space.diomentia.ehzdiagnosticstracker.R
-import space.diomentia.ehzdiagnosticstracker.ToolMenuActivity
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
@@ -67,8 +63,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
-fun DiagnosticObjectsScreen() {
-    val activity = LocalActivity.current
+fun DiagnosticObjectsScreen(
+    onAuthorize: () -> Unit,
+    onAreaChosen: (DiagnosticArea) -> Unit
+) {
     var createObjectRequest by remember { mutableStateOf(false) }
 
     PtmTheme {
@@ -86,10 +84,7 @@ fun DiagnosticObjectsScreen() {
                             painterResource(R.drawable.ic_person),
                             label = stringResource(R.string.authorization)
                         ) {
-                            activity?.run {
-                                startActivity(Intent(this, AuthorizationActivity::class.java))
-                                finish()
-                            }
+                            onAuthorize()
                         }
                     },
                     actions = if (AppState.adminSession)
@@ -188,10 +183,7 @@ fun DiagnosticObjectsScreen() {
                         ) {
                             AppState.CurrentDiagnosticSession.diagnosticArea =
                                 area.diagnosticArea.id
-                            activity?.run {
-                                startActivity(Intent(this, ToolMenuActivity::class.java))
-                                finish()
-                            }
+                            onAreaChosen(area.diagnosticArea)
                         }
                     }
                 }
@@ -723,7 +715,7 @@ private fun EditAreaDialog(
 
 @Preview
 @Composable
-private fun DiagnosticObjectChooseScreenPreview() = DiagnosticObjectsScreen()
+private fun DiagnosticObjectChooseScreenPreview() = DiagnosticObjectsScreen({}, {})
 
 @Preview
 @Composable

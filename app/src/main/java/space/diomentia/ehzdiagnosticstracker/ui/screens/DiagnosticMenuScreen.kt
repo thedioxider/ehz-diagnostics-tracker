@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
-import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.indication
@@ -37,8 +36,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.State
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -59,23 +56,16 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
-import space.diomentia.ehzdiagnosticstracker.AuthorizationActivity
-import space.diomentia.ehzdiagnosticstracker.DiagnosticObjectChooseActivity
-import space.diomentia.ehzdiagnosticstracker.DiagnosticPointsActivity
 import space.diomentia.ehzdiagnosticstracker.R
-import space.diomentia.ehzdiagnosticstracker.ReportHistoryActivity
-import space.diomentia.ehzdiagnosticstracker.ScanIdActivity
-import space.diomentia.ehzdiagnosticstracker.SettingsActivity
-import space.diomentia.ehzdiagnosticstracker.TechDiagnosticsActivity
 import space.diomentia.ehzdiagnosticstracker.data.AppState
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticAreaWithPoints
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObjectWithAreas
+import space.diomentia.ehzdiagnosticstracker.data.DiagnosticViewModel
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
+import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticViewModel
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
-import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
@@ -85,30 +75,21 @@ import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
 
-private val LocalDiagnosticObject =
-    compositionLocalOf<State<DiagnosticObjectWithAreas?>> { mutableStateOf(null) }
-private val LocalDiagnosticArea =
-    compositionLocalOf<State<DiagnosticAreaWithPoints?>> { mutableStateOf(null) }
-
 @Composable
-fun DiagnosticMenuScreen() {
-    val context = LocalContext.current
-    val activity = LocalActivity.current
+fun DiagnosticMenuScreen(
+    viewModel: DiagnosticViewModel = hiltViewModel(),
+    onAuthorize: () -> Unit,
+    onChooseArea: () -> Unit,
+    onSettings: () -> Unit,
+    onPointList: () -> Unit,
+    onHistory: () -> Unit,
+    onCreateReport: (String) -> Unit,
+    onEditReport: (String, Long) -> Unit
+) {
     val snackbarHostState = LocalSnackbarHostState.current
 
     CompositionLocalProvider(
-        LocalDiagnosticObject provides (AppState.CurrentDiagnosticSession.diagnosticObject?.let {
-            ReportDatabase.Companion.getInstance()
-                .diagnosticAreaDao()
-                .getObjectById(it)
-                .collectAsStateWithLifecycle(null)
-        } ?: remember { mutableStateOf(null) }),
-        LocalDiagnosticArea provides (AppState.CurrentDiagnosticSession.diagnosticArea?.let {
-            ReportDatabase.Companion.getInstance()
-                .diagnosticAreaDao()
-                .getAreaById(it)
-                .collectAsStateWithLifecycle(null)
-        } ?: remember { mutableStateOf(null) })
+        LocalDiagnosticViewModel provides viewModel
     ) {
         PtmTheme {
             Scaffold(
@@ -127,28 +108,12 @@ fun DiagnosticMenuScreen() {
                                 icon = painterResource(R.drawable.ic_person),
                                 label = stringResource(R.string.change_account)
                             ) {
-                                activity?.run {
-                                    startActivity(
-                                        Intent(
-                                            context,
-                                            AuthorizationActivity::class.java
-                                        )
-                                    )
-                                    finish()
-                                }
+                                onAuthorize()
                             }
                             ActionButton(
                                 icon = rememberVectorPainter(Icons.Outlined.LocationOn)
                             ) {
-                                activity?.run {
-                                    startActivity(
-                                        Intent(
-                                            context,
-                                            DiagnosticObjectChooseActivity::class.java
-                                        )
-                                    )
-                                    finish()
-                                }
+                                onChooseArea()
                             }
                         },
                         actions = {
@@ -156,9 +121,7 @@ fun DiagnosticMenuScreen() {
                                 icon = rememberVectorPainter(Icons.Outlined.Settings),
                                 label = stringResource(R.string.settings)
                             ) {
-                                context.startActivity(
-                                    Intent(context, SettingsActivity::class.java)
-                                )
+                                onSettings()
                             }
                         }
                     )
@@ -175,8 +138,9 @@ fun DiagnosticMenuScreen() {
                     AreaInfo()
                     MainAction()
                     MenuActionButtonsRow(
-                        Modifier.Companion
-                            .fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        onHistory = onHistory,
+                        onPointList = onPointList
                     )
                     DiagnosticsTypeSelector()
                 }
@@ -189,8 +153,9 @@ fun DiagnosticMenuScreen() {
 private fun AreaInfo(
     modifier: Modifier = Modifier
 ) {
-    val dObject by LocalDiagnosticObject.current
-    val dArea by LocalDiagnosticArea.current
+    val vm = LocalDiagnosticViewModel.current
+    val dObject by vm.diagnosticObject.collectAsStateWithLifecycle(null)
+    val dArea by vm.diagnosticArea.collectAsStateWithLifecycle(null)
 
     Column(
         horizontalAlignment = Alignment.Companion.CenterHorizontally,
@@ -239,15 +204,17 @@ private fun ScanQrButton(
 ) {
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
-    val activity = LocalActivity.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val dArea by LocalDiagnosticArea.current
+    val vm = LocalDiagnosticViewModel.current
+    val dArea by vm.diagnosticArea.collectAsStateWithLifecycle(null)
 
-    val scanQrLauncher = rememberLauncherForActivityResult(
+    rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
-        val id = result.data?.extras?.getString(ScanIdActivity.Companion.QR_DATA)
+        // TODO
+        //val id = result.data?.extras?.getString(ScanIdActivity.Companion.QR_DATA)
+        val id: String? = null
         if (id == null) {
             coroutineScope?.launch {
                 snackbarHostState.currentSnackbarData?.dismiss()
@@ -267,14 +234,18 @@ private fun ScanQrButton(
         AppState.CurrentDiagnosticSession.diagnosticPoint = foundPoint.id
         AppState.CurrentDiagnosticSession.validationId = foundPoint.id
         AppState.CurrentDiagnosticSession.dateTime = LocalDateTime.now()
+        /* TODO
         activity?.run {
             val intent = Intent(context, TechDiagnosticsActivity::class.java)
             startActivity(intent)
         }
+         */
     }
     val launchScanQr = {
+        /* TODO
         val intent = Intent(context, ScanIdActivity::class.java)
         scanQrLauncher.launch(intent)
+         */
     }
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -314,7 +285,6 @@ private fun ScanQrButton(
 private fun ContinueEditingButton(
     modifier: Modifier = Modifier
 ) {
-    val activity = LocalActivity.current
     val interactionSource = remember { MutableInteractionSource() }
     val isVisible = AppState.CurrentDiagnosticSession.diagnosticPoint != null
     Row(
@@ -328,10 +298,12 @@ private fun ContinueEditingButton(
                 label = stringResource(R.string.continue_editing),
                 interactionSource = interactionSource
             ) {
+                /* TODO
                 activity?.run {
                     val intent = Intent(activity, TechDiagnosticsActivity::class.java)
                     startActivity(intent)
                 }
+                 */
             }
             .padding(12.dp)
     ) {
@@ -357,7 +329,7 @@ private fun ContinueEditingButton(
 
 @Composable
 private fun MenuActionButton(
-    modifier: Modifier = Modifier.Companion,
+    modifier: Modifier = Modifier,
     enabled: Boolean = true,
     buttonHeight: Dp? = null,
     description: String,
@@ -403,10 +375,13 @@ private fun MenuActionButton(
 
 @Composable
 private fun MenuActionButtonsRow(
+    onPointList: () -> Unit,
+    onHistory: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val dArea by LocalDiagnosticArea.current
+    val vm = LocalDiagnosticViewModel.current
+    val dArea by vm.diagnosticArea.collectAsStateWithLifecycle(null)
     val areaLastLocation = dArea?.diagnosticArea?.lastLocation
     val rowHeight = 80.dp
 
@@ -424,9 +399,7 @@ private fun MenuActionButtonsRow(
             description = stringResource(R.string.diagnostic_points),
             icon = painterResource(R.drawable.ic_edit_location)
         ) {
-            context.startActivity(
-                Intent(context, DiagnosticPointsActivity::class.java)
-            )
+            onPointList()
         }
         MenuActionButton(
             actionButtonModifier,
@@ -451,9 +424,7 @@ private fun MenuActionButtonsRow(
             description = stringResource(R.string.diagnostics_history),
             icon = painterResource(R.drawable.ic_history)
         ) {
-            context.startActivity(
-                Intent(context, ReportHistoryActivity::class.java)
-            )
+            onHistory()
         }
     }
 }
@@ -525,6 +496,6 @@ private fun ToolMenuScreenPreview() {
     AppState.reportConfig.value = ReportConfig(listOf())
 
     PtmTheme {
-        DiagnosticMenuScreen()
+        DiagnosticMenuScreen(hiltViewModel(), {}, {}, {}, {}, {}, {}, { _, _ -> })
     }
 }
