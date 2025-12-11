@@ -1,6 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.icu.text.DecimalFormatSymbols
@@ -570,6 +571,7 @@ private fun ValidationField(
     val qrValidationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
+        if (result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
         val data = result.data?.getStringExtra(ScanIdQrActivity.QR_DATA)
         reportSession = reportSession.copy(validationId = data)
     }
