@@ -45,7 +45,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -90,6 +89,8 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
 import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
 import space.diomentia.ehzdiagnosticstracker.data.ReportSession
@@ -391,6 +392,9 @@ private fun ReportEditor(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    val reportDb = ReportDatabase.getInstance()
     var reportSession by LocalReportSession.current
     var diagnosticType by remember {
         mutableIntStateOf(
@@ -398,11 +402,43 @@ private fun ReportEditor(
         )
     }
     diagnosticType = reportSession.reportType ?: diagnosticType
+    var reportExporter: ReportExporter? by remember { mutableStateOf(null) }
+    reportExporter?.let { reportExporter ->
+        val filename = reportExporter.defaultFilename()!!
+        val exportFileLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("application/json")
+        ) { uri ->
+            uri?.let {
+                coroutineScope?.launch {
+                    val result = reportExporter.exportReportToUri(uri, context.contentResolver)
+                    if (result) {
+                        onSaved()
+                        onBack()
+                    }
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(
+                        context.getString(
+                            if (result) {
+                                R.string.report_exported
+                            } else {
+                                R.string.something_wrong
+                            }
+                        )
+                    )
+                }
+            }
+        }
+        LaunchedEffect(exportFileLauncher) {
+            exportFileLauncher.launch(filename)
+        }
+    }
 
     CompositionLocalProvider(
         LocalCoroutineScope provides rememberCoroutineScope(),
         LocalReportType provides diagnosticType,
-        LocalLocationProvider provides LocationServices.getFusedLocationProviderClient(context)
+        LocalLocationProvider provides LocationServices.getFusedLocationProviderClient(
+            context
+        )
     ) {
         PtmTheme {
             Column(
@@ -443,13 +479,40 @@ private fun ReportEditor(
                 ValidationField()
 
                 SaveButton(
-                    onClick = {
-                        reportSession.reportToDb(context)
+                    modifier = Modifier
+                        .padding(top = 8.dp)
+                        .padding(8.dp)
+                ) {
+                    val reportId = reportSession.reportToDb(context)
+                    if (reportId != null) {
                         onSaved()
                         onBack()
-                    },
-                    modifier = Modifier.padding(16.dp)
-                )
+                    } else {
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(context.getString(R.string.something_wrong))
+                        }
+                    }
+                }
+                ExportButton(
+                    modifier = Modifier
+                        .padding(top = 0.dp, bottom = 16.dp)
+                        .padding(horizontal = 8.dp)
+                ) {
+                    val reportId = reportSession.reportToDb(context)
+                    if (reportId == null) {
+                        coroutineScope?.launch {
+                            snackbarHostState.currentSnackbarData?.dismiss()
+                            snackbarHostState.showSnackbar(context.getString(R.string.something_wrong))
+                        }
+                        return@ExportButton
+                    }
+                    reportExporter = ReportExporter(
+                        reportId = reportId,
+                        db = reportDb,
+                        reportConfig = AppState.reportConfig.value
+                    )
+                }
             }
         }
     }
@@ -749,22 +812,13 @@ private fun ReportField(
 
 @Composable
 private fun SaveButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
     val reportSession by LocalReportSession.current
-    val reportConfig = AppState.reportConfig.value ?: return
-    val derivedReportType by LocalReportType.current.let { remember { derivedStateOf { it } } }
-    remember(derivedReportType) {
-        (reportConfig.reportTypes[derivedReportType].parameters ?: emptyList())
-            .asSequence()
-            .map { it.id }
-            .toSet()
-    }
     val enabled = with(reportSession) {
         reportType != null && location != null
     }
-
     PtmFilledButton(
         enabled = enabled,
         onClick = onClick,
@@ -776,6 +830,29 @@ private fun SaveButton(
             modifier = Modifier.padding(end = 4.dp)
         )
         Text(stringResource(R.string.save))
+    }
+}
+
+@Composable
+private fun ExportButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    val reportSession by LocalReportSession.current
+    val enabled = with(reportSession) {
+        reportType != null && location != null
+    }
+    PtmFilledButton(
+        enabled = enabled,
+        onClick = onClick,
+        modifier = modifier
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_file_export),
+            contentDescription = stringResource(R.string.export),
+            modifier = Modifier.padding(end = 4.dp)
+        )
+        Text(stringResource(R.string.export_report))
     }
 }
 

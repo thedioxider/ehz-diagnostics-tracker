@@ -56,7 +56,7 @@ data class ReportSession(
         }
     }
 
-    fun reportToDb(context: Context): Boolean {
+    fun reportToDb(context: Context): Long? {
         val reportDb = ReportDatabase.getInstance(context)
         val reportConfig = reportConfig.value
         val diagnosticType = reportType
@@ -67,7 +67,7 @@ data class ReportSession(
             || location == null
             || reportConfig == null
             || inspector == null
-        ) return false
+        ) return null
         (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
             .asSequence()
             .map { it.id }
@@ -107,6 +107,6 @@ data class ReportSession(
                 )
             )
         )
-        return true
+        return newReportId
     }
 }
