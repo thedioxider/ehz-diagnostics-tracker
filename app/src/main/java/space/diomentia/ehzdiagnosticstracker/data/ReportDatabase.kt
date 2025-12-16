@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 
 @Database(
-    version = 5,
+    version = 6,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
@@ -33,7 +33,8 @@ import kotlinx.serialization.Serializable
         DiagnosticPoint::class
     ],
     autoMigrations = [
-        AutoMigration(from = 3, to = 5)
+        AutoMigration(from = 3, to = 5),
+        AutoMigration(from = 5, to = 6)
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
@@ -91,7 +92,8 @@ data class DiagnosticReport(
 data class ReportDataEntry(
     @ColumnInfo(name = "report") val report: Long,
     @ColumnInfo(name = "characteristic") val characteristic: String,
-    @ColumnInfo(name = "value") val value: String
+    @ColumnInfo(name = "value") val value: String,
+    @ColumnInfo(name = "datatype") val datatype: String? = null
 )
 
 data class DiagnosticReportWithData(

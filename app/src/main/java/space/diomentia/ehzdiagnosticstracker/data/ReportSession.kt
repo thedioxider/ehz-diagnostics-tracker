@@ -66,10 +66,7 @@ data class ReportSession(
             || reportConfig == null
             || inspector == null
         ) return null
-        (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
-            .asSequence()
-            .map { it.id }
-            .toSet()
+        val typeConfig = reportConfig.reportTypes[diagnosticType]
         var report = DiagnosticReport(
             diagnosticPoint = diagnosticPoint.id,
             timestamp = dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
@@ -92,7 +89,8 @@ data class ReportSession(
                 ReportDataEntry(
                     report = newReportId,
                     characteristic = k,
-                    value = v.value.toString()
+                    value = v.value.toString(),
+                    datatype = typeConfig.parameters?.find { it.id == k }?.type?.datatype
                 )
             }
             .toTypedArray()

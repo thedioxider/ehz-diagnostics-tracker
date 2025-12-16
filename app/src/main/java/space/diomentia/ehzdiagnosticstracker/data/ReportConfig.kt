@@ -27,7 +27,15 @@ enum class ParameterType {
     Integer,
     Decimal,
     Photo,
-    Raw,
+    Raw;
+
+    val datatype
+        get() = this.name.lowercase()
+
+    companion object {
+        fun parse(s: String): ParameterType? =
+            entries.find { it.name.equals(s, ignoreCase = true) }
+    }
 }
 
 @Serializable

@@ -115,7 +115,7 @@ class ReportExporter(
             val characteristic: String,
             val value: String,
             var name: String? = null,
-            var type: String? = null,
+            var datatype: String? = null,
             var unit: String? = null
         ) {
             constructor(ref: ReportDataEntry, reportType: ReportType? = null) : this(
@@ -126,7 +126,7 @@ class ReportExporter(
                     ?.parameters
                     ?.find { it.id == characteristic }
                 name = paramConfig?.name
-                type = paramConfig?.type?.name
+                datatype = paramConfig?.type?.name
                 unit = paramConfig?.unit
             }
         }
