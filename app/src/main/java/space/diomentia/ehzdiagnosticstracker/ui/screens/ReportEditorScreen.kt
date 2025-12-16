@@ -105,6 +105,7 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
 import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.data.ReportType
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
+import space.diomentia.ehzdiagnosticstracker.ui.FullScreenImageDialog
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
@@ -185,6 +186,7 @@ fun ReportEditorScreen(
                     }
                     return@Scaffold
                 }
+
                 ScrollableColumn(
                     innerPadding,
                     modifier = Modifier.Companion.padding(horizontal = 16.dp)
@@ -875,6 +877,9 @@ private fun PhotoField(
         }
     }
 
+    var fullView by remember { mutableStateOf(false) }
+    if (fullView) pic?.asImageBitmap()?.let { FullScreenImageDialog(it) { fullView = false } }
+
     Column(
         horizontalAlignment = Alignment.Start,
         modifier = Modifier
@@ -947,6 +952,7 @@ private fun PhotoField(
                     contentDescription = "",
                     modifier = Modifier
                         .height(150.dp)
+                        .clickable(onClick = { fullView = true })
                 )
             }
         }
