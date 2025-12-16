@@ -4,7 +4,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: 4528ba923e6204031d8ee663f6e1b018a6c86716
         name: Сопротивление растеканию тока защитного заземления
         type: Decimal
@@ -75,7 +75,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: d5e0d969d2f1310636598f0d760bcfc8db290ccf
         name: Сопротивление растеканию тока защитного заземления
         type: Decimal
@@ -116,7 +116,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: aa6f8c648f42a64aea81aae5f8ef79523e35c599
         name: Проверка контактных соединений в БДР (БСЗ)
         type: Bool
@@ -152,7 +152,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: ab5f6ab1942617b3f6ba5fd5d9cf85fd65a65ae8
         name: Продольное (кажущееся) электрическое сопротивление
         type: Decimal
@@ -173,7 +173,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: 2fec78fc9d701bf9d12cee2280d0b9e63c51e867
         name: Потенциалы сооружения с омической составляющей
         type: Decimal
@@ -197,7 +197,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: 43dbb54b61d52b7a1b2d3cfd5fce3fb32ed7a01b
         name: Сопротивление "защитный кожух-труба" в местах переходов трубопровода под автомобильными и железными дорогами
         type: Decimal
@@ -228,7 +228,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: 3329075f0055fee64558c2b3927a238d136d014d
         name: Потенциалы на всех выводах от коммуникаций относительно стационарных ЭСДД и образцовых (переносных) ЭС при подключенном БДР
         type: Decimal
@@ -249,7 +249,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: 6f7e73d4105d5286ac871463e01f1640f5c63d54
         name: Измерение при прерывистой поляризации потенциалов включения/отключения вне зоны блуждающих токов
         type: Decimal
@@ -277,7 +277,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: d98c74e0e17d4ca4bac78c9254156cd74528cb37
         name: Обследование сплошности ЗП сооружения с нахождением мест сквозных дефектов
         type: Bool
@@ -296,7 +296,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: 8a22ad40d8fba262a259c28e4ba84e2a564717f8
         name: Синхронные измерения в КИП и КДП потенциалов в месте пересечения или сближения обследуемого объекта с сопутствующим (сторонним) сооружением
         type: Decimal
@@ -309,7 +309,7 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Integer
+        type: Decimal
       - id: 6f0098f3e8946e4259ac22afda3fb74d78b58228
         name: Ориентиры на местности
         type: Text

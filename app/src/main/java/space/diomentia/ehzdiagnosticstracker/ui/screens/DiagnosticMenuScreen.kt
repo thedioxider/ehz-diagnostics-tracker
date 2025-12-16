@@ -139,8 +139,11 @@ fun DiagnosticMenuScreen(
                     DiagnosticsTypeSelector()
                     LastReport(
                         reportSession = reportSession ?: latestReport?.let {
-                            ReportSession
-                                .fromExisting(context, diagnosticSession, latestReport.id)
+                            ReportSession.fromExisting(
+                                diagnosticSession = diagnosticSession,
+                                reportId = latestReport.id,
+                                reportDb = ReportDatabase.getInstance(context)
+                            )
                         },
                         onEditReport = onEditReport,
                         saved = reportSession == null,

@@ -1,6 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
-import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import space.diomentia.ehzdiagnosticstracker.data.AppState.profileSession
@@ -22,40 +21,41 @@ data class ReportSession(
 ) {
     companion object {
         fun fromExisting(
-            context: Context,
             diagnosticSession: DiagnosticSession,
-            reportId: Long
+            reportId: Long,
+            reportDb: ReportDatabase
         ): ReportSession? {
-            val report = ReportDatabase.getInstance(context).diagnosticReportDao()
+            val report = reportDb.diagnosticReportDao()
                 .getReportByIdOnce(reportId)
             if (report == null) return null
-            val point = ReportDatabase.getInstance(context).diagnosticAreaDao()
-                .getPointByIdOnce(report.report.diagnosticPoint)
+            val point = reportDb.diagnosticAreaDao()
+                .getPointByIdOnce(report.diagnosticPoint)
             if (point == null) return null
+            val data = reportDb.diagnosticReportDao()
+                .getReportDataOnce(report.id)
             return ReportSession(
                 diagnosticSession = diagnosticSession,
-                diagnosticPoint = point.point,
+                diagnosticPoint = point,
                 dateTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochSecond(report.report.timestamp),
+                    Instant.ofEpochSecond(report.timestamp),
                     ZoneId.systemDefault()
                 ),
                 reportType = reportConfig.value?.reportTypes
-                    ?.indexOfFirst { it.id == report.report.reportType }
+                    ?.indexOfFirst { it.id == report.reportType }
                     ?.let { if (it != -1) it else null },
-                location = report.report.location,
-                validationId = report.report.validation,
+                location = report.location,
+                validationId = report.validation,
                 data = mutableMapOf(
-                    *report.data.map { it.characteristic to mutableStateOf(it.value) }
+                    *data.map { it.characteristic to mutableStateOf(it.value) }
                         .toTypedArray()
                 ),
-                reportId = report.report.id,
-                inspector = report.report.inspector
+                reportId = report.id,
+                inspector = report.inspector
             )
         }
     }
 
-    fun reportToDb(context: Context): Boolean {
-        val reportDb = ReportDatabase.getInstance(context)
+    fun reportToDb(reportDb: ReportDatabase): Long? {
         val reportConfig = reportConfig.value
         val diagnosticType = reportType
         val location = location
@@ -65,7 +65,7 @@ data class ReportSession(
             || location == null
             || reportConfig == null
             || inspector == null
-        ) return false
+        ) return null
         (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
             .asSequence()
             .map { it.id }
@@ -105,6 +105,6 @@ data class ReportSession(
                 )
             )
         )
-        return true
+        return newReportId
     }
 }

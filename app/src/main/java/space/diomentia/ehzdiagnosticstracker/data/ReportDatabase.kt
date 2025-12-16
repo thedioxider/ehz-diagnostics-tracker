@@ -107,13 +107,23 @@ interface DiagnosticReportDao {
 
     @Transaction
     @Query("SELECT * FROM diagnostic_reports WHERE id = :id")
-    fun getReportByIdOnce(id: Long): DiagnosticReportWithData?
+    fun getReportById(id: Long): Flow<DiagnosticReportWithData>
+
+    @Transaction
+    @Query("SELECT * FROM diagnostic_reports WHERE id = :id")
+    fun getReportByIdOnce(id: Long): DiagnosticReport?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertReport(report: DiagnosticReport): Long
 
     @Update
     fun updateReport(report: DiagnosticReport)
+
+    @Query("SELECT * FROM data_entries WHERE report = :report")
+    fun getReportData(report: Long): Flow<List<ReportDataEntry>>
+
+    @Query("SELECT * FROM data_entries WHERE report = :report")
+    fun getReportDataOnce(report: Long): List<ReportDataEntry>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertData(vararg data: ReportDataEntry)
@@ -191,20 +201,22 @@ interface DiagnosticAreaDao {
     @Query("SELECT * FROM diagnostic_objects WHERE id = :id")
     fun getObjectById(id: String): Flow<DiagnosticObjectWithAreas>
 
+    @Query("SELECT * FROM diagnostic_objects WHERE id = :id")
+    fun getObjectByIdOnce(id: String): DiagnosticObject?
+
     @Transaction
     @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
     fun getAreaById(id: String): Flow<DiagnosticAreaWithPoints>
 
     @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
-    fun getAreaByIdOnce(id: String): DiagnosticArea
+    fun getAreaByIdOnce(id: String): DiagnosticArea?
 
     @Transaction
     @Query("SELECT * FROM diagnostic_points WHERE id = :id")
     fun getPointById(id: String): Flow<DiagnosticPointWithHistory>
 
-    @Transaction
     @Query("SELECT * FROM diagnostic_points WHERE id = :id")
-    fun getPointByIdOnce(id: String): DiagnosticPointWithHistory?
+    fun getPointByIdOnce(id: String): DiagnosticPoint?
 
     @Transaction
     @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject ORDER BY id ASC")

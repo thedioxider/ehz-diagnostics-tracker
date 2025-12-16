@@ -121,4 +121,7 @@
     <string name="last_point_report">Последняя точка отчёта</string>
     <string name="last_report_not_saved">Последний отчёт не сохранён!</string>
     <string name="new_report_there">Новый отчёт с той же точки</string>
+    <string name="export_report">Экспортировать отчёт</string>
+    <string name="report_exported">Отчёт экспортирован</string>
+    <string name="export">Экспортировать</string>
 </resources>

@@ -30,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -41,6 +40,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.BarcodeAnalyzer
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
@@ -65,7 +65,7 @@ class ScanIdQrActivity : ComponentActivity() {
         setupEdgeToEdge(this)
         setContent {
             CompositionLocalProvider(
-                LocalCoroutineScope provides rememberCoroutineScope(),
+                LocalCoroutineScope provides lifecycleScope,
                 LocalSnackbarHostState provides SnackbarHostState()
             ) {
                 ScanIdQrScreen()
