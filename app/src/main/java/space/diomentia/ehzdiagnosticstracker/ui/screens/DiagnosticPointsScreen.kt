@@ -39,7 +39,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -250,7 +249,7 @@ private fun AddPointDialog(
                 )
                 TextField(
                     inventoryNumberInput,
-                    onValueChange = { inventoryNumberInput = it.filter { c -> c.isDigit() } },
+                    onValueChange = { inventoryNumberInput = it },
                     placeholder = {
                         Text(
                             stringResource(R.string.input_name),
@@ -260,7 +259,6 @@ private fun AddPointDialog(
                         )
                     },
                     keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Number,
                         imeAction = ImeAction.Companion.Next
                     ),
                     modifier = Modifier
@@ -273,8 +271,8 @@ private fun AddPointDialog(
                 ) {
                     PtmFilledButton(
                         onClick = {
-                            val id = idInput
-                            val inventoryNumber = inventoryNumberInput
+                            val id = idInput.trim()
+                            val inventoryNumber = inventoryNumberInput.trim()
                             if (id.isEmpty() || inventoryNumber.isEmpty()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
@@ -357,7 +355,9 @@ private fun EditPointDialog(
                             modifier = Modifier.Companion.alpha(.5f)
                         )
                     },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Companion.Next
+                    ),
                     modifier = Modifier.Companion
                         .padding(vertical = 12.dp)
                         .padding(start = 16.dp)
@@ -368,7 +368,7 @@ private fun EditPointDialog(
                 ) {
                     PtmFilledButton(
                         onClick = {
-                            val inventoryNumber = inventoryNumberInput
+                            val inventoryNumber = inventoryNumberInput.trim()
                             if (inventoryNumber.isEmpty()) {
                                 coroutineScope?.launch {
                                     snackbarHostState.currentSnackbarData?.dismiss()
