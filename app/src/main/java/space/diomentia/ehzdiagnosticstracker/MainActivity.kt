@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.lifecycleScope
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
         setupEdgeToEdge(this)
         setContent {
             CompositionLocalProvider(
-                LocalCoroutineScope provides rememberCoroutineScope(),
+                LocalCoroutineScope provides lifecycleScope,
                 LocalSnackbarHostState provides SnackbarHostState()
             ) {
                 AppNavigation()

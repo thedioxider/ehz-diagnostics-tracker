@@ -1,5 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,12 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
@@ -45,11 +51,13 @@ import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ParameterType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
@@ -58,6 +66,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -166,16 +175,44 @@ private fun ReportItem(
     onLongClick: () -> Unit = {},
     onClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
     val dateTime = LocalDateTime
         .ofEpochSecond(
             report.report.timestamp, 0, ZoneOffset.systemDefault().rules.getOffset(
                 LocalDateTime.now()
             )
         )
+    val reportExporter = ReportExporter(
+        reportId = report.report.id,
+        db = ReportDatabase.getInstance(),
+        reportConfig = AppState.reportConfig.value
+    )
+    val exportFilename = reportExporter.defaultFilename()
     val diagnosticPoint by ReportDatabase.Companion.getInstance()
         .diagnosticAreaDao()
         .getPointById(report.report.diagnosticPoint)
         .collectAsStateWithLifecycle(null)
+    val exportFileLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            coroutineScope?.launch {
+                val result = reportExporter.exportReportToUri(uri, context.contentResolver)
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(
+                    context.getString(
+                        if (result) {
+                            R.string.report_exported
+                        } else {
+                            R.string.something_wrong
+                        }
+                    )
+                )
+            }
+        }
+    }
 
     Row(
         verticalAlignment = Alignment.Companion.CenterVertically,
@@ -207,6 +244,20 @@ private fun ReportItem(
                     .alpha(.7f)
             )
         }
+        Icon(
+            painterResource(R.drawable.ic_file_export),
+            contentDescription = stringResource(R.string.export_report),
+            modifier = Modifier.Companion
+                .clickableWithLabel(
+                    label = stringResource(R.string.export_report),
+                    enabled = exportFilename != null
+                ) {
+                    exportFileLauncher.launch(exportFilename!!)
+                }
+                .fillMaxHeight()
+                .aspectRatio(1f)
+                .padding(end = 12.dp)
+        )
     }
 }
 

@@ -30,26 +30,28 @@ data class ReportSession(
                 .getReportByIdOnce(reportId)
             if (report == null) return null
             val point = ReportDatabase.getInstance(context).diagnosticAreaDao()
-                .getPointByIdOnce(report.report.diagnosticPoint)
+                .getPointByIdOnce(report.diagnosticPoint)
             if (point == null) return null
+            val data = ReportDatabase.getInstance(context).diagnosticReportDao()
+                .getReportDataOnce(report.id)
             return ReportSession(
                 diagnosticSession = diagnosticSession,
-                diagnosticPoint = point.point,
+                diagnosticPoint = point,
                 dateTime = LocalDateTime.ofInstant(
-                    Instant.ofEpochSecond(report.report.timestamp),
+                    Instant.ofEpochSecond(report.timestamp),
                     ZoneId.systemDefault()
                 ),
                 reportType = reportConfig.value?.reportTypes
-                    ?.indexOfFirst { it.id == report.report.reportType }
+                    ?.indexOfFirst { it.id == report.reportType }
                     ?.let { if (it != -1) it else null },
-                location = report.report.location,
-                validationId = report.report.validation,
+                location = report.location,
+                validationId = report.validation,
                 data = mutableMapOf(
-                    *report.data.map { it.characteristic to mutableStateOf(it.value) }
+                    *data.map { it.characteristic to mutableStateOf(it.value) }
                         .toTypedArray()
                 ),
-                reportId = report.report.id,
-                inspector = report.report.inspector
+                reportId = report.id,
+                inspector = report.inspector
             )
         }
     }
