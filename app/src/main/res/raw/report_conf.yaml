@@ -67,6 +67,9 @@ reportTypes:
       - id: 49edaa5ee18d40d0772fdaf160436ef6d6ffde58
         name: Работоспособность АВР, блоков управления и автоматики СКЗ
         type: Bool
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -108,6 +111,9 @@ reportTypes:
       - id: 988325d870a0d1295b75f2b59a31fae42210d01c
         name: Проверка дистанционного контроля и управления
         type: Bool
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -144,6 +150,9 @@ reportTypes:
         name: Удельное сопротивление грунта в месте расположения УПЗ
         type: Decimal
         unit: Ом
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -165,6 +174,9 @@ reportTypes:
         name: Одновременное измерение поляризационного потенциала трубы до и после ВЭИ
         type: Decimal
         unit: В
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -188,7 +200,10 @@ reportTypes:
       - id: d3571f556f7c2329360a303dca38f893377f30f2
         name: Удельное сопротивление грунта в месте расположения КИП
         type: Decimal
-        unit:
+        unit: Ом
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -220,6 +235,9 @@ reportTypes:
       - id: 4859ae9f4cfef4b8aefc8fda945a08f7d364e987
         name: Работоспособность средств защиты
         type: Bool
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -241,6 +259,9 @@ reportTypes:
         name: Сопротивления растекания тока каждого трубопровода, каждого ЭСДД и ВЭ
         type: Decimal
         unit: Ом
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -269,6 +290,9 @@ reportTypes:
       - id: 3c475487beb65fcc7453a275c2447db9a6bf002e
         name: При отсутствии на участке блуждающих токов определение длины зоны за щиты УКЗ при выполнении оптимизации
         type: Decimal
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -288,6 +312,9 @@ reportTypes:
         name: Интегральная оценка сопротивления ЗП подземного сооружения, в том числе с применением методов на переменном токе
         type: Decimal
         unit: Ом
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -301,6 +328,9 @@ reportTypes:
         name: Синхронные измерения в КИП и КДП потенциалов в месте пересечения или сближения обследуемого объекта с сопутствующим (сторонним) сооружением
         type: Decimal
         unit: В
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text
@@ -387,6 +417,9 @@ reportTypes:
       - id: fc7a48922feef42f204581de9c2287c12b4638ba
         name: Восстановление ЗП после проведения обследования
         type: Bool
+      - id: point_photo
+        name: Фотография точки
+        type: Photo
       - id: commentary
         name: Комментарий
         type: Text

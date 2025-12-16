@@ -4,11 +4,16 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.icu.text.DecimalFormatSymbols
+import android.provider.MediaStore
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
@@ -29,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
@@ -56,6 +62,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -69,12 +76,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.launch
+import space.diomentia.ehzdiagnosticstracker.BuildConfig
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ScanIdQrActivity
 import space.diomentia.ehzdiagnosticstracker.data.AppState
@@ -104,6 +113,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.RequestConfigScreen
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.IOException
 import java.time.format.DateTimeFormatter
 
 private enum class UiState {
@@ -776,7 +789,7 @@ private fun ReportField(
             }
         }
         when (parameter.type) {
-            ParameterType.Text, ParameterType.Raw, ParameterType.Photo -> {
+            ParameterType.Text, ParameterType.Raw -> {
                 var v by value
                 ParamField(value = v) { v = it }
             }
@@ -805,7 +818,137 @@ private fun ReportField(
                 }
             }
 
+            ParameterType.Photo -> {
+                PhotoField(value, parameter)
+            }
+
             ParameterType.Bool -> Unit
+        }
+    }
+}
+
+@Composable
+private fun PhotoField(
+    value: MutableState<String>,
+    parameter: ReportParameter
+) {
+    val context = LocalContext.current
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
+
+    var v by value
+    val pic: Bitmap? = remember(v) {
+        Base64.decode(v, Base64.DEFAULT).let {
+            BitmapFactory.decodeByteArray(it, 0, it.size)
+        }
+    }
+    val picStorage = remember {
+        File(context.cacheDir, "images")
+            .also { if (!it.exists()) it.mkdirs() }
+    }
+    val picUri = remember {
+        FileProvider.getUriForFile(
+            context,
+            BuildConfig.APPLICATION_ID,
+            File.createTempFile("PARAM_${parameter.id}", ".png", picStorage)
+        )
+    }
+    val photoLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (!success) return@rememberLauncherForActivityResult
+        try {
+            @Suppress("DEPRECATION")
+            val bitmap = MediaStore.Images.Media
+                .getBitmap(context.contentResolver, picUri)
+            ByteArrayOutputStream().use {
+                bitmap.compress(Bitmap.CompressFormat.WEBP, 80, it)
+                v = Base64.encodeToString(it.toByteArray(), Base64.DEFAULT)
+            }
+        } catch (e: Exception) {
+            when (e) {
+                is FileNotFoundException, is IOException -> coroutineScope?.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(context.getString(R.string.something_wrong))
+                }
+            }
+        }
+    }
+
+    Column(
+        horizontalAlignment = Alignment.Start,
+        modifier = Modifier
+            .fillMaxWidth(1f)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth(1f)
+                .height(IntrinsicSize.Min)
+        ) {
+            PtmFilledButton(
+                onClick = { photoLauncher.launch(picUri) },
+                modifier = Modifier.weight(1f, fill = true)
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val label = stringResource(
+                        if (pic == null)
+                            R.string.make_photo
+                        else
+                            R.string.change_photo
+                    )
+                    Icon(
+                        painterResource(R.drawable.ic_photo_camera),
+                        contentDescription = label,
+                        modifier = Modifier.padding(end = 4.dp)
+                    )
+                    Text(label)
+                }
+            }
+
+            Surface(
+                color = if (v.isNotBlank() == true)
+                    MaterialTheme.colorScheme.primary
+                else
+                    Color.Gray,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(start = 16.dp)
+            ) {
+                Icon(
+                    if (v.isNotBlank() == true)
+                        Icons.Outlined.Check
+                    else
+                        Icons.Outlined.Close,
+                    tint = MaterialTheme.colorScheme.background,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .aspectRatio(1f)
+                        .padding(8.dp)
+                )
+            }
+        }
+
+        Row(
+            verticalAlignment = Alignment.Top,
+            modifier = Modifier
+                .padding(8.dp)
+        ) {
+            pic?.let {
+                Icon(
+                    Icons.Outlined.KeyboardArrowRight,
+                    contentDescription = ""
+                )
+                Image(
+                    pic.asImageBitmap(),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .height(150.dp)
+                )
+            }
         }
     }
 }

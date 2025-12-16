@@ -124,4 +124,6 @@
     <string name="export_report">Экспортировать отчёт</string>
     <string name="report_exported">Отчёт экспортирован</string>
     <string name="export">Экспортировать</string>
+    <string name="make_photo">Сделать снимок</string>
+    <string name="change_photo">Заменить снимок</string>
 </resources>
