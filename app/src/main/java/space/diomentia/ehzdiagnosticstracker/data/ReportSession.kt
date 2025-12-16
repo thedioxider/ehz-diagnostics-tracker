@@ -1,6 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
-import android.content.Context
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import space.diomentia.ehzdiagnosticstracker.data.AppState.profileSession
@@ -22,17 +21,17 @@ data class ReportSession(
 ) {
     companion object {
         fun fromExisting(
-            context: Context,
             diagnosticSession: DiagnosticSession,
-            reportId: Long
+            reportId: Long,
+            reportDb: ReportDatabase
         ): ReportSession? {
-            val report = ReportDatabase.getInstance(context).diagnosticReportDao()
+            val report = reportDb.diagnosticReportDao()
                 .getReportByIdOnce(reportId)
             if (report == null) return null
-            val point = ReportDatabase.getInstance(context).diagnosticAreaDao()
+            val point = reportDb.diagnosticAreaDao()
                 .getPointByIdOnce(report.diagnosticPoint)
             if (point == null) return null
-            val data = ReportDatabase.getInstance(context).diagnosticReportDao()
+            val data = reportDb.diagnosticReportDao()
                 .getReportDataOnce(report.id)
             return ReportSession(
                 diagnosticSession = diagnosticSession,
@@ -56,8 +55,7 @@ data class ReportSession(
         }
     }
 
-    fun reportToDb(context: Context): Long? {
-        val reportDb = ReportDatabase.getInstance(context)
+    fun reportToDb(reportDb: ReportDatabase): Long? {
         val reportConfig = reportConfig.value
         val diagnosticType = reportType
         val location = location

@@ -483,7 +483,7 @@ private fun ReportEditor(
                         .padding(top = 8.dp)
                         .padding(8.dp)
                 ) {
-                    val reportId = reportSession.reportToDb(context)
+                    val reportId = reportSession.reportToDb(reportDb)
                     if (reportId != null) {
                         onSaved()
                         onBack()
@@ -499,7 +499,7 @@ private fun ReportEditor(
                         .padding(top = 0.dp, bottom = 16.dp)
                         .padding(horizontal = 8.dp)
                 ) {
-                    val reportId = reportSession.reportToDb(context)
+                    val reportId = reportSession.reportToDb(reportDb)
                     if (reportId == null) {
                         coroutineScope?.launch {
                             snackbarHostState.currentSnackbarData?.dismiss()

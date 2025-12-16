@@ -14,6 +14,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.ui.screens.AuthorizationScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.DiagnosticMenuScreen
@@ -209,9 +210,9 @@ fun AppNavigation() {
                     diagnosticSession = mDiagnosticSession,
                     onEditReport = { report ->
                         reportSession = ReportSession.fromExisting(
-                            context = context,
                             diagnosticSession = mDiagnosticSession,
-                            reportId = report.id
+                            reportId = report.id,
+                            reportDb = ReportDatabase.getInstance(context)
                         )
                         navController.navigate(Screen.Diagnostics.ReportEditor.route) {
                             popUpTo(Screen.Diagnostics.Menu.route) { inclusive = false }
