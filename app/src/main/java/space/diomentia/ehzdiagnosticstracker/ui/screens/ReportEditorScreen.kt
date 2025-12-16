@@ -724,7 +724,7 @@ private fun ReportField(
                     value = v,
                     keyboardType = KeyboardType.Companion.Number
                 ) {
-                    v = it.filter { it.isDigit() }
+                    v = it.filter { it.isDigit() || it == '-' }
                 }
             }
 
@@ -735,7 +735,9 @@ private fun ReportField(
                     keyboardType = KeyboardType.Companion.Decimal
                 ) {
                     v = it.filter {
-                        it.isDigit() || it == DecimalFormatSymbols.getInstance().decimalSeparator
+                        it.isDigit()
+                                || it == DecimalFormatSymbols.getInstance().decimalSeparator
+                                || it == '-'
                     }
                 }
             }
