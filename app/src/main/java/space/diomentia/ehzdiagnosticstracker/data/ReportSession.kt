@@ -44,7 +44,7 @@ data class ReportSession(
                     ?.indexOfFirst { it.id == report.reportType }
                     ?.let { if (it != -1) it else null },
                 location = report.location,
-                validationId = report.validation,
+                validationId = report.validationId,
                 data = mutableMapOf(
                     *data.map { it.characteristic to mutableStateOf(it.value) }
                         .toTypedArray()
@@ -74,7 +74,7 @@ data class ReportSession(
             reportType = reportConfig.reportTypes[diagnosticType].id,
             location = Coordinates(location.latitude, location.longitude),
             inspector = this.inspector ?: "${inspector.surname} ${inspector.name}",
-            validation = validationId
+            validationId = validationId
         )
         val newReportId = if (reportId != null) {
             report = report.copy(id = reportId)
