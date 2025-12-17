@@ -2,11 +2,11 @@ package space.diomentia.ehzdiagnosticstracker.data
 
 import android.content.ContentResolver
 import android.net.Uri
-import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 class ReportExporter(
     val reportId: Long,
@@ -126,7 +126,7 @@ class ReportExporter(
                     ?.parameters
                     ?.find { it.id == characteristic }
                 name = paramConfig?.name
-                datatype = paramConfig?.type?.name
+                datatype = paramConfig?.type?.datatype
                 unit = paramConfig?.unit
             }
         }
@@ -140,11 +140,7 @@ class ReportExporter(
             db = db,
             reportConfig = reportConfig
         ) ?: return null
-        val gson = GsonBuilder()
-            .setPrettyPrinting()
-            .setVersion(exportReport.version.toDouble())
-            .create()
-        return gson.toJson(exportReport)
+        return Json.default.encodeToString(exportReport)
     }
 
     suspend fun exportReportToUri(
