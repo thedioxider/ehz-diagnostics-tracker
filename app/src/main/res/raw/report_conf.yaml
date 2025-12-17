@@ -4,422 +4,422 @@ reportTypes:
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: 4528ba923e6204031d8ee663f6e1b018a6c86716
         name: Сопротивление растеканию тока защитного заземления
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: ebc6b4f17e600b838de0c42ffc8cee81f314bd0e
         name: Наличие гальванической связи металлоконструкции и ограждения с защитным заземлением
-        type: Bool
+        type: bool
       - id: 329f2e3daa4ee27f402f0578d0428598febef5bc
         name: Сопротивление растеканию тока A3
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: e1eb11568d3c5c6a16d8e48a082e50987348de79
         name: Состояние контактных соединений
-        type: Bool
+        type: bool
       - id: 350aa765f69ce18a5d372a19f0d1ac363437349d
         name: Электрическое сопротивление дренажных цепей
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: e2c3500355a91f41a693b14ea87c21fdfd04b54d
         name: Удельное сопротивление грунта в местах расположения защитного и анодного заземлений
-        type: Decimal
+        type: decimal
         unit: Ом·м
       - id: f5054843dc3659fbac2b92547ad15f2147771581
         name: Запас по току
-        type: Decimal
+        type: decimal
         unit: А
       - id: b7c55da2a1f9923744dd6bcd12826bc9a87099c7
         name: Запас по напряжению
-        type: Decimal
+        type: decimal
         unit: В
       - id: 3c7df7a114f62f1e46d6040eac5563b479ef24e3
         name: Потенциaл "труба-земля"
-        type: Decimal
+        type: decimal
         unit: В
       - id: 8f1283bc76d2d8c4598d3a2c7f371812461f7ffa
         name: Поляризационный потенциал
-        type: Decimal
+        type: decimal
         unit: В
       - id: 56b6aca4b874cd3def2b2946e08079f12dbed3e3
         name: Протяженность зоны защиты
-        type: Decimal
+        type: decimal
         unit: км
       - id: 2def56c55e4f8a0169d82709b3360baea0786ccd
         name: Возможность резервирования зон защиты соседних
-        type: Bool
+        type: bool
       - id: 56085bf12c25a705acc421d2cb7b39ef6d81a438
         name: Левый/правый градиент потенциалов при включенных средствах ЭХЗ
-        type: Decimal
+        type: decimal
         unit: мВ
       - id: 582bc772f2045ae21d187be0dab40181663bea61
         name: Левый/правый градиент потенциалов при отключенных средствах ЭХЗ
-        type: Decimal
+        type: decimal
         unit: мВ
       - id: 6dd360b66d0c26ff1c2f24330b9cce2b7efe1dae
         name: Работоспособность встроенных приборов и индикаторов СКЗ
-        type: Bool
+        type: bool
       - id: 27cdd608dae59b0d879fcd042dc9a1e5d95bd101
         name: Соответствие показаний с эталонным средствам измерений
-        type: Bool
+        type: bool
       - id: 49edaa5ee18d40d0772fdaf160436ef6d6ffde58
         name: Работоспособность АВР, блоков управления и автоматики СКЗ
-        type: Bool
+        type: bool
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: f1efb1897b6a55d0b204b71bc7f14680e460eb0c
     name: Состояние УДЗ (Установка Дренажной Защиты)
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: d5e0d969d2f1310636598f0d760bcfc8db290ccf
         name: Сопротивление растеканию тока защитного заземления
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: ebc6b4f17e600b838de0c42ffc8cee81f314bd0e
         name: Наличие гальванической связи металлоконструкции и ограждения с защитным заземлением
-        type: Bool
+        type: bool
       - id: ac6fd3bc7de743499ea9f7f1790d7fe9398721ef
         name: Удельное сопротивления грунта в месте расположения УДЗ
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: 3c852dbf92d466a51bc92ab146b830c4393d12c2
         name: Значения потенциалов трубы и рельса с омической составляющей
-        type: Decimal
+        type: decimal
         unit: В
       - id: 37924a9aad68a06cfc29882805c6fc289b0dc42f
         name: Поляризационный потенциал трубы
-        type: Decimal
+        type: decimal
         unit: В
       - id: b85d6c2a795fb1f71d64d792367e0b474bc0395f
         name: Значения тока дренирования
-        type: Decimal
+        type: decimal
         unit: А
       - id: 794c533156f088454892e5be7868ff373f21af1d
         name: Проверка контактных соединений
-        type: Bool
+        type: bool
       - id: 43d4da11b2d273657a544a2bc6a6cbd998f804ae
         name: Проверка соответствия амперметра и токового шунта
-        type: Bool
+        type: bool
       - id: 988325d870a0d1295b75f2b59a31fae42210d01c
         name: Проверка дистанционного контроля и управления
-        type: Bool
+        type: bool
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: e4ef49ab1452981ec4c491b754820eebb4f8840e
     name: Состояние УПЗ (Установка Протекторной Защиты)
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: aa6f8c648f42a64aea81aae5f8ef79523e35c599
         name: Проверка контактных соединений в БДР (БСЗ)
-        type: Bool
+        type: bool
       - id: 3dcf317ac93166d704613120f43b45dc5211d121
         name: Потенциалы сооружения при включенной УПЗ
-        type: Decimal
+        type: decimal
         unit: В
       - id: 1931b2b7a29647e1349a738baf72d0ee62953365
         name: Потенциалы сооружения при отключенной УПЗ
-        type: Decimal
+        type: decimal
         unit: В
       - id: 25a696410faa83768bc69a8909c8958d3244bbf5
         name: Потенциал протекторной группы
-        type: Decimal
+        type: decimal
         unit: В
       - id: b45c20dd2ce3dc97e838036358275b86314fd298
         name: Значения тока в цепи "сооружение - протекторная группа"
-        type: Decimal
+        type: decimal
         unit: А
       - id: 0b75bc0d051c678eded8b70643192863faee47e1
         name: Сопротивление растеканию тока протекторной группы
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: 046ff2788c1787fefe746bfb371492cdadff513d
         name: Удельное сопротивление грунта в месте расположения УПЗ
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: a3ddec72bcfd0a75c8ccf43b98a9b79e3faaba5a
     name: Состояние ВЭИ (Вставка Электроизолирующая)
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: ab5f6ab1942617b3f6ba5fd5d9cf85fd65a65ae8
         name: Продольное (кажущееся) электрическое сопротивление
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: bbc03f3caf32c831ecd19f912d614477f69f7d65
         name: Одновременное измерение потенциала трубы с омической составляющей до и после ВЭИ
-        type: Decimal
+        type: decimal
         unit: В
       - id: 75f61bca3c30708b91ff1879b8eb06ba896bdeaa
         name: Одновременное измерение поляризационного потенциала трубы до и после ВЭИ
-        type: Decimal
+        type: decimal
         unit: В
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: 90f429c74d9d1dff998770f2f221fff3e84fea2a
     name: Состояние КИП (Контрольно-Измерительный Пункт)
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: 2fec78fc9d701bf9d12cee2280d0b9e63c51e867
         name: Потенциалы сооружения с омической составляющей
-        type: Decimal
+        type: decimal
         unit: В
       - id: 18c5f4e7dd79c70ed0d1e204f4a7c4b565eaf990
         name: Поляризационный потенциал сооружения
-        type: Decimal
+        type: decimal
         unit: В
       - id: 699e0a9c9ef26ab0f94bb57f2d5b60ae30db4be7
         name: Проверка работоспособности контрольного вывода от трубы, ВЭ и неполяризующегося ЭСДД
-        type: Bool
+        type: bool
       - id: d3571f556f7c2329360a303dca38f893377f30f2
         name: Удельное сопротивление грунта в месте расположения КИП
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: 7e715ea6daf247a0c78bd3004e7afdfeb3a8641b
     name: Состояние переходов, оборудованных защитными кожухами
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: 43dbb54b61d52b7a1b2d3cfd5fce3fb32ed7a01b
         name: Сопротивление "защитный кожух-труба" в местах переходов трубопровода под автомобильными и железными дорогами
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: 213c3c5930a5d51a7903c8dd4b03079002194787
         name: Сопротивление растекания тока защитного кожуха
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: e8057bdd999566fd1f5835718a1393429ce36499
         name: Потенциалы трубы и кожуха
-        type: Decimal
+        type: decimal
         unit: В
       - id: 9e432047d906272c9ba8a016b89f71823bec08fa
         name: Удельное сопротивление грунта с обеих сторон дороги в месте перехода
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: d0a13a8114abb17f64f0e03a6b12e10626eda46a
         name: Наличие электрического контакта "защитный кожух-труба"
-        type: Bool
+        type: bool
       - id: 4859ae9f4cfef4b8aefc8fda945a08f7d364e987
         name: Работоспособность средств защиты
-        type: Bool
+        type: bool
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: a291b88dffb550138ed93ae0ca80d87a750a3575
     name: Состояние БДР (БСЗ)
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: 3329075f0055fee64558c2b3927a238d136d014d
         name: Потенциалы на всех выводах от коммуникаций относительно стационарных ЭСДД и образцовых (переносных) ЭС при подключенном БДР
-        type: Decimal
+        type: decimal
         unit: В
       - id: 28f4669d9393f103e381d97612826de1ee2f7a6b
         name: Потенциалы на всех выводах от коммуникаций относительно стационарных ЭСДД и образцовых (переносных) ЭС при отключенном от коммуникаций БДР
-        type: Decimal
+        type: decimal
         unit: В
       - id: 18cf63224918bc691c2768360084aa639872b81d
         name: Сопротивления растекания тока каждого трубопровода, каждого ЭСДД и ВЭ
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: 7e321eff449d5911176ae37bf3020895fbe20186
     name: Контроль защищенности трубопровода
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: 6f7e73d4105d5286ac871463e01f1640f5c63d54
         name: Измерение при прерывистой поляризации потенциалов включения/отключения вне зоны блуждающих токов
-        type: Decimal
+        type: decimal
         unit: В
       - id: 57ad2f549d4c95e48cc71133fcafe6479d2ca3df
         name: В зоне действия блуждающих токов, вызванных источниками постоянного тока, проверка наличия участков знакопеременных и анодных зон на всех КИП и в доступных местах в течение не менее 2 часов
-        type: Bool
+        type: bool
       - id: e268fbc1ad64483420e98d51b8f0bee2b29db10c
         name: На участках, подверженных влиянию блуждающих токов, на КИП в месте пересечения трубопроводом электрифицированных железных дорог или максимального сближения с ними, а также на границах этих участков – суточные измерения с регистрацией потенциалов
-        type: Decimal
+        type: decimal
       - id: e474d57d4f860b8c82f9db34619242a6730aed87
         name: При отсутствии на участке блуждающих токов определение длины зоны за щиты УКЗ при режимах, установленных проектом, и при необходимости их корректировка
-        type: Decimal
+        type: decimal
       - id: 95e467dea32fa4e26d2a45f09664999c0f92fe68
         name: Оптимизация режимов УКЗ по току поляризации
-        type: Bool
+        type: bool
       - id: 3c475487beb65fcc7453a275c2447db9a6bf002e
         name: При отсутствии на участке блуждающих токов определение длины зоны за щиты УКЗ при выполнении оптимизации
-        type: Decimal
+        type: decimal
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: 14025a7abb7cf63420b3dc0531b27a5cf2275d2a
     name: Оценка состояния Защитного Покрытия (ЗП)
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: d98c74e0e17d4ca4bac78c9254156cd74528cb37
         name: Обследование сплошности ЗП сооружения с нахождением мест сквозных дефектов
-        type: Bool
+        type: photo
       - id: 9b8aecb51db046247f42824e8487504e4e63d9ae
         name: При отсутствии на участке блуждающих токов измерение с обеих сторон под земного сооружения градиентов потенциала в грунте при включенных и отключенных (прерывистая поляризация) УКЗ
-        type: Decimal
+        type: decimal
       - id: 30d2c690a4c392526543f72fa950b04baf1b00d7
         name: Интегральная оценка сопротивления ЗП подземного сооружения, в том числе с применением методов на переменном токе
-        type: Decimal
+        type: decimal
         unit: Ом
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: a22871a076a549c93142a7dbf1f43f37141c7847
     name: Контроль негативного влияния на сторонние сооружения
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: 8a22ad40d8fba262a259c28e4ba84e2a564717f8
         name: Синхронные измерения в КИП и КДП потенциалов в месте пересечения или сближения обследуемого объекта с сопутствующим (сторонним) сооружением
-        type: Decimal
+        type: decimal
         unit: В
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
   - id: 7ac2b5539c44f3ff7c58cd24f5e30dc3ad860d35
     name: Обследование коррозионного состояния сооружения в шурфах
     parameters:
       - id: kilometer_location
         name: Километраж
-        type: Decimal
+        type: decimal
       - id: 6f0098f3e8946e4259ac22afda3fb74d78b58228
         name: Ориентиры на местности
-        type: Text
+        type: text
       - id: 987a4633d70a541db35a00a75d7d845419ccf3f0
         name: Описание наличия недопустимой растительности, особенностей рельефа и гидрологических условий местности, на которой отрыт шурф
-        type: Text
+        type: text
       - id: c99a2918325ea07746d6aab476253276a53cca13
         name: Глубина залегания трубопровода от поверхности земли доверх ней образующей трубы и длину отрытой части
-        type: Decimal
+        type: decimal
         unit: м
       - id: 3408df8ee884f46ae685f467c72381e07d425142
         name: Типы грунтов с указанием толщины слоев по порядку сверху
-        type: Text
+        type: text
       - id: 06c4e85437a62fcf8d49f2c9e39e330bce2f42cc
         name: Потенциалы трубопровода в шурфе относительно поверхности земли
-        type: Decimal
+        type: decimal
         unit: В
       - id: 0eed91380ed9323090c50507b48817da10b2c1e3
         name: Фотофиксация наличия повреждений ЗП, наличия катодного налета и продуктов коррозии
-        type: Photo
+        type: photo
       - id: 0be6a0d8681492e90721eeef489060fec74bfaef
         name: Очистка трубопровода от грунта, обертки и отслоившегося защитного покрытия
-        type: Bool
+        type: bool
       - id: d60939dc401e1a4094155458351bbde30da9ee31
         name: Обследование методом ВИК изоляционного покрытия и металла трубы в местах коррозионных повреждений и повреждений ЗП
-        type: Text
+        type: text
       - id: 5f2dcd0086d35fc8940e69e94173e2de074bf3d1
         name: Обследование другими методами НК (если это определено ППР)
-        type: Text
+        type: text
       - id: a9af1c1f23ee336d676398eb17b08ff854e379f0
         name: Определение типа ЗП и обертки и число слоев
-        type: Text
+        type: text
       - id: a270764092f67ba83886c2ce1832eba4da0895cb
         name: Измерение толщины ЗП в четырех точках поперечного сечения трубы на 3, 6, 9, 12 ч
-        type: Decimal
+        type: decimal
         unit: м
       - id: 23b307e0e99b8a398f054e54acdc8dd4d62a07cf
         name: Оценка состояния поверхности ЗП
-        type: Bool
+        type: bool
       - id: be20173ea9702ae7c8d0b94ed7a8d34942e12222
         name: Дефекты в ЗП
-        type: Bool
+        type: bool
       - id: fd48420811f0ed2f31845c277e233a5494752307
         name: Площадь отдельных отслоений и сквозных повреждений ЗП
-        type: Decimal
+        type: decimal
         unit: м^2
       - id: 55a3607efa097cee28b03a105f8990f1f3885710
         name: Суммарная площадь отслоений и сквозных повреждений
-        type: Decimal
+        type: decimal
         unit: м^2
       - id: 29f5a6cfa369ddcdf328a1f95d78b1b5864f4dee
         name: Величина адгезии защитного покрытия к трубе
-        type: Decimal
+        type: decimal
       - id: 217cf99e5e91657e5b7a829b959142f754aa83c7
         name: Наличие влаги под ЗП
-        type: Bool
+        type: bool
       - id: 34172747faace4cb59bd2ca35445fcbd450c77a3
         name: Наличие коррозии металла трубопровода
-        type: Bool
+        type: bool
       - id: f699026ec518f4bc78836c905ef3f0b6222fb6d9
         name: Характер коррозии металла трубопровода
-        type: Text
+        type: text
       - id: d7604cf18563f9ad2b3b067ab69f8d10eedcc72f
         name: Наличие механических повреждений
-        type: Bool
+        type: bool
       - id: e2ad36df062954717e89708a7392773d8d3ca536
         name: Размеры механических повреждений
-        type: Decimal
+        type: decimal
       - id: 3220f086378f3a761e0fcd75c769d43d0c691762
         name: Характер коррозионных повреждений
-        type: Text
+        type: text
       - id: 75585b6c3f9510a3a484cf2589fa3d7c1019b9a5
         name: Размеры коррозионных повреждений
-        type: Decimal
+        type: decimal
       - id: fc7a48922feef42f204581de9c2287c12b4638ba
         name: Восстановление ЗП после проведения обследования
-        type: Bool
+        type: bool
       - id: point_photo
         name: Фотография точки
-        type: Photo
+        type: photo
       - id: commentary
         name: Комментарий
-        type: Text
+        type: text
