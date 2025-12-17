@@ -21,10 +21,11 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Database(
-    version = 5,
+    version = 6,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
@@ -33,7 +34,8 @@ import kotlinx.serialization.Serializable
         DiagnosticPoint::class
     ],
     autoMigrations = [
-        AutoMigration(from = 3, to = 5)
+        AutoMigration(from = 3, to = 5),
+        AutoMigration(from = 5, to = 6)
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
@@ -62,8 +64,10 @@ abstract class ReportDatabase : RoomDatabase() {
 
 @Serializable
 data class Coordinates(
-    @ColumnInfo(name = "latitude") val latitude: Double,
-    @ColumnInfo(name = "altitude") val longitude: Double
+    @ColumnInfo(name = "latitude") @SerialName("latitude")
+    val latitude: Double,
+    @ColumnInfo(name = "altitude") @SerialName("altitude")
+    val longitude: Double
 )
 
 @Entity(
@@ -73,25 +77,38 @@ data class Coordinates(
     ]
 )
 data class DiagnosticReport(
-    @ColumnInfo(name = "diagnostic_point") val diagnosticPoint: String,
-    @ColumnInfo(name = "timestamp") val timestamp: Long,
-    @ColumnInfo(name = "diagnostics_type") val diagnosticsType: String,
-    @ColumnInfo(name = "report_type") val reportType: String,
-    @Embedded val location: Coordinates,
-    @ColumnInfo(name = "inspector") val inspector: String,
+    @ColumnInfo(name = "diagnostic_point") @SerialName("diagnostic_point")
+    val diagnosticPoint: String,
+    @ColumnInfo(name = "timestamp") @SerialName("timestamp")
+    val timestamp: Long,
+    @ColumnInfo(name = "diagnostics_type") @SerialName("diagnostics_type")
+    val diagnosticsType: String,
+    @ColumnInfo(name = "report_type") @SerialName("report_type")
+    val reportType: String,
+    @Embedded @SerialName("location")
+    val location: Coordinates,
+    @ColumnInfo(name = "inspector") @SerialName("inspector")
+    val inspector: String,
     /**
      * A validation ID is known when a report point is scanned (via QR or NFC). Can be used for
      * verification of indeed reaching the point and for identification the same point on server side.
      */
-    @ColumnInfo(name = "validation_id") val validation: String? = null,
-    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") val id: Long = 0
+    @ColumnInfo(name = "validation_id") @SerialName("validation_id")
+    val validationId: String? = null,
+    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") @SerialName("id")
+    val id: Long = 0
 )
 
 @Entity(tableName = "data_entries", primaryKeys = ["report", "characteristic"])
 data class ReportDataEntry(
-    @ColumnInfo(name = "report") val report: Long,
-    @ColumnInfo(name = "characteristic") val characteristic: String,
-    @ColumnInfo(name = "value") val value: String
+    @ColumnInfo(name = "report") @SerialName("report")
+    val report: Long,
+    @ColumnInfo(name = "characteristic") @SerialName("characteristic")
+    val characteristic: String,
+    @ColumnInfo(name = "value") @SerialName("value")
+    val value: String,
+    @ColumnInfo(name = "datatype") @SerialName("datatype")
+    val datatype: String? = null
 )
 
 data class DiagnosticReportWithData(
@@ -138,32 +155,48 @@ interface DiagnosticReportDao {
 @Serializable
 @Entity(tableName = "diagnostic_objects")
 data class DiagnosticObject(
-    @PrimaryKey @ColumnInfo(name = "id") val id: String,
-    @ColumnInfo(name = "inventory_id") val inventoryId: String,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
+    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
+    val id: String,
+    @ColumnInfo(name = "inventory_id") @SerialName("inventory_id")
+    val inventoryId: String,
+    @ColumnInfo(name = "name") @SerialName("name")
+    val name: String,
+    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
+    val additionalInfo: String? = null
 )
 
 @Serializable
 @Entity(tableName = "diagnostic_areas")
 data class DiagnosticArea(
-    @PrimaryKey @ColumnInfo(name = "id") val id: String,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "diagnostic_object") val diagnosticObject: String,
-    @ColumnInfo(name = "danger_class") val dangerClass: String,
-    @Embedded(prefix = "last_") val lastLocation: Coordinates? = null,
-    @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
+    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
+    val id: String,
+    @ColumnInfo(name = "name") @SerialName("name")
+    val name: String,
+    @ColumnInfo(name = "diagnostic_object") @SerialName("diagnostic_object")
+    val diagnosticObject: String,
+    @ColumnInfo(name = "danger_class") @SerialName("danger_class")
+    val dangerClass: String,
+    @Embedded(prefix = "last_") @SerialName("last_location")
+    val lastLocation: Coordinates? = null,
+    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
+    val additionalInfo: String? = null
 )
 
 @Serializable
 @Entity(tableName = "diagnostic_points")
 data class DiagnosticPoint(
-    @PrimaryKey @ColumnInfo(name = "id") val id: String,
-    @ColumnInfo(name = "diagnostic_area") val diagnosticArea: String,
-    @ColumnInfo(name = "inventory_id") val inventoryId: String,
-    @ColumnInfo(name = "registration_number") val registrationNumber: String,
-    @ColumnInfo(name = "diagnostics_type") val diagnosticsType: String? = null,
-    @ColumnInfo(name = "additional_info") val additionalInfo: String? = null
+    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
+    val id: String,
+    @ColumnInfo(name = "diagnostic_area") @SerialName("diagnostic_area")
+    val diagnosticArea: String,
+    @ColumnInfo(name = "inventory_id") @SerialName("inventory_id")
+    val inventoryId: String,
+    @ColumnInfo(name = "registration_number") @SerialName("registration_number")
+    val registrationNumber: String,
+    @ColumnInfo(name = "diagnostics_type") @SerialName("diagnostics_type")
+    val diagnosticsType: String? = null,
+    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
+    val additionalInfo: String? = null
 )
 
 data class DiagnosticObjectWithAreas(

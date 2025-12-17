@@ -1,5 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 sealed class ReportFieldValue {
@@ -22,37 +23,51 @@ sealed class ReportFieldValue {
 
 @Serializable
 enum class ParameterType {
+    @SerialName("text")
     Text,
+    @SerialName("bool")
     Bool,
+    @SerialName("integer")
     Integer,
+    @SerialName("decimal")
     Decimal,
+    @SerialName("photo")
     Photo,
-    Raw,
+    @SerialName("raw")
+    Raw;
+
+    val datatype
+        get() = this.name.lowercase()
+
+    companion object {
+        fun parse(s: String): ParameterType? =
+            entries.find { it.name.equals(s, ignoreCase = true) }
+    }
 }
 
 @Serializable
 data class ReportParameter(
-    val id: String,
-    val name: String,
-    val type: ParameterType,
-    val unit: String? = null
+    @SerialName("id") val id: String,
+    @SerialName("name") val name: String,
+    @SerialName("type") val type: ParameterType,
+    @SerialName("unit") val unit: String? = null
 )
 
 @Serializable
 data class ReportType(
-    val id: String,
-    val name: String,
-    val parameters: List<ReportParameter>?
+    @SerialName("id") val id: String,
+    @SerialName("name") val name: String,
+    @SerialName("parameters") val parameters: List<ReportParameter>?
 )
 
 @Serializable
 data class ReportConfig(
-    val reportTypes: List<ReportType>
+    @SerialName("report_types") val reportTypes: List<ReportType>
 )
 
 @Serializable
 data class InitialAreaEntries(
-    val diagnosticObjects: List<DiagnosticObject>,
-    val diagnosticAreas: List<DiagnosticArea>,
-    val diagnosticPoints: List<DiagnosticPoint>
+    @SerialName("diagnostic_objects") val diagnosticObjects: List<DiagnosticObject>,
+    @SerialName("diagnostic_areas") val diagnosticAreas: List<DiagnosticArea>,
+    @SerialName("diagnostic_points") val diagnosticPoints: List<DiagnosticPoint>
 )

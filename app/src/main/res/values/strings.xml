@@ -124,4 +124,8 @@
     <string name="export_report">Экспортировать отчёт</string>
     <string name="report_exported">Отчёт экспортирован</string>
     <string name="export">Экспортировать</string>
+    <string name="make_photo">Сделать снимок</string>
+    <string name="change_photo">Заменить снимок</string>
+    <string name="image">Изображение</string>
+    <string name="unable_access_camera">Не удалось получить доступ к камере</string>
 </resources>

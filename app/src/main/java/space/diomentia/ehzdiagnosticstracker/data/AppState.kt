@@ -40,7 +40,7 @@ object AppState {
 
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
 
-        val initialAreaEntries = Yaml.default.decodeFromString<InitialAreaEntries>(
+        val initialAreaEntries = Yaml.appConf.decodeFromString<InitialAreaEntries>(
             String(
                 resources?.openRawResource(R.raw.initial_area_entries)?.readBytes() ?: ByteArray(0)
             )
@@ -101,7 +101,7 @@ object AppState {
             if (!it.isFile) {
                 return@lazy mutableStateOf(
                     resource?.let {
-                        Yaml.default.decodeFromString(
+                        Yaml.appConf.decodeFromString(
                             String(
                                 resources.openRawResource(it).readBytes()
                             )
@@ -109,7 +109,7 @@ object AppState {
                     }
                 )
             }
-            return@lazy mutableStateOf(Yaml.default.decodeFromString(it.readText()))
+            return@lazy mutableStateOf(Yaml.appConf.decodeFromString(it.readText()))
         }
     }
 
@@ -134,7 +134,7 @@ object AppState {
             context.contentResolver.openInputStream(it)?.use { iStream ->
                 try {
                     val bytes = iStream.readBytes()
-                    onResult(Yaml.default.decodeFromString<T>(String(bytes)))
+                    onResult(Yaml.appConf.decodeFromString<T>(String(bytes)))
                     FileOutputStream(File(context.dataDir, filename)).use { oStream ->
                         oStream.write(bytes)
                     }

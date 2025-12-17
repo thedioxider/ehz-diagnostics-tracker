@@ -1,22 +1,26 @@
-diagnosticObjects:
+diagnostic_objects:
   - id: 5484b855400576141edceb9a9d22ee1bd77483fa
-    inventoryId: 5484b855400576141edceb9a9d22ee1bd77483fa
+    inventory_id: 5484b855400576141edceb9a9d22ee1bd77483fa
     name: САЦ-III
-diagnosticAreas:
-  - id: 92754
+diagnostic_areas:
+  - id: 0f2j03j02022909hg029hg020239t02h09g0249g
     name: 0-41 км
-    diagnosticObject: 5484b855400576141edceb9a9d22ee1bd77483fa
-    dangerClass: 0
-  - id: 85394
+    diagnostic_object: 5484b855400576141edceb9a9d22ee1bd77483fa
+    danger_class: 0
+  - id: 10mmv3n0b71395nv701938n70xn01xn193xn8780
     name: 41-82 км
-    diagnosticObject: 5484b855400576141edceb9a9d22ee1bd77483fa
-    dangerClass: 1
-diagnosticPoints:
-  - id: 12795
-    diagnosticArea: 85394
-    inventoryId: 48953938
-    registrationNumber: 52837519515346
-  - id: "https://npk-ptm.ru/"
-    diagnosticArea: 92754
-    inventoryId: 1235135
-    registrationNumber: 52837519515346
+    diagnostic_object: 5484b855400576141edceb9a9d22ee1bd77483fa
+    danger_class: 1
+diagnostic_points:
+  - id: mc19300085vn7813b7n1807xx4m09v83798nv78w
+    diagnostic_area: 0f2j03j02022909hg029hg020239t02h09g0249g
+    inventory_id: "23 км"
+    registration_number: mc19300085vn7813b7n1807xx4m09v83798nv78w
+  - id: bi7g6coubu1trxcsudvf762yiy18uyf7c2yv3iyc
+    diagnostic_area: 0f2j03j02022909hg029hg020239t02h09g0249g
+    inventory_id: "37 км"
+    registration_number: bi7g6coubu1trxcsudvf762yiy18uyf7c2yv3iyc
+  - id: 618tbbjqbqoiouxcic17938tf11fg1789cboaueg
+    diagnostic_area: 10mmv3n0b71395nv701938n70xn01xn193xn8780
+    inventory_id: "68 км"
+    registration_number: 618tbbjqbqoiouxcic17938tf11fg1789cboaueg

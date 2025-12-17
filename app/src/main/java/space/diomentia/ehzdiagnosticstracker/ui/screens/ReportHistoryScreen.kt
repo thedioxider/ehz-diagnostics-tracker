@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -301,11 +302,20 @@ private fun ReportDetailsDialog(
                 parameter?.name ?: entry.characteristic,
                 style = MaterialTheme.typography.titleSmall
             )
-            Text(
-                value,
-                modifier = Modifier.Companion
-                    .padding(top = 8.dp, start = 24.dp)
-            )
+            when (entry.datatype?.let { ParameterType.parse(it) }) {
+                ParameterType.Photo -> Text(
+                    "[ ${stringResource(R.string.image)} ]",
+                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier
+                        .padding(top = 8.dp, start = 24.dp)
+                )
+
+                else -> Text(
+                    value,
+                    modifier = Modifier
+                        .padding(top = 8.dp, start = 24.dp)
+                )
+            }
         }
     }
 

@@ -44,7 +44,7 @@ data class ReportSession(
                     ?.indexOfFirst { it.id == report.reportType }
                     ?.let { if (it != -1) it else null },
                 location = report.location,
-                validationId = report.validation,
+                validationId = report.validationId,
                 data = mutableMapOf(
                     *data.map { it.characteristic to mutableStateOf(it.value) }
                         .toTypedArray()
@@ -66,10 +66,7 @@ data class ReportSession(
             || reportConfig == null
             || inspector == null
         ) return null
-        (reportConfig.reportTypes[diagnosticType].parameters ?: emptyList())
-            .asSequence()
-            .map { it.id }
-            .toSet()
+        val typeConfig = reportConfig.reportTypes[diagnosticType]
         var report = DiagnosticReport(
             diagnosticPoint = diagnosticPoint.id,
             timestamp = dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
@@ -77,7 +74,7 @@ data class ReportSession(
             reportType = reportConfig.reportTypes[diagnosticType].id,
             location = Coordinates(location.latitude, location.longitude),
             inspector = this.inspector ?: "${inspector.surname} ${inspector.name}",
-            validation = validationId
+            validationId = validationId
         )
         val newReportId = if (reportId != null) {
             report = report.copy(id = reportId)
@@ -92,7 +89,8 @@ data class ReportSession(
                 ReportDataEntry(
                     report = newReportId,
                     characteristic = k,
-                    value = v.value.toString()
+                    value = v.value.toString(),
+                    datatype = typeConfig.parameters?.find { it.id == k }?.type?.datatype
                 )
             }
             .toTypedArray()

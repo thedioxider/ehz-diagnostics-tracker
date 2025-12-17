@@ -2,10 +2,11 @@ package space.diomentia.ehzdiagnosticstracker.data
 
 import android.content.ContentResolver
 import android.net.Uri
-import com.google.gson.GsonBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 class ReportExporter(
     val reportId: Long,
@@ -15,19 +16,18 @@ class ReportExporter(
     private val report = db.diagnosticReportDao().getReportByIdOnce(reportId)
 
     @Serializable
-    @Suppress("PropertyName")
     data class ExportReport(
-        val timestamp: Long,
-        val diagnostic_object: ExportDiagnosticObject,
-        val diagnostic_area: ExportDiagnosticArea,
-        val diagnostic_point: ExportDiagnosticPoint,
-        val diagnostics_type: String,
-        val report_type: String,
-        val location: Coordinates,
-        val inspector: String,
-        val validation: String?,
-        val data: List<ExportDataEntry>,
-        val report_type_name: String? = null
+        @SerialName("timestamp") val timestamp: Long,
+        @SerialName("diagnostic_object") val diagnosticObject: ExportDiagnosticObject,
+        @SerialName("diagnostic_area") val diagnosticArea: ExportDiagnosticArea,
+        @SerialName("diagnostic_point") val diagnosticPoint: ExportDiagnosticPoint,
+        @SerialName("diagnostics_type") val diagnosticsType: String,
+        @SerialName("report_type") val reportType: String,
+        @SerialName("location") val location: Coordinates,
+        @SerialName("inspector") val inspector: String,
+        @SerialName("validation") val validation: String?,
+        @SerialName("data") val data: List<ExportDataEntry>,
+        @SerialName("report_type_name") val reportTypeName: String? = null
     ) {
         val version = 1
 
@@ -55,68 +55,68 @@ class ReportExporter(
                         ?: return null
                 return ExportReport(
                     timestamp = r.timestamp,
-                    diagnostic_object = ExportDiagnosticObject(diagnosticObject),
-                    diagnostic_area = ExportDiagnosticArea(diagnosticArea),
-                    diagnostic_point = ExportDiagnosticPoint(diagnosticPoint),
-                    diagnostics_type = r.diagnosticsType,
-                    report_type = r.reportType,
+                    diagnosticObject = ExportDiagnosticObject(diagnosticObject),
+                    diagnosticArea = ExportDiagnosticArea(diagnosticArea),
+                    diagnosticPoint = ExportDiagnosticPoint(diagnosticPoint),
+                    diagnosticsType = r.diagnosticsType,
+                    reportType = r.reportType,
                     location = r.location,
                     inspector = r.inspector,
-                    validation = r.validation,
+                    validation = r.validationId,
                     data = data,
-                    report_type_name = reportTypeConfig?.name
+                    reportTypeName = reportTypeConfig?.name
                 )
             }
         }
 
         @Serializable
         data class ExportDiagnosticObject(
-            val id: String,
-            val name: String,
-            val additional_info: String? = null
+            @SerialName("id") val id: String,
+            @SerialName("name") val name: String,
+            @SerialName("additional_info") val additionalInfo: String? = null
         ) {
             constructor(ref: DiagnosticObject) : this(
                 id = ref.id,
                 name = ref.name,
-                additional_info = ref.additionalInfo
+                additionalInfo = ref.additionalInfo
             )
         }
 
         @Serializable
         data class ExportDiagnosticArea(
-            val id: String,
-            val name: String,
-            val danger_class: String,
-            val additional_info: String? = null
+            @SerialName("id") val id: String,
+            @SerialName("name") val name: String,
+            @SerialName("danger_class") val dangerClass: String,
+            @SerialName("additional_info") val additionalInfo: String? = null
         ) {
             constructor(ref: DiagnosticArea) : this(
                 id = ref.id,
                 name = ref.name,
-                danger_class = ref.dangerClass,
-                additional_info = ref.additionalInfo
+                dangerClass = ref.dangerClass,
+                additionalInfo = ref.additionalInfo
             )
         }
 
         @Serializable
         data class ExportDiagnosticPoint(
-            val id: String,
-            val name: String,
-            val additional_info: String? = null
+            @SerialName("id") val id: String,
+            @SerialName("name") val name: String,
+            @SerialName("additional_info") val additionalInfo: String? = null
         ) {
             constructor(ref: DiagnosticPoint) : this(
                 id = ref.id,
                 name = ref.inventoryId,
-                additional_info = ref.additionalInfo
+                additionalInfo = ref.additionalInfo
             )
         }
 
         @Serializable
         data class ExportDataEntry(
-            val characteristic: String,
-            val value: String,
-            var name: String? = null,
-            var type: String? = null,
-            var unit: String? = null
+            @SerialName("characteristic") val characteristic: String,
+            @SerialName("value") val value: String,
+            @SerialName("name") var name: String? = null,
+            @SerialName("datatype") var datatype: String? = null,
+            @SerialName("unit") var unit: String? = null
         ) {
             constructor(ref: ReportDataEntry, reportType: ReportType? = null) : this(
                 characteristic = ref.characteristic,
@@ -126,7 +126,7 @@ class ReportExporter(
                     ?.parameters
                     ?.find { it.id == characteristic }
                 name = paramConfig?.name
-                type = paramConfig?.type?.name
+                datatype = paramConfig?.type?.datatype
                 unit = paramConfig?.unit
             }
         }
@@ -140,11 +140,7 @@ class ReportExporter(
             db = db,
             reportConfig = reportConfig
         ) ?: return null
-        val gson = GsonBuilder()
-            .setPrettyPrinting()
-            .setVersion(exportReport.version.toDouble())
-            .create()
-        return gson.toJson(exportReport)
+        return Json.default.encodeToString(exportReport)
     }
 
     suspend fun exportReportToUri(
