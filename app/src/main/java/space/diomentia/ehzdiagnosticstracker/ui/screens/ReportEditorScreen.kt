@@ -86,6 +86,8 @@ import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.BuildConfig
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ScanIdQrActivity
+import space.diomentia.ehzdiagnosticstracker.askCameraPermissions
+import space.diomentia.ehzdiagnosticstracker.checkCameraPermissions
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
@@ -838,6 +840,16 @@ private fun PhotoField(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
+    var cameraPermission: Boolean? by remember { mutableStateOf(context.checkCameraPermissions()) }
+    if (cameraPermission == false)
+        cameraPermission = askCameraPermissions {
+            cameraPermission = null
+            coroutineScope?.launch {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(context.getString(R.string.unable_access_camera))
+            }
+        }
+
     var v by value
     val pic: Bitmap? = remember(v) {
         Base64.decode(v, Base64.DEFAULT).let {
@@ -892,7 +904,10 @@ private fun PhotoField(
                 .height(IntrinsicSize.Min)
         ) {
             PtmFilledButton(
-                onClick = { photoLauncher.launch(picUri) },
+                onClick = if (cameraPermission == true)
+                    { -> photoLauncher.launch(picUri) }
+                else
+                    { -> cameraPermission = context.checkCameraPermissions() },
                 modifier = Modifier.weight(1f, fill = true)
             ) {
                 Row(
