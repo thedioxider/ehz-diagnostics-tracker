@@ -171,7 +171,7 @@ fun ReportEditorScreen(
                     )
                 },
                 snackbarHost = { PtmSnackbarHost(snackbarHostState) },
-                modifier = Modifier.Companion.fillMaxSize()
+                modifier = Modifier.fillMaxSize()
             ) { innerPadding ->
                 if (AppState.reportConfig.value == null) {
                     val configChooserLauncher =
@@ -180,7 +180,7 @@ fun ReportEditorScreen(
                         }
                     RequestConfigScreen(
                         label = stringResource(R.string.import_report_config),
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .fillMaxSize()
                             .padding(innerPadding)
                     ) {
@@ -191,43 +191,43 @@ fun ReportEditorScreen(
 
                 ScrollableColumn(
                     innerPadding,
-                    modifier = Modifier.Companion.padding(horizontal = 16.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
                     Text(
                         "${stringResource(R.string.point)} ${reportSession.diagnosticPoint.inventoryId}",
                         style = MaterialTheme.typography.titleLarge,
                         fontSize = 36.sp,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 24.dp)
                     )
                     Text(
                         reportSession.diagnosticSession.diagnosticObject.name,
                         style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
                             .fillMaxWidth()
                     )
                     Text(
                         "${stringResource(R.string.area)} ${reportSession.diagnosticSession.diagnosticArea.name}",
                         style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Companion.Center,
-                        modifier = Modifier.Companion
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
                             .fillMaxWidth()
                     )
                     Text(
                         "${stringResource(R.string.report_by)} " + (reportSession.inspector
                             ?: AppState.profileSession?.let { "${it.surname} ${it.name[0]}." }),
-                        textAlign = TextAlign.Companion.Center,
+                        textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.Companion.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                     Text(
                         reportSession.dateTime
                             .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
                         style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .alpha(.5f)
                             .padding(bottom = 16.dp)
                     )
@@ -238,14 +238,14 @@ fun ReportEditorScreen(
                                 AppState.reportConfig.value?.reportTypes[reportType]?.name
                             } ?: stringResource(R.string.unknown),
                             style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 8.dp, bottom = 8.dp)
                         )
                     }
 
                     AnimatedVisibility(state == UiState.Configuration) {
-                        ReportConfiguration(Modifier.Companion.fillMaxWidth())
+                        ReportConfiguration(Modifier.fillMaxWidth())
                     }
 
                     ApplyButton()
@@ -255,13 +255,13 @@ fun ReportEditorScreen(
                         ReportEditor(
                             onSaved = onSaved,
                             onBack = onBack,
-                            modifier = Modifier.Companion
+                            modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 16.dp)
                         )
                     }
 
-                    Spacer(Modifier.Companion.height(24.dp))
+                    Spacer(Modifier.height(24.dp))
                 }
             }
         }
@@ -278,8 +278,8 @@ private fun ReportTypesList(
         Text(
             stringResource(R.string.no_report_configuration),
             style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Companion.Center,
-            modifier = Modifier.Companion
+            textAlign = TextAlign.Center,
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
         )
@@ -289,21 +289,21 @@ private fun ReportTypesList(
     var state by LocalUiState.current
 
     Column(
-        horizontalAlignment = Alignment.Companion.Start,
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top,
         modifier = modifier
     ) {
         Text(
             stringResource(R.string.works_contents),
             style = MaterialTheme.typography.headlineSmall,
-            modifier = Modifier.Companion.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 8.dp)
         )
 
         reportConfig.reportTypes.forEachIndexed { i, rClass ->
             val interactionSource = remember { MutableInteractionSource() }
             Row(
-                verticalAlignment = Alignment.Companion.CenterVertically,
-                modifier = Modifier.Companion
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
                     .fillMaxWidth()
                     .clickable(
                         interactionSource = interactionSource,
@@ -321,14 +321,14 @@ private fun ReportTypesList(
                     else
                         painterResource(R.drawable.ic_radio_button_unchecked),
                     contentDescription = stringResource(R.string.works_contents),
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .height(18.dp)
                         .indication(interactionSource, ripple(bounded = false))
                 )
                 Text(
                     rClass.name,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .weight(1f, fill = true)
                         .padding(horizontal = 12.dp)
                 )
@@ -342,11 +342,11 @@ private fun ReportConfiguration(
     modifier: Modifier = Modifier
 ) {
     Column(
-        horizontalAlignment = Alignment.Companion.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = modifier
     ) {
         ReportTypesList(
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
         )
@@ -375,7 +375,7 @@ private fun ApplyButton(
             modifier = modifier
         ) {
             Row(
-                verticalAlignment = Alignment.Companion.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     when (state) {
@@ -383,7 +383,7 @@ private fun ApplyButton(
                         UiState.Editor -> rememberVectorPainter(Icons.Outlined.Settings)
                     },
                     contentDescription = stringResource(R.string.apply),
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .padding(4.dp)
                         .height(18.dp)
                 )
@@ -392,7 +392,7 @@ private fun ApplyButton(
                         UiState.Configuration -> stringResource(R.string.apply)
                         UiState.Editor -> stringResource(R.string.edit_report_type)
                     },
-                    modifier = Modifier.Companion
+                    modifier = Modifier
                         .padding(4.dp)
                 )
             }
@@ -757,7 +757,7 @@ private fun ReportField(
         @Composable
         fun ParamField(
             value: String,
-            keyboardType: KeyboardType = KeyboardType.Companion.Text,
+            keyboardType: KeyboardType = KeyboardType.Text,
             onValueChange: (String) -> Unit
         ) {
             Row(
@@ -772,21 +772,21 @@ private fun ReportField(
                     placeholder = {
                         Text(
                             stringResource(R.string.input_value),
-                            fontStyle = FontStyle.Companion.Italic,
+                            fontStyle = FontStyle.Italic,
                             maxLines = 1,
                             modifier = Modifier.alpha(.5f)
                         )
                     },
                     keyboardOptions = KeyboardOptions(
                         keyboardType = keyboardType,
-                        imeAction = ImeAction.Companion.Next
+                        imeAction = ImeAction.Next
                     ),
                     modifier = Modifier.weight(1f)
                 )
                 if (parameter.unit != null) {
                     Text(
                         parameter.unit,
-                        fontWeight = FontWeight.Companion.SemiBold,
+                        fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(start = 12.dp)
                     )
                 }
@@ -802,7 +802,7 @@ private fun ReportField(
                 var v by value
                 ParamField(
                     value = v,
-                    keyboardType = KeyboardType.Companion.Number
+                    keyboardType = KeyboardType.Number
                 ) {
                     v = it.filter { it.isDigit() || it == '-' }
                 }
@@ -812,7 +812,7 @@ private fun ReportField(
                 var v by value
                 ParamField(
                     value = v,
-                    keyboardType = KeyboardType.Companion.Decimal
+                    keyboardType = KeyboardType.Decimal
                 ) {
                     v = it.filter {
                         it.isDigit()
@@ -958,6 +958,7 @@ private fun PhotoField(
                 .padding(8.dp)
         ) {
             pic?.let {
+                @Suppress("DEPRECATION")
                 Icon(
                     Icons.Outlined.KeyboardArrowRight,
                     contentDescription = ""
