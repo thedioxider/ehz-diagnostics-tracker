@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
@@ -56,7 +57,7 @@ fun AppNavigation() {
     NavHost(
         navController,
         startDestination = when {
-            LocalDate.now() < LocalDate.of(2026, 1, 1) -> Screen.Initial.route
+            LocalDate.now() < AppState.DUE_DATE -> Screen.Initial.route
             else -> Screen.OutOfService.route
         },
         enterTransition = {

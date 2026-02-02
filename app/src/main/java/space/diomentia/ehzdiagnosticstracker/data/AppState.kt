@@ -22,9 +22,12 @@ import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppPreferences.getPreference
 import java.io.File
 import java.io.FileOutputStream
+import java.time.LocalDate
 
 @Stable
 object AppState {
+    val DUE_DATE: LocalDate = LocalDate.of(2026, 3, 15)
+
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
 
     var inspectionMode = true
