@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ApplicationExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -9,7 +10,13 @@ plugins {
     alias(libs.plugins.androidx.room)
 }
 
-android {
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+configure<ApplicationExtension> {
     signingConfigs {
         create("release") {
             storeFile = file("/home/dio/Android/Keystore/diomentia.jks")
@@ -29,10 +36,6 @@ android {
         versionName = "1.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    room {
-        schemaDirectory("$projectDir/schemas")
     }
 
     buildTypes {
@@ -56,12 +59,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
     }
 }
 
@@ -92,4 +89,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
