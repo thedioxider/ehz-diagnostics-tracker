@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -16,13 +17,17 @@ kotlin {
     }
 }
 
+val localProps = Properties().apply {
+    rootProject.file("local.properties").inputStream().use { load(it) }
+}
+
 configure<ApplicationExtension> {
     signingConfigs {
         create("release") {
-            storeFile = file("/home/dio/Android/Keystore/diomentia.jks")
-            storePassword = "5wdm8t7s"
-            keyAlias = "diomentia"
-            keyPassword = "5wdm8t7s"
+            storeFile = file(localProps["RELEASE_STORE_FILE"] as String)
+            storePassword = localProps["RELEASE_STORE_PASSWORD"] as String
+            keyAlias = localProps["RELEASE_KEY_ALIAS"] as String
+            keyPassword = localProps["RELEASE_KEY_PASSWORD"] as String
         }
     }
     namespace = "space.diomentia.ehzdiagnosticstracker"
