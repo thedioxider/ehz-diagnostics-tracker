@@ -142,10 +142,11 @@ fun EditFieldsDialog(
     secondaryActionLabel: (@Composable () -> Unit)? = null,
     onCancel: () -> Unit
 ) {
-    val valuesErrors: Map<Int, Pair<MutableState<String>, MutableState<Boolean>>> =
+    val valuesErrors: Map<Int, Pair<MutableState<String>, MutableState<Boolean>>> = remember {
         fields.associate { (k, field) ->
             k to (mutableStateOf(field.initValue ?: "") to mutableStateOf(false))
         }
+    }
 
     ActionCancelDialog(
         onAction = { onAction(valuesErrors.mapValues { (k, v) -> v.first.value }) },
@@ -166,7 +167,7 @@ fun EditFieldsDialog(
                         v,
                         onValueChange = { input: String ->
                             v = input
-                            e = field.checker(input)
+                            e = !field.checker(input)
                         },
                         label = { Text(field.name) },
                         keyboardOptions = KeyboardOptions(

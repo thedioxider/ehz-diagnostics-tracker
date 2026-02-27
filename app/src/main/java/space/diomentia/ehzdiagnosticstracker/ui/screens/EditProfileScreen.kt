@@ -272,7 +272,7 @@ private fun PasswordChangeDialog(
         fields = listOf(
             R.string.password to DialogField(
                 name = stringResource(R.string.password),
-                checker = { !PasswordHash.checkInput(it) },  // Negate: checker expects true=error
+                checker = { PasswordHash.checkInput(it) },
                 supportingText = stringResource(R.string.password_symbols),
                 keyboardType = KeyboardType.Password
             )
