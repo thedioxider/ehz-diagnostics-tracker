@@ -5,9 +5,9 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.google.android.gms.location.FusedLocationProviderClient
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.MainScope
 
-val LocalCoroutineScope = staticCompositionLocalOf<CoroutineScope?> { null }
+val LocalCoroutineScope = staticCompositionLocalOf { MainScope() }
 val LocalSnackbarHostState = staticCompositionLocalOf { SnackbarHostState() }
 val LocalLocationProvider = compositionLocalOf<FusedLocationProviderClient?> { null }
 val LocalDiagnosticSession =

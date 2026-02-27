@@ -3,7 +3,6 @@ package space.diomentia.ehzdiagnosticstracker.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Edit
@@ -20,7 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,19 +25,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
@@ -51,12 +44,14 @@ import space.diomentia.ehzdiagnosticstracker.data.PasswordHash
 import space.diomentia.ehzdiagnosticstracker.data.Profile
 import space.diomentia.ehzdiagnosticstracker.data.ProfileDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
-import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
+import space.diomentia.ehzdiagnosticstracker.ui.DialogField
+import space.diomentia.ehzdiagnosticstracker.ui.EditFieldsDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
@@ -96,7 +91,7 @@ fun AuthorizationScreen(
                                     shape = RectangleShape
                                 )
                         ) { adminPasswordRequest = true }
-                        if (AppState.adminSession == true) {
+                        if (AppState.adminSession) {
                             ActionButton(
                                 rememberVectorPainter(Icons.Outlined.Edit),
                                 label = stringResource(R.string.edit_profile)
@@ -108,42 +103,23 @@ fun AuthorizationScreen(
                 )
             }
         ) { innerPadding ->
-            if (adminPasswordRequest) AdminAuthorizeDialog { adminPasswordRequest = false }
+            if (adminPasswordRequest) AuthorizeDialog(null) { adminPasswordRequest = false }
 
             var addUserRequest by remember { mutableStateOf(false) }
             if (addUserRequest) {
-                AddUserDialog { addUserRequest = false }
+                AddProfileDialog { addUserRequest = false }
             }
 
             var authorizeRequest by remember { mutableStateOf<Profile?>(null) }
-            authorizeRequest?.let { profile ->
-                AuthorizeDialog(
-                    profile,
-                    onDismissRequest = { authorizeRequest = null },
-                    onLogin = { password ->
-                        val success = AppState.loginProfile(profile, password)
-                        coroutineScope?.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(
-                                if (success)
-                                    "${context.getString(R.string.auth_success)}!"
-                                else
-                                    "${context.getString(R.string.auth_fail)}..."
-                            )
-                        }
-                        authorizeRequest = null
-                        if (success) {
-                            onAuthorized()
-                        }
-                    }
-                )
+            authorizeRequest?.let {
+                AuthorizeDialog(authorizeRequest, onAuthorized) { authorizeRequest = null }
             }
 
             FullscreenLazyColumn(
                 innerPadding,
                 verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                modifier = Modifier.Companion.fillMaxSize()
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxSize()
             ) {
                 items(profiles) { profile ->
                     ProfileItem(profile) {
@@ -192,248 +168,93 @@ fun AuthorizationScreen(
 
 @Composable
 private fun AuthorizeDialog(
-    profile: Profile,
-    onDismissRequest: () -> Unit,
-    onLogin: (String) -> Unit
-) {
-    var passwordInput by remember { mutableStateOf("") }
-
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.Start,
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    "${stringResource(R.string.login_as)} ${profile.surname}" +
-                            if (profile.name.isNotBlank()) " ${profile.name[0]}." else "",
-                    style = MaterialTheme.typography.titleMedium
-                )
-                TextField(
-                    passwordInput,
-                    onValueChange = { input ->
-                        passwordInput = input.filter { !it.isWhitespace() }
-                    },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_password),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Companion.Password,
-                        imeAction = ImeAction.Companion.Done
-                    ),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                )
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.Companion.fillMaxWidth()
-                ) {
-                    PtmFilledButton(
-                        enabled = PasswordHash.Companion.checkInput(passwordInput),
-                        onClick = { onLogin(passwordInput) }
-                    ) {
-                        Text(stringResource(R.string.login))
-                    }
-                    PtmFilledButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.Companion.padding(start = 8.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun AdminAuthorizeDialog(
+    profile: Profile?,
+    onAuthorized: () -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
+    val snacker = rememberSnacker()
 
-    var adminPasswordInput by remember { mutableStateOf<String?>(null) }
-    adminPasswordInput?.let {
-        coroutineScope?.launch {
-            val success = AppState.elevateToAdmin(context, password = it)
-            snackbarHostState.currentSnackbarData?.dismiss()
-            snackbarHostState.showSnackbar(
-                if (success)
-                    context.getString(R.string.admin_authorized)
-                else
-                    "${context.getString(R.string.auth_fail)}..."
+    EditFieldsDialog(
+        fields = listOf(
+            R.string.password to DialogField(
+                stringResource(R.string.password),
+                keyboardType = KeyboardType.Password
+            )
+        ),
+        onAction = { v ->
+            val password = v[R.string.password]!!
+            if (profile != null) {
+                val success = AppState.loginProfile(profile, password)
+                snacker.showMessage(
+                    context.getString(
+                        if (success) R.string.auth_success else R.string.auth_fail
+                    )
+                )
+                if (success) onAuthorized()
+            } else {
+                coroutineScope?.launch {
+                    val success = AppState.elevateToAdmin(context, password = password)
+                    snacker.showMessage(
+                        context.getString(
+                            if (success) R.string.admin_authorized else R.string.auth_fail
+                        )
+                    )
+                }
+            }
+            onDismissRequest()
+        },
+        actionLabel = { Text(stringResource(R.string.login)) },
+        onCancel = onDismissRequest,
+        label = {
+            Text(
+                "${stringResource(R.string.login_as)} " +
+                        (profile?.abbreviated ?: stringResource(R.string.administrator))
             )
         }
-        adminPasswordInput = null
-        onDismissRequest()
-    }
-    AuthorizeDialog(
-        profile = Profile(
-            surname = stringResource(R.string.administrator),
-            name = "",
-            hashword = ""
-        ),
-        onDismissRequest = onDismissRequest
-    ) { adminPasswordInput = it }
+    )
 }
 
 @Composable
-private fun AddUserDialog(
-    onDismissRequest: () -> Unit
-) {
+private fun AddProfileDialog(onDismissRequest: () -> Unit) {
     val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    var nameInput by remember { mutableStateOf("") }
-    var nameError by remember { mutableStateOf(false) }
-    var surnameInput by remember { mutableStateOf("") }
-    var surnameError by remember { mutableStateOf(false) }
-    var passwordInput by remember { mutableStateOf("") }
-    var passwordError by remember { mutableStateOf(false) }
 
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.Start,
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    "${stringResource(R.string.name)}:",
-                    style = MaterialTheme.typography.titleSmall
+    EditFieldsDialog(
+        fields = listOf(
+            R.string.name to DialogField(
+                stringResource(R.string.name),
+                checker = { Profile.checkName(it) },
+                supportingText = stringResource(R.string.only_letters)
+            ),
+            R.string.surname to DialogField(
+                stringResource(R.string.surname),
+                checker = { Profile.checkSurname(it) },
+                supportingText = stringResource(R.string.only_letters)
+            ),
+            R.string.password to DialogField(
+                stringResource(R.string.password),
+                checker = { PasswordHash.checkInput(it) },
+                supportingText = stringResource(R.string.password_symbols),
+                keyboardType = KeyboardType.Password
+            )
+        ),
+        onAction = { v ->
+            ProfileDatabase.getInstance(context).profileDao()
+                .createProfile(
+                    Profile(
+                        name = v[R.string.name]!!,
+                        surname = v[R.string.surname]!!,
+                        hashword = PasswordHash.encrypt(v[R.string.password]!!)?.hash
+                            ?: return@EditFieldsDialog
+                    )
                 )
-                TextField(
-                    nameInput,
-                    onValueChange = {
-                        nameError = false
-                        nameInput = it.filter { c -> c.isLetter() }
-                    },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_name),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    isError = nameError,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Text(
-                    "${stringResource(R.string.surname)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    surnameInput,
-                    onValueChange = {
-                        surnameError = false
-                        surnameInput = it.filter { c -> c.isLetter() }
-                    },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_surname),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    isError = nameError,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Text(
-                    "${stringResource(R.string.password)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    passwordInput,
-                    onValueChange = {
-                        passwordError = false
-                        passwordInput = it.filter { !it.isWhitespace() }
-                    },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_password),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    isError = passwordError,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Companion.Password,
-                        imeAction = ImeAction.Companion.Done
-                    ),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Row(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.Companion.fillMaxWidth()
-                ) {
-                    PtmFilledButton(
-                        onClick = {
-                            val name = nameInput
-                            val surname = surnameInput
-                            val hashword = PasswordHash.Companion.encrypt(passwordInput)?.hash
-                            if (
-                                (hashword == null).also { passwordError = it }
-                                || (!Profile.Companion.checkName(name)).also { nameError = it }
-                                || (!Profile.Companion.checkName(surname)).also {
-                                    surnameError = it
-                                }
-                            ) {
-                                coroutineScope?.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(
-                                        when {
-                                            nameError || surnameError -> context.getString(R.string.name_only_letters)
-                                            hashword == null -> "${context.getString(R.string.password_symbols)}: ${PasswordHash.Companion.SPECIAL_SYMBOLS}"
-                                            else -> context.getString(R.string.wrong_profile_input)
-                                        }
-                                    )
-                                }
-                                return@PtmFilledButton
-                            }
-                            ProfileDatabase.Companion.getInstance(context).profileDao()
-                                .createProfile(
-                                    Profile(
-                                        name = name,
-                                        surname = surname,
-                                        hashword = hashword!!
-                                    )
-                                )
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(R.string.create))
-                    }
-                    PtmFilledButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.Companion.padding(start = 8.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            }
-        }
-    }
+            onDismissRequest()
+        },
+        actionLabel = { Text(stringResource(R.string.create)) },
+        label = { Text(stringResource(R.string.create_profile)) },
+        onCancel = onDismissRequest
+    )
 }
 
 @Composable
@@ -442,8 +263,8 @@ private fun ProfileItem(
     onClick: () -> Unit
 ) {
     Row(
-        verticalAlignment = Alignment.Companion.CenterVertically,
-        modifier = Modifier.Companion
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
             .padding(start = 12.dp, end = 16.dp)
@@ -454,12 +275,12 @@ private fun ProfileItem(
             tint = if (AppState.profileSession == profile)
                 MaterialTheme.colorScheme.background
             else MaterialTheme.colorScheme.primary,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .padding(12.dp)
                 .background(
                     color = if (AppState.profileSession == profile)
                         MaterialTheme.colorScheme.primary
-                    else Color.Companion.Transparent,
+                    else Color.Transparent,
                     shape = CircleShape
                 )
                 .size(96.dp)
@@ -467,7 +288,7 @@ private fun ProfileItem(
         Text(
             "${profile.surname} ${profile.name}",
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.Companion.weight(1f)
+            modifier = Modifier.weight(1f)
         )
     }
 }
@@ -479,15 +300,17 @@ private fun AuthorizationScreenPreview() = AuthorizationScreen({}, {})
 
 @Preview
 @Composable
-private fun AuthorizeDialogPreview() =
-    PtmTheme {
-        AuthorizeDialog(Profile("Name", "Secondname", ""), {}) {}
-    }
+private fun AuthorizeDialogPreview() = PtmTheme {
+    AuthorizationScreenPreview()
+    AuthorizeDialog(Profile("Name", "Secondname", ""), {}) {}
+}
 
 @Preview
 @Composable
-private fun AddUserDialogPreview() =
-    PtmTheme { AddUserDialog {} }
+private fun UserDialogPreview() = PtmTheme {
+    AuthorizationScreenPreview()
+    AddProfileDialog {}
+}
 
 @Preview(showBackground = true)
 @Composable

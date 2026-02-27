@@ -1,5 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker.ui
 
+import android.content.Context
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
@@ -19,8 +20,10 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
@@ -105,4 +108,28 @@ fun Modifier.clickableWithLabel(
             onLongClick = longClickAction,
             onClick = action
         )
+}
+
+class Snacker(
+    val coroutineScope: CoroutineScope,
+    val snackbarHostState: SnackbarHostState
+) {
+    fun showMessage(message: String, urgent: Boolean = true) {
+        coroutineScope.launch {
+            if (urgent) snackbarHostState.currentSnackbarData?.dismiss()
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+}
+
+@Composable
+fun rememberSnacker(): Snacker {
+    val coroutineScope = LocalCoroutineScope.current
+    val snackbarHostState = LocalSnackbarHostState.current
+    return remember {
+        Snacker(
+            coroutineScope = coroutineScope,
+            snackbarHostState = snackbarHostState
+        )
+    }
 }

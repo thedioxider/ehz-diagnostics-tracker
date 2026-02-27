@@ -78,14 +78,14 @@ fun PtmFilledButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colors = ButtonColors(
+    colors: ButtonColors = ButtonColors(
         containerColor = MaterialTheme.colorScheme.primary,
         disabledContainerColor = blue_oxford,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         disabledContentColor = MaterialTheme.colorScheme.onPrimary
-    )
+    ),
+    content: @Composable () -> Unit
+) {
     FilledTonalButton(
         onClick,
         modifier = modifier,
@@ -102,14 +102,14 @@ fun PtmFilledIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colors = IconButtonColors(
+    colors: IconButtonColors = IconButtonColors(
         containerColor = MaterialTheme.colorScheme.primary,
         disabledContainerColor = blue_oxford,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         disabledContentColor = MaterialTheme.colorScheme.onPrimary
-    )
+    ),
+    content: @Composable () -> Unit
+) {
     FilledTonalIconButton(
         onClick,
         modifier = modifier,

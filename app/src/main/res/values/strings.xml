@@ -18,7 +18,6 @@
     <string name="point">Точка</string>
     <string name="id">Идентификатор</string>
     <string name="title">Название</string>
-    <string name="input_title">Введите название</string>
     <string name="diagnostics_type">Вид коррозионного обследования</string>
     <string name="diagnostics_type_0">приёмочное (первичное)</string>
     <string name="diagnostics_type_1">периодическое комплексное</string>
@@ -43,7 +42,6 @@
     <string name="something_wrong">Что-то пошло не так</string>
     <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
     <string name="input_value">Введите значение</string>
-    <string name="input_password">Введите пароль</string>
     <string name="import_report_config">Пожалуйста, выберите файл с конфигурацией отчётов</string>
     <string name="choose_file">Выбрать файл</string>
     <string name="report_configuration">Конфигурация отчётов</string>
@@ -75,8 +73,8 @@
     <string name="create">Создать</string>
     <string name="login_as">Войти как</string>
     <string name="administrator">Администратор</string>
-    <string name="auth_success">Авторизация успешна</string>
-    <string name="auth_fail">Не удалось авторизоваться</string>
+    <string name="auth_success">Авторизация успешна!</string>
+    <string name="auth_fail">Не удалось авторизоваться…</string>
     <string name="edit_profile">Редактировать профиль</string>
     <string name="change_admin_password">Изменить пароль администратора</string>
     <string name="change_password_success">Пароль успешно сменён</string>
@@ -84,9 +82,6 @@
     <string name="add_profile">Добавить профиль</string>
     <string name="name">Имя</string>
     <string name="surname">Фамилия</string>
-    <string name="input_name">Введите имя</string>
-    <string name="input_surname">Введите фамилию</string>
-    <string name="input_id">Введите идентификатор</string>
     <string name="submit">Принять</string>
     <string name="password">Пароль</string>
     <string name="wrong_profile_input">Неверно введены данные</string>
@@ -105,18 +100,19 @@
     <string name="authorize_as_admin">Необходимо авторизоваться как администратор</string>
     <string name="profile">Профиль</string>
     <string name="registration_number">Регистрационный номер</string>
-    <string name="input_registration_number">Введите регистрационный номер</string>
     <string name="edit_object">Редактировать объект</string>
     <string name="edit_area">Редактировать участок</string>
     <string name="edit_point">Редактировать точку</string>
     <string name="diagnostic_points">Точки диагностирования</string>
     <string name="create_point">Создать точку</string>
+    <string name="create_profile">Создать профиль</string>
     <string name="inventory_number">Инвентарный номер</string>
-    <string name="input_inventory_number">Введите инвентарный номер</string>
-    <string name="name_only_letters">Имя и фамилия могут содержать только буквы</string>
-    <string name="password_symbols">Пароль может содержать в себе только буквы, цифры и специальные символы</string>
+    <string name="only_letters">Только буквы</string>
+    <string name="only_letters_or_numbers">Только буквы или цифры</string>
+    <string name="password_symbols">Только буквы, цифры или специальные символы (!@#$%^&amp;*()\-=+/,."';:?`~[]{})</string>
     <string name="edit">Изменить</string>
     <string name="delete_area">Удалить участок</string>
+    <string name="delete_point">Удалить точку</string>
     <string name="delete_object">Удалить объект</string>
     <string name="last_point_report">Последняя точка отчёта</string>
     <string name="last_report_not_saved">Последний отчёт не сохранён!</string>
@@ -128,4 +124,5 @@
     <string name="change_photo">Заменить снимок</string>
     <string name="image">Изображение</string>
     <string name="unable_access_camera">Не удалось получить доступ к камере</string>
+    <string name="lipsum"> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris consequat, augue sed pulvinar sodales, sem lectus volutpat lacus, eget tincidunt felis lacus eu tellus. Nulla posuere id ante vel fermentum. Maecenas rutrum dui nec est ornare, sit amet pellentesque lectus ultricies. Nam a vehicula eros. Aliquam id ligula leo. Etiam vel ante sed eros ultricies molestie vel sed nisl. In nec felis vitae sem ullamcorper lacinia. Cras leo nunc, luctus non gravida vitae, interdum quis nisi. Aliquam eget interdum justo. Vestibulum sit amet lorem lectus. Nam bibendum odio vel justo egestas, et sagittis risus dignissim. Duis ut elit accumsan, pretium lectus et, commodo leo. Nullam lobortis est at elementum blandit. Morbi vel tellus in sapien condimentum egestas eu id purus.</string>
 </resources>

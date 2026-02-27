@@ -82,7 +82,11 @@ data class Profile(
 ) {
     companion object {
         fun checkName(name: String): Boolean = Regex("^[\\w-.]+$").matches(name)
+        fun checkSurname(surname: String): Boolean = Regex("^[\\w-.]+$").matches(surname)
     }
+
+    val abbreviated: String
+        get() = surname + (if (name.isNotBlank()) " ${name[0]}." else "")
 }
 
 @Dao

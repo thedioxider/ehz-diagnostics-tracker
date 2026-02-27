@@ -13,11 +13,9 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
@@ -26,7 +24,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,27 +36,25 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
-import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
-import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
+import space.diomentia.ehzdiagnosticstracker.ui.DeleteDialog
+import space.diomentia.ehzdiagnosticstracker.ui.DialogField
+import space.diomentia.ehzdiagnosticstracker.ui.EditFieldsDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
-import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
@@ -105,7 +100,7 @@ fun DiagnosticObjectsScreen(
                 .collectAsStateWithLifecycle(emptyList())
 
             if (createObjectRequest) {
-                AddObjectDialog { createObjectRequest = false }
+                DiagnosticObjectDialog(null) { createObjectRequest = false }
             }
 
             if (diagnosticObjects.isEmpty()) {
@@ -124,23 +119,23 @@ fun DiagnosticObjectsScreen(
 
             var addAreaRequest by remember { mutableStateOf<DiagnosticObject?>(null) }
             addAreaRequest?.let { diagnosticObject ->
-                AddAreaDialog(diagnosticObject) { addAreaRequest = null }
+                DiagnosticAreaDialog(diagnosticObject.id, null) { addAreaRequest = null }
             }
 
             var editObjectRequest by remember { mutableStateOf<DiagnosticObject?>(null) }
             var deleteObjectRequest: DiagnosticObject? by remember { mutableStateOf(null) }
-            editObjectRequest?.let { diagnosticObject ->
-                EditObjectDialog(
-                    diagnosticObject,
-                    onDelete = { deleteObjectRequest = diagnosticObject },
-                    onDismissRequest = { editObjectRequest = null }
-                )
+            editObjectRequest?.let {
+                DiagnosticObjectDialog(
+                    editObjectRequest,
+                    onDelete = { deleteObjectRequest = editObjectRequest }
+                ) { editObjectRequest = null }
             }
 
             var editAreaRequest by remember { mutableStateOf<DiagnosticArea?>(null) }
             var deleteAreaRequest: DiagnosticArea? by remember { mutableStateOf(null) }
             editAreaRequest?.let { diagnosticArea ->
-                EditAreaDialog(
+                DiagnosticAreaDialog(
+                    diagnosticArea.diagnosticObject,
                     diagnosticArea,
                     onDelete = { deleteAreaRequest = diagnosticArea },
                     onDismissRequest = { editAreaRequest = null }
@@ -268,8 +263,8 @@ private fun DiagnosticObjectItem(
     onClick: (() -> Unit)? = null
 ) {
     Row(
-        verticalAlignment = Alignment.Companion.CenterVertically,
-        modifier = Modifier.Companion
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
             .combinedClickable(
                 enabled = onClick != null,
                 onClick = onClick ?: {},
@@ -285,7 +280,7 @@ private fun DiagnosticObjectItem(
             Icon(
                 Icons.AutoMirrored.Outlined.ArrowBack,
                 contentDescription = null,
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .clickable(onClick = onBack ?: {})
                     .fillMaxHeight()
                     .aspectRatio(1f)
@@ -293,9 +288,9 @@ private fun DiagnosticObjectItem(
             )
         }
         Column(
-            horizontalAlignment = Alignment.Companion.Start,
+            horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center,
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
         ) {
@@ -308,7 +303,7 @@ private fun DiagnosticObjectItem(
             Icon(
                 Icons.Outlined.Edit,
                 contentDescription = stringResource(R.string.edit_object),
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .clickable(onClick = onLongClick ?: {})
                     .fillMaxHeight()
                     .aspectRatio(1f)
@@ -319,7 +314,7 @@ private fun DiagnosticObjectItem(
             Icon(
                 Icons.Outlined.Add,
                 contentDescription = stringResource(R.string.create),
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .clickable(onClick = onNew ?: {})
                     .fillMaxHeight()
                     .aspectRatio(1f)
@@ -330,405 +325,129 @@ private fun DiagnosticObjectItem(
 }
 
 @Composable
-private fun AddObjectDialog(
+private fun DiagnosticObjectDialog(
+    diagnosticObject: DiagnosticObject?,
+    onDelete: () -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    var idInput by remember { mutableStateOf("") }
-    var nameInput by remember { mutableStateOf("") }
 
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.Start,
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    stringResource(R.string.create_object),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion.padding(bottom = 8.dp)
-                )
-                Text(
-                    "${stringResource(R.string.registration_number)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    idInput,
-                    onValueChange = { idInput = it.filter { c -> c.isLetter() || c.isDigit() } },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_registration_number),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
+    EditFieldsDialog(
+        fields = listOf(
+            R.string.registration_number to DialogField(
+                stringResource(R.string.registration_number),
+                checker = { DiagnosticObject.checkId(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                mutable = diagnosticObject == null,
+                initValue = diagnosticObject?.id,
+                keyboardType = KeyboardType.Ascii
+            ),
+            R.string.name to DialogField(
+                stringResource(R.string.name),
+                checker = { DiagnosticObject.checkName(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                initValue = diagnosticObject?.name
+            )
+        ),
+        onAction = { v ->
+            if (diagnosticObject == null) {
+                ReportDatabase.getInstance(context).diagnosticAreaDao()
+                    .insertDiagnosticObject(
+                        DiagnosticObject(
+                            id = v[R.string.registration_number]!!,
+                            inventoryId = v[R.string.registration_number]!!,
+                            name = v[R.string.name]!!
                         )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Text(
-                    "${stringResource(R.string.title)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    nameInput,
-                    onValueChange = { nameInput = it },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_title),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Column(
-                    horizontalAlignment = Alignment.Companion.End,
-                    modifier = Modifier.Companion.fillMaxWidth()
-                ) {
-                    PtmFilledButton(
-                        onClick = {
-                            val id = idInput.trim()
-                            val name = nameInput.trim()
-                            if (id.isBlank() || name.isBlank()) {
-                                coroutineScope?.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
-                                }
-                                return@PtmFilledButton
-                            }
-                            ReportDatabase.getInstance(context).diagnosticAreaDao()
-                                .insertDiagnosticObject(
-                                    DiagnosticObject(
-                                        id = id,
-                                        inventoryId = id,
-                                        name = name
-                                    )
-                                )
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(R.string.save))
-                    }
-                    PtmFilledButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.Companion.padding(start = 8.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
+                    )
+            } else {
+                ReportDatabase.getInstance(context).diagnosticAreaDao()
+                    .updateDiagnosticObject(
+                        diagnosticObject.copy(name = v[R.string.name]!!)
+                    )
             }
-        }
-    }
+            onDismissRequest()
+        },
+        actionLabel = {
+            Text(
+                stringResource(
+                    if (diagnosticObject == null)
+                        R.string.create
+                    else R.string.save
+                )
+            )
+        },
+        onSecondaryAction = {
+            onDelete()
+            onDismissRequest()
+        },
+        secondaryActionLabel = if (diagnosticObject != null) { -> Text(stringResource(R.string.delete)) } else null,
+        label = {
+            Text(
+                stringResource(
+                    if (diagnosticObject == null)
+                        R.string.create_object
+                    else R.string.edit_object
+                )
+            )
+        },
+        onCancel = onDismissRequest
+    )
 }
 
 @Composable
-private fun EditObjectDialog(
-    diagnosticObject: DiagnosticObject,
-    onDelete: () -> Unit,
+private fun DiagnosticAreaDialog(
+    diagnosticObjectId: String,
+    diagnosticArea: DiagnosticArea?,
+    onDelete: () -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    var nameInput by remember { mutableStateOf(diagnosticObject.name) }
 
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.Start,
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    stringResource(R.string.edit_object),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion.padding(bottom = 8.dp)
-                )
-                Text(
-                    "${stringResource(R.string.registration_number)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    diagnosticObject.id,
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Text(
-                    "${stringResource(R.string.title)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    nameInput,
-                    onValueChange = { nameInput = it },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_title),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
+    EditFieldsDialog(
+        fields = listOf(
+            R.string.registration_number to DialogField(
+                stringResource(R.string.registration_number),
+                checker = { DiagnosticArea.checkId(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                mutable = diagnosticArea == null,
+                initValue = diagnosticArea?.id,
+                keyboardType = KeyboardType.Ascii
+            ),
+            R.string.name to DialogField(
+                stringResource(R.string.name),
+                checker = { DiagnosticArea.checkName(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                initValue = diagnosticArea?.name
+            )
+        ),
+        onAction = { v ->
+            if (diagnosticArea == null) {
+                ReportDatabase.getInstance(context).diagnosticAreaDao()
+                    .insertDiagnosticArea(
+                        DiagnosticArea(
+                            id = v[R.string.registration_number]!!,
+                            name = v[R.string.name]!!,
+                            diagnosticObject = diagnosticObjectId,
+                            dangerClass = "0"
                         )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Column(
-                    horizontalAlignment = Alignment.Companion.End,
-                    modifier = Modifier.Companion.fillMaxWidth()
-                ) {
-                    PtmFilledButton(
-                        onClick = {
-                            val name = nameInput.trim()
-                            if (name.isBlank()) {
-                                coroutineScope?.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
-                                }
-                                return@PtmFilledButton
-                            }
-                            ReportDatabase.Companion.getInstance(context).diagnosticAreaDao()
-                                .updateDiagnosticObject(
-                                    diagnosticObject.copy(name = nameInput)
-                                )
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(R.string.save))
-                    }
-                    PtmFilledButton(
-                        onClick = {
-                            onDelete()
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(R.string.delete))
-                    }
-                    PtmFilledButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.Companion.padding(start = 8.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
+                    )
+            } else {
+                ReportDatabase.getInstance(context).diagnosticAreaDao()
+                    .updateDiagnosticArea(
+                        diagnosticArea.copy(name = v[R.string.name]!!)
+                    )
             }
-        }
-    }
-}
-
-@Composable
-private fun AddAreaDialog(
-    diagnosticObject: DiagnosticObject,
-    onDismissRequest: () -> Unit
-) {
-    val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    var idInput by remember { mutableStateOf("") }
-    var nameInput by remember { mutableStateOf("") }
-
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.Start,
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    stringResource(R.string.create_area),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion.padding(bottom = 8.dp)
-                )
-                Text(
-                    "${stringResource(R.string.registration_number)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    idInput,
-                    onValueChange = { idInput = it.filter { c -> c.isLetter() || c.isDigit() } },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_registration_number),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Text(
-                    "${stringResource(R.string.title)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    nameInput,
-                    onValueChange = { nameInput = it },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_title),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Column(
-                    horizontalAlignment = Alignment.Companion.End,
-                    modifier = Modifier.Companion.fillMaxWidth()
-                ) {
-                    PtmFilledButton(
-                        onClick = {
-                            val id = idInput.trim()
-                            val name = nameInput.trim()
-                            if (id.isBlank() || name.isBlank()) {
-                                coroutineScope?.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
-                                }
-                                return@PtmFilledButton
-                            }
-                            ReportDatabase.Companion.getInstance(context).diagnosticAreaDao()
-                                .insertDiagnosticArea(
-                                    DiagnosticArea(
-                                        id = id,
-                                        name = name,
-                                        diagnosticObject = diagnosticObject.id,
-                                        dangerClass = "0"
-                                    )
-                                )
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(R.string.save))
-                    }
-                    PtmFilledButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.Companion.padding(start = 8.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun EditAreaDialog(
-    diagnosticArea: DiagnosticArea,
-    onDelete: () -> Unit,
-    onDismissRequest: () -> Unit
-) {
-    val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    var nameInput by remember { mutableStateOf(diagnosticArea.name) }
-
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.Start,
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(
-                    stringResource(R.string.edit_area),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion.padding(bottom = 8.dp)
-                )
-                Text(
-                    "${stringResource(R.string.registration_number)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                Text(
-                    diagnosticArea.id,
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Text(
-                    "${stringResource(R.string.title)}:",
-                    style = MaterialTheme.typography.titleSmall
-                )
-                TextField(
-                    nameInput,
-                    onValueChange = { nameInput = it },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.input_title),
-                            fontStyle = FontStyle.Companion.Italic,
-                            maxLines = 1,
-                            modifier = Modifier.Companion.alpha(.5f)
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Companion.Next),
-                    modifier = Modifier.Companion
-                        .padding(vertical = 12.dp)
-                        .padding(start = 16.dp)
-                )
-                Column(
-                    horizontalAlignment = Alignment.Companion.End,
-                    modifier = Modifier.Companion.fillMaxWidth()
-                ) {
-                    PtmFilledButton(
-                        onClick = {
-                            val name = nameInput.trim()
-                            if (name.isBlank()) {
-                                coroutineScope?.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(context.getString(R.string.wrong_profile_input))
-                                }
-                                return@PtmFilledButton
-                            }
-                            ReportDatabase.Companion.getInstance(context).diagnosticAreaDao()
-                                .updateDiagnosticArea(
-                                    diagnosticArea.copy(name = nameInput)
-                                )
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(R.string.save))
-                    }
-                    PtmFilledButton(
-                        onClick = {
-                            onDelete()
-                            onDismissRequest()
-                        }
-                    ) {
-                        Text(stringResource(R.string.delete))
-                    }
-                    PtmFilledButton(
-                        onClick = onDismissRequest,
-                        modifier = Modifier.Companion.padding(start = 8.dp)
-                    ) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            }
-        }
-    }
+            onDismissRequest()
+        },
+        actionLabel = { Text(stringResource(if (diagnosticArea == null) R.string.create else R.string.save)) },
+        onSecondaryAction = {
+            onDelete()
+            onDismissRequest()
+        },
+        secondaryActionLabel = if (diagnosticArea != null) { -> Text(stringResource(R.string.delete)) } else null,
+        label = { Text(stringResource(if (diagnosticArea == null) R.string.create_area else R.string.edit_area)) },
+        onCancel = onDismissRequest
+    )
 }
 
 @Composable
@@ -737,44 +456,21 @@ private fun DeleteObjectDialog(
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.End,
-                modifier = Modifier.Companion
-                    .padding(16.dp)
-            ) {
-                Text(
-                    "${stringResource(R.string.delete_object)}:\n${diagnosticObject.name}?",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                )
-                PtmFilledButton(
-                    onClick = {
-                        ReportDatabase.getInstance(context)
-                            .diagnosticAreaDao()
-                            .deleteDiagnosticObject(diagnosticObject)
-                        coroutineScope?.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
-                        }
-                        onDismissRequest()
-                    }
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
-                PtmFilledButton(
-                    onClick = onDismissRequest
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        }
-    }
+    val snacker = rememberSnacker()
+
+    DeleteDialog(
+        onDelete = {
+            ReportDatabase.getInstance(context)
+                .diagnosticAreaDao()
+                .deleteDiagnosticObject(diagnosticObject)
+            snacker.showMessage(context.getString(R.string.profile_deleted))
+            onDismissRequest()
+        },
+        label = { Text("${stringResource(R.string.delete_object)}?") },
+        onCancel = onDismissRequest,
+        name = diagnosticObject.name,
+        details = diagnosticObject.id
+    )
 }
 
 @Composable
@@ -783,44 +479,21 @@ private fun DeleteAreaDialog(
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.End,
-                modifier = Modifier.Companion
-                    .padding(16.dp)
-            ) {
-                Text(
-                    "${stringResource(R.string.delete_area)}:\n${diagnosticArea.name}?",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.Companion
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                )
-                PtmFilledButton(
-                    onClick = {
-                        ReportDatabase.getInstance(context)
-                            .diagnosticAreaDao()
-                            .deleteDiagnosticArea(diagnosticArea)
-                        coroutineScope?.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(context.getString(R.string.profile_deleted))
-                        }
-                        onDismissRequest()
-                    }
-                ) {
-                    Text(stringResource(R.string.delete))
-                }
-                PtmFilledButton(
-                    onClick = onDismissRequest
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        }
-    }
+    val snacker = rememberSnacker()
+
+    DeleteDialog(
+        onDelete = {
+            ReportDatabase.getInstance(context)
+                .diagnosticAreaDao()
+                .deleteDiagnosticArea(diagnosticArea)
+            snacker.showMessage(context.getString(R.string.profile_deleted))
+            onDismissRequest()
+        },
+        label = { Text("${stringResource(R.string.delete_area)}?") },
+        onCancel = onDismissRequest,
+        name = diagnosticArea.name,
+        details = diagnosticArea.id
+    )
 }
 
 
@@ -830,4 +503,28 @@ private fun DiagnosticObjectChooseScreenPreview() = DiagnosticObjectsScreen({}, 
 
 @Preview
 @Composable
-private fun AddObjectDialogPreview() = PtmTheme { AddObjectDialog { } }
+private fun AddObjectDialogPreview() = PtmTheme {
+    DiagnosticObjectChooseScreenPreview()
+    DiagnosticObjectDialog(null) { }
+}
+
+@Preview
+@Composable
+private fun EditObjectDialogPreview() = PtmTheme {
+    DiagnosticObjectChooseScreenPreview()
+    DiagnosticObjectDialog(DiagnosticObject("testes", "test", "Test"), {}, {})
+}
+
+@Preview
+@Composable
+private fun AddAreaDialogPreview() = PtmTheme {
+    DiagnosticObjectChooseScreenPreview()
+    DiagnosticAreaDialog("", null) {}
+}
+
+@Preview
+@Composable
+private fun DeleteObjectDialogPreview() = PtmTheme {
+    DiagnosticObjectChooseScreenPreview()
+    DeleteObjectDialog(DiagnosticObject("tsetsetset", "testse", "Test"), {})
+}

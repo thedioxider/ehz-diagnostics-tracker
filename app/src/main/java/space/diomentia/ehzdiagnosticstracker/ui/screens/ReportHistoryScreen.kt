@@ -38,7 +38,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -62,6 +61,7 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.BorderedDialogContainer
+import space.diomentia.ehzdiagnosticstracker.ui.DeleteDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
@@ -117,9 +117,10 @@ fun ReportHistoryScreen(
                 var reportDelete by remember { mutableStateOf<DiagnosticReportWithData?>(null) }
                 reportDelete?.let {
                     ReportDeleteDialog(
+                        report = it,
                         onDismissRequest = { reportDelete = null },
-                        onAcceptRequest = {
-                            ReportDatabase.Companion.getInstance(context).diagnosticReportDao()
+                        onDelete = {
+                            ReportDatabase.getInstance(context).diagnosticReportDao()
                                 .run {
                                     deleteData(*it.data.toTypedArray())
                                     deleteReport(it.report)
@@ -142,13 +143,13 @@ fun ReportHistoryScreen(
                 }
                 if (reports.isEmpty()) {
                     Box(
-                        contentAlignment = Alignment.Companion.Center,
-                        modifier = Modifier.Companion.fillMaxSize()
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize()
                     ) {
                         Text(
                             stringResource(R.string.entries_not_found),
                             style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.Companion.alpha(.3f)
+                            modifier = Modifier.alpha(.3f)
                         )
                     }
                     return@Scaffold
@@ -191,7 +192,7 @@ private fun ReportItem(
         reportConfig = AppState.reportConfig.value
     )
     val exportFilename = reportExporter.defaultFilename()
-    val diagnosticPoint by ReportDatabase.Companion.getInstance()
+    val diagnosticPoint by ReportDatabase.getInstance()
         .diagnosticAreaDao()
         .getPointById(report.report.diagnosticPoint)
         .collectAsStateWithLifecycle(null)
@@ -216,8 +217,8 @@ private fun ReportItem(
     }
 
     Row(
-        verticalAlignment = Alignment.Companion.CenterVertically,
-        modifier = Modifier.Companion
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
@@ -228,8 +229,8 @@ private fun ReportItem(
             .then(modifier)
     ) {
         Column(
-            horizontalAlignment = Alignment.Companion.Start,
-            modifier = Modifier.Companion
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
                 .fillMaxHeight()
                 .weight(1f)
         ) {
@@ -240,7 +241,7 @@ private fun ReportItem(
             Text(
                 "${stringResource(R.string.point)} ${diagnosticPoint?.point?.inventoryId}",
                 style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .padding(top = 4.dp)
                     .alpha(.7f)
             )
@@ -248,7 +249,7 @@ private fun ReportItem(
         Icon(
             painterResource(R.drawable.ic_file_export),
             contentDescription = stringResource(R.string.export_report),
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .clickableWithLabel(
                     label = stringResource(R.string.export_report),
                     enabled = exportFilename != null
@@ -295,7 +296,7 @@ private fun ReportDetailsDialog(
             ParameterType.Photo, ParameterType.Text, ParameterType.Raw, null -> entry.value
         } + (parameter?.unit?.let { " $it" } ?: "")
         Column(
-            modifier = Modifier.Companion
+            modifier = Modifier
                 .padding(vertical = 16.dp)
         ) {
             Text(
@@ -322,14 +323,14 @@ private fun ReportDetailsDialog(
     Dialog(onDismissRequest) {
         BorderedDialogContainer {
             Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.Companion
+                modifier = Modifier
                     .padding(horizontal = 16.dp)
             ) {
                 LazyColumn(
-                    horizontalAlignment = Alignment.Companion.Start,
-                    modifier = Modifier.Companion
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f, fill = false)
                 ) {
@@ -338,14 +339,14 @@ private fun ReportDetailsDialog(
                             Text(
                                 it,
                                 style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.Companion.padding(top = 16.dp)
+                                modifier = Modifier.padding(top = 16.dp)
                             )
                         }
                     }
                     item {
                         Text(
                             "${stringResource(R.string.report_by)} ${report.report.inspector}",
-                            modifier = Modifier.Companion.padding(top = 16.dp, bottom = 24.dp)
+                            modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
                         )
                     }
                     items(report.data) { entry ->
@@ -362,14 +363,14 @@ private fun ReportDetailsDialog(
                             onEditReport(report.report)
                             onDismissRequest()
                         },
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .padding(vertical = 8.dp)
                     ) {
                         Text(stringResource(R.string.edit))
                     }
                     PtmFilledButton(
                         onDismissRequest,
-                        modifier = Modifier.Companion
+                        modifier = Modifier
                             .padding(vertical = 8.dp)
                     ) {
                         Text(stringResource(R.string.close))
@@ -382,40 +383,22 @@ private fun ReportDetailsDialog(
 
 @Composable
 private fun ReportDeleteDialog(
+    report: DiagnosticReportWithData,
     onDismissRequest: () -> Unit,
-    onAcceptRequest: () -> Unit
+    onDelete: () -> Unit
 ) {
-    Dialog(onDismissRequest) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Companion.End,
-                modifier = Modifier.Companion
-                    .fillMaxWidth()
-                    .padding(24.dp)
-            ) {
-                Text(
-                    stringResource(R.string.question_delete_report),
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Companion.Start,
-                    modifier = Modifier.Companion
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp)
-                )
-                PtmFilledButton(
-                    onAcceptRequest,
-                    modifier = Modifier.Companion.padding(4.dp)
-                ) {
-                    Text(stringResource(R.string.remove))
-                }
-                PtmFilledButton(
-                    onDismissRequest,
-                    modifier = Modifier.Companion.padding(4.dp)
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            }
-        }
-    }
+    val dateTime = LocalDateTime.ofEpochSecond(
+        report.report.timestamp, 0,
+        ZoneOffset.systemDefault().rules.getOffset(LocalDateTime.now())
+    )
+
+    DeleteDialog(
+        onDelete = onDelete,
+        label = { Text("${stringResource(R.string.question_delete_report)}?") },
+        onCancel = onDismissRequest,
+        name = dateTime.format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")),
+        details = report.report.inspector
+    )
 }
 
 
@@ -455,6 +438,20 @@ private fun ReportViewDialogPreview() {
 @Composable
 private fun ReportDeleteDialogPreview() {
     PtmTheme {
-        ReportDeleteDialog({}) {}
+        ReportDeleteDialog(
+            report = DiagnosticReportWithData(
+                report = DiagnosticReport(
+                    diagnosticPoint = "P-001",
+                    timestamp = 0,
+                    diagnosticsType = "",
+                    reportType = "",
+                    location = Coordinates(0.0, 0.0),
+                    inspector = "Иванов И."
+                ),
+                data = emptyList()
+            ),
+            onDismissRequest = {},
+            onDelete = {}
+        )
     }
 }

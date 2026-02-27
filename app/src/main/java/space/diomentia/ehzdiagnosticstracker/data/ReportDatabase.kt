@@ -163,7 +163,13 @@ data class DiagnosticObject(
     val name: String,
     @ColumnInfo(name = "additional_info") @SerialName("additional_info")
     val additionalInfo: String? = null
-)
+) {
+    companion object {
+        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
+        fun checkName(name: String): Boolean =
+            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
+    }
+}
 
 @Serializable
 @Entity(tableName = "diagnostic_areas")
@@ -180,7 +186,13 @@ data class DiagnosticArea(
     val lastLocation: Coordinates? = null,
     @ColumnInfo(name = "additional_info") @SerialName("additional_info")
     val additionalInfo: String? = null
-)
+) {
+    companion object {
+        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
+        fun checkName(name: String): Boolean =
+            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
+    }
+}
 
 @Serializable
 @Entity(tableName = "diagnostic_points")
@@ -197,7 +209,13 @@ data class DiagnosticPoint(
     val diagnosticsType: String? = null,
     @ColumnInfo(name = "additional_info") @SerialName("additional_info")
     val additionalInfo: String? = null
-)
+) {
+    companion object {
+        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
+        fun checkName(name: String): Boolean =
+            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
+    }
+}
 
 data class DiagnosticObjectWithAreas(
     @Embedded val diagnosticObject: DiagnosticObject,
