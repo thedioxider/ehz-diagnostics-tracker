@@ -2,6 +2,8 @@ package space.diomentia.ehzdiagnosticstracker.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,7 +14,9 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -180,15 +184,23 @@ private fun DiagnosticPointItem(
                 modifier = Modifier.alpha(.75f)
             )
         }
-        Icon(
-            Icons.Outlined.Edit,
-            contentDescription = null,
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .clickable(onClick = onEdit)
                 .fillMaxHeight()
-                .aspectRatio(1f)
-                .padding(end = 12.dp)
-        )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = ripple(bounded = false),
+                    onClick = onEdit
+                )
+                .padding(horizontal = 16.dp)
+        ) {
+            Icon(
+                Icons.Outlined.Edit,
+                contentDescription = null,
+                modifier = Modifier.size(30.dp)
+            )
+        }
     }
 }
 
