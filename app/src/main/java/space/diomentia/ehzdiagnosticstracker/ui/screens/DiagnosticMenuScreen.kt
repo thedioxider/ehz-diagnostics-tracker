@@ -51,12 +51,12 @@ import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Section
 import space.diomentia.ehzdiagnosticstracker.data.Route
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
-import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.ReportSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
-import space.diomentia.ehzdiagnosticstracker.data.ReportSession
+import space.diomentia.ehzdiagnosticstracker.data.LegacyReportSession
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
@@ -67,25 +67,25 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
 fun DiagnosticMenuScreen(
-    diagnosticSession: DiagnosticSession,
+    reportSession: ReportSession,
     onAuthorize: () -> Unit,
     onChooseArea: () -> Unit,
     onSettings: () -> Unit,
     onPointList: () -> Unit,
     onHistory: () -> Unit,
-    onEditReport: (ReportSession) -> Unit,
-    reportSession: ReportSession? = null
+    onEditReport: (LegacyReportSession) -> Unit,
+    legacyReportSession: LegacyReportSession? = null
 ) {
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
     val history by ReportDatabase.getInstance()
         .routeDao()
-        .getSectionPoints(diagnosticSession.section.id)
+        .getSectionPoints(reportSession.section.id)
         .collectAsStateWithLifecycle(emptyList())
     val latestReport = history.flatMap { it.history }.maxByOrNull { it.timestamp }
 
     CompositionLocalProvider(
-        LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
+        LocalReportSession provides remember { mutableStateOf(reportSession) }
     ) {
         PtmTheme {
             Scaffold(
@@ -138,15 +138,15 @@ fun DiagnosticMenuScreen(
                     )
                     DiagnosticsTypeSelector()
                     LastReport(
-                        reportSession = reportSession ?: latestReport?.let {
-                            ReportSession.fromExisting(
-                                diagnosticSession = diagnosticSession,
+                        legacyReportSession = legacyReportSession ?: latestReport?.let {
+                            LegacyReportSession.fromExisting(
+                                reportSession = reportSession,
                                 reportId = latestReport.id,
                                 reportDb = ReportDatabase.getInstance(context)
                             )
                         },
                         onEditReport = onEditReport,
-                        saved = reportSession == null,
+                        saved = legacyReportSession == null,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
@@ -159,7 +159,7 @@ fun DiagnosticMenuScreen(
 private fun AreaInfo(
     modifier: Modifier = Modifier
 ) {
-    val diagnosticSession by LocalDiagnosticSession.current
+    val diagnosticSession by LocalReportSession.current
 
     Column(
         horizontalAlignment = Alignment.Companion.CenterHorizontally,
@@ -262,13 +262,13 @@ private fun MenuActionButton(
 
 @Composable
 private fun LastReport(
-    reportSession: ReportSession?,
+    legacyReportSession: LegacyReportSession?,
     saved: Boolean,
-    onEditReport: (ReportSession) -> Unit,
+    onEditReport: (LegacyReportSession) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val diagnosticSession by LocalDiagnosticSession.current
+    val diagnosticSession by LocalReportSession.current
     val areaLastLocation = diagnosticSession.section.lastLocation
     val rowHeight = 80.dp
 
@@ -276,7 +276,7 @@ private fun LastReport(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.then(modifier)
     ) {
-        reportSession?.let { session ->
+        legacyReportSession?.let { session ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -302,13 +302,13 @@ private fun LastReport(
                 .weight(1f)
             MenuActionButton(
                 actionButtonModifier,
-                enabled = reportSession != null,
+                enabled = legacyReportSession != null,
                 buttonHeight = rowHeight,
                 description = stringResource(R.string.continue_editing),
                 shortDescription = stringResource(R.string.continue_editing_short),
                 icon = rememberVectorPainter(Icons.Outlined.Edit)
             ) {
-                onEditReport(reportSession!!)
+                onEditReport(legacyReportSession!!)
             }
             MenuActionButton(
                 actionButtonModifier,
@@ -329,15 +329,15 @@ private fun LastReport(
             }
             MenuActionButton(
                 actionButtonModifier,
-                enabled = reportSession != null,
+                enabled = legacyReportSession != null,
                 buttonHeight = rowHeight,
                 description = stringResource(R.string.new_report_there),
                 icon = rememberVectorPainter(Icons.Outlined.Add)
             ) {
                 onEditReport(
-                    ReportSession(
-                        diagnosticSession = diagnosticSession,
-                        diagnosticPoint = reportSession!!.diagnosticPoint
+                    LegacyReportSession(
+                        reportSession = diagnosticSession,
+                        diagnosticPoint = legacyReportSession!!.diagnosticPoint
                     )
                 )
             }
@@ -350,7 +350,7 @@ private fun LastReport(
 private fun DiagnosticsTypeSelector(
     modifier: Modifier = Modifier
 ) {
-    var diagnosticSession by LocalDiagnosticSession.current
+    var diagnosticSession by LocalReportSession.current
     var expanded by remember { mutableStateOf(false) }
     val options = stringArrayResource(R.array.diagnostics_types)
     val colors = TextFieldDefaults.colors(
@@ -410,13 +410,13 @@ private fun DiagnosticsTypeSelector(
 @Preview(showBackground = true)
 @Composable
 private fun DiagnosticMenuScreenPreview() {
-    AppState.reportConfig.value = ReportConfig(listOf())
-    val diagnosticSession = DiagnosticSession(
-        route = Route("", "", "Test Object"),
-        section = Section("", "Test Area", "", "")
+    AppState.reportConfig.value = ReportConfig()
+    val reportSession = ReportSession(
+        route = Route("", "Test Object"),
+        section = Section("", "Test Area", "")
     )
 
     PtmTheme {
-        DiagnosticMenuScreen(diagnosticSession, {}, {}, {}, {}, {}, {})
+        DiagnosticMenuScreen(reportSession, {}, {}, {}, {}, {}, {})
     }
 }

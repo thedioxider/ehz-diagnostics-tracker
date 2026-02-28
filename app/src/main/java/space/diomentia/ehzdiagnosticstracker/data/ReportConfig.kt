@@ -57,13 +57,21 @@ data class FieldSpec(
 data class ReportTemplate(
     @SerialName("id") val id: String,
     @SerialName("name") val name: String,
-    @SerialName("parameters") val specIds: List<FieldSpec>?
+    @SerialName("spec_ids") val specIds: List<String>? = null
 )
 
 @Serializable
 data class ReportConfig(
-    @SerialName("report_types") val templates: List<ReportTemplate>
-)
+    @SerialName("field_specs") val fieldSpecs: List<FieldSpec> = emptyList(),
+    @SerialName("templates") val templates: List<ReportTemplate> = emptyList()
+) {
+    /** Lookup a field spec by its ID */
+    fun getSpec(id: String): FieldSpec? = fieldSpecs.find { it.id == id }
+
+    /** Resolve a template's spec IDs to full FieldSpec objects */
+    fun resolveTemplate(template: ReportTemplate): List<FieldSpec> =
+        template.specIds?.mapNotNull { getSpec(it) } ?: emptyList()
+}
 
 @Serializable
 data class InitialAreaEntries(

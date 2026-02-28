@@ -43,8 +43,8 @@ import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.Section
 import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
-import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.ReportSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -60,14 +60,14 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
 fun DiagnosticPointsScreen(
-    diagnosticSession: DiagnosticSession,
+    reportSession: ReportSession,
     onBack: () -> Unit,
     onPointChosen: (DiagnosticPoint) -> Unit
 ) {
     var createPointRequest by remember { mutableStateOf(false) }
 
     CompositionLocalProvider(
-        LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
+        LocalReportSession provides remember { mutableStateOf(reportSession) }
     ) {
         PtmTheme {
             Scaffold(
@@ -96,7 +96,7 @@ fun DiagnosticPointsScreen(
                     )
                 }
             ) { innerPadding ->
-                val diagnosticSession by LocalDiagnosticSession.current
+                val diagnosticSession by LocalReportSession.current
                 val diagnosticPoints by ReportDatabase.getInstance()
                     .routeDao()
                     .getSectionPoints(diagnosticSession.section.id)
@@ -209,7 +209,7 @@ private fun DiagnosticPointDialog(
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
-    val diagnosticSession by LocalDiagnosticSession.current
+    val diagnosticSession by LocalReportSession.current
 
     EditFieldsDialog(
         fields = listOf(
@@ -284,7 +284,7 @@ private fun DeletePointDialog(
 @Preview
 @Composable
 private fun DiagnosticPointsScreenPreview() = DiagnosticPointsScreen(
-    DiagnosticSession(
-        route = Route("", "", "Test Object"),
-        section = Section("", "Test Area", "", "")
+    ReportSession(
+        route = Route("", "Test Object"),
+        section = Section("", "Test Area", "")
     ), {}, {})

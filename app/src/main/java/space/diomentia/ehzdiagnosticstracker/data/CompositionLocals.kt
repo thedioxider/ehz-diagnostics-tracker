@@ -10,7 +10,7 @@ import kotlinx.coroutines.MainScope
 val LocalCoroutineScope = staticCompositionLocalOf { MainScope() }
 val LocalSnackbarHostState = staticCompositionLocalOf { SnackbarHostState() }
 val LocalLocationProvider = compositionLocalOf<FusedLocationProviderClient?> { null }
-val LocalDiagnosticSession =
-    compositionLocalOf { mutableStateOf<DiagnosticSession>(throw error("no diagnostic session")) }
 val LocalReportSession =
-    compositionLocalOf { mutableStateOf<ReportSession>(throw error("no report session")) }
+    compositionLocalOf { mutableStateOf<ReportSession>(throw error("no diagnostic session")) }
+val LocalLegacyReportSession =
+    compositionLocalOf { mutableStateOf<LegacyReportSession>(throw error("no report session")) }

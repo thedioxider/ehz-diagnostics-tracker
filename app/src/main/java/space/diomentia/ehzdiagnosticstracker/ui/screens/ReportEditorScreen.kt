@@ -93,10 +93,10 @@ import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.Section
 import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
-import space.diomentia.ehzdiagnosticstracker.data.LocalReportSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalLegacyReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
@@ -104,7 +104,7 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
 import space.diomentia.ehzdiagnosticstracker.data.FieldSpec
-import space.diomentia.ehzdiagnosticstracker.data.ReportSession
+import space.diomentia.ehzdiagnosticstracker.data.LegacyReportSession
 import space.diomentia.ehzdiagnosticstracker.data.ReportTemplate
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.FullScreenImageDialog
@@ -127,7 +127,7 @@ private enum class UiState {
     Editor;
 
     companion object {
-        fun canOpenEditor(reportSession: ReportSession) = reportSession.reportType != null
+        fun canOpenEditor(legacyReportSession: LegacyReportSession) = legacyReportSession.reportType != null
     }
 }
 
@@ -136,18 +136,18 @@ private val LocalUiState =
 
 @Composable
 fun ReportEditorScreen(
-    reportSession: ReportSession,
+    legacyReportSession: LegacyReportSession,
     onSaved: () -> Unit,
     onBack: () -> Unit
 ) {
     val snackbarHostState = LocalSnackbarHostState.current
 
     CompositionLocalProvider(
-        LocalUiState provides remember { mutableStateOf(if (UiState.canOpenEditor(reportSession)) UiState.Editor else UiState.Configuration) },
-        LocalReportSession provides remember { mutableStateOf(reportSession) }
+        LocalUiState provides remember { mutableStateOf(if (UiState.canOpenEditor(legacyReportSession)) UiState.Editor else UiState.Configuration) },
+        LocalLegacyReportSession provides remember { mutableStateOf(legacyReportSession) }
     ) {
         var state by LocalUiState.current
-        val reportSession by LocalReportSession.current
+        val reportSession by LocalLegacyReportSession.current
         if (reportSession.reportType == null) state = UiState.Configuration
         PtmTheme {
             Scaffold(
@@ -203,14 +203,14 @@ fun ReportEditorScreen(
                             .padding(top = 24.dp)
                     )
                     Text(
-                        reportSession.diagnosticSession.route.name,
+                        reportSession.reportSession.route.name,
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
                     )
                     Text(
-                        "${stringResource(R.string.area)} ${reportSession.diagnosticSession.section.name}",
+                        "${stringResource(R.string.area)} ${reportSession.reportSession.section.name}",
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -273,7 +273,7 @@ private fun ReportTypesList(
     modifier: Modifier = Modifier
 ) {
     val reportConfig = AppState.reportConfig.value
-    var reportSession by LocalReportSession.current
+    var reportSession by LocalLegacyReportSession.current
     if (reportConfig == null) {
         Text(
             stringResource(R.string.no_report_configuration),
@@ -358,7 +358,7 @@ private fun ApplyButton(
     modifier: Modifier = Modifier
 ) {
     var state by LocalUiState.current
-    var reportSession by LocalReportSession.current
+    var reportSession by LocalLegacyReportSession.current
     val enabled = when (state) {
         UiState.Configuration -> UiState.canOpenEditor(reportSession)
         UiState.Editor -> true
@@ -412,7 +412,7 @@ private fun ReportEditor(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     val reportDb = ReportDatabase.getInstance()
-    var reportSession by LocalReportSession.current
+    var reportSession by LocalLegacyReportSession.current
     var diagnosticType by remember {
         mutableIntStateOf(
             reportSession.reportType ?: 0
@@ -478,19 +478,22 @@ private fun ReportEditor(
                         .padding(start = 32.dp, end = 16.dp)
                 )
 
-                AppState.reportConfig.value?.templates[diagnosticType]?.specIds?.forEachIndexed { i, parameter ->
-                    val value = remember {
-                        reportSession.data[parameter.id] ?: mutableStateOf("").also {
-                            reportSession.data[parameter.id] = it
+                val config = AppState.reportConfig.value
+                config?.templates?.getOrNull(diagnosticType)?.let { template ->
+                    config.resolveTemplate(template).forEachIndexed { i, parameter ->
+                        val value = remember {
+                            reportSession.data[parameter.id] ?: mutableStateOf("").also {
+                                reportSession.data[parameter.id] = it
+                            }
                         }
+                        ReportField(
+                            parameter,
+                            value,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp)
+                        )
                     }
-                    ReportField(
-                        parameter,
-                        value,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp)
-                    )
                 }
 
                 ValidationField()
@@ -543,7 +546,7 @@ private fun LocationField(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     val locationProvider = LocalLocationProvider.current
-    var reportSession by LocalReportSession.current
+    var reportSession by LocalLegacyReportSession.current
 
     var isSyncingLocation by remember { mutableStateOf(true) }
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
@@ -646,7 +649,7 @@ private fun ValidationField(
 ) {
     // TODO: somehow it doesn't save into continue later, whatever
     val context = LocalContext.current
-    var reportSession by LocalReportSession.current
+    var reportSession by LocalLegacyReportSession.current
 
     val qrValidationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -980,7 +983,7 @@ private fun SaveButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val reportSession by LocalReportSession.current
+    val reportSession by LocalLegacyReportSession.current
     val enabled = with(reportSession) {
         reportType != null && location != null
     }
@@ -1003,7 +1006,7 @@ private fun ExportButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val reportSession by LocalReportSession.current
+    val reportSession by LocalLegacyReportSession.current
     val enabled = with(reportSession) {
         reportType != null && location != null
     }
@@ -1022,10 +1025,10 @@ private fun ExportButton(
 }
 
 
-private val _reportSession = ReportSession(
-    diagnosticSession = DiagnosticSession(
-        route = Route("", "", "Test Object"),
-        section = Section("", "Test Area", "", "")
+private val _reportSession = LegacyReportSession(
+    reportSession = ReportSession(
+        route = Route("", "Test Object"),
+        section = Section("", "Test Area", "")
     ),
     diagnosticPoint = DiagnosticPoint("", "", "", "")
 )
@@ -1034,23 +1037,25 @@ private val _reportSession = ReportSession(
 @Composable
 private fun TechDiagnosticsScreenPreview() {
     AppState.reportConfig.value = ReportConfig(
-        listOf(
+        fieldSpecs = listOf(
+            FieldSpec(
+                "bar0",
+                "Very long and wordy parameter name with like lots of words in it " +
+                        "and that's why it doesn't even fit the screen",
+                FieldType.Bool
+            ),
+            FieldSpec(
+                "bar1",
+                "Some other parameter",
+                FieldType.Decimal,
+                "kV"
+            )
+        ),
+        templates = listOf(
             ReportTemplate(
                 "foo0",
-                "Test", listOf(
-                    FieldSpec(
-                        "bar0",
-                        "Very long and wordy parameter name with like lots of words in it " +
-                                "and that's why it doesn't even fit the screen",
-                        FieldType.Bool
-                    ),
-                    FieldSpec(
-                        "bar1",
-                        "Some other parameter",
-                        FieldType.Decimal,
-                        "kV"
-                    )
-                )
+                "Test",
+                listOf("bar0", "bar1")
             )
         )
     )
@@ -1065,28 +1070,30 @@ private fun TechDiagnosticsScreenPreview() {
 @Composable
 private fun ReportEditorPreview() {
     AppState.reportConfig.value = ReportConfig(
-        listOf(
+        fieldSpecs = listOf(
+            FieldSpec(
+                "bar0",
+                "Very long and wordy parameter name with like lots of words in it " +
+                        "and that's why it doesn't even fit the screen",
+                FieldType.Bool
+            ),
+            FieldSpec(
+                "bar1",
+                "Some other parameter",
+                FieldType.Decimal,
+                "kV"
+            )
+        ),
+        templates = listOf(
             ReportTemplate(
                 "foo0",
-                "Test", listOf(
-                    FieldSpec(
-                        "bar0",
-                        "Very long and wordy parameter name with like lots of words in it " +
-                                "and that's why it doesn't even fit the screen",
-                        FieldType.Bool
-                    ),
-                    FieldSpec(
-                        "bar1",
-                        "Some other parameter",
-                        FieldType.Decimal,
-                        "kV"
-                    )
-                )
+                "Test",
+                listOf("bar0", "bar1")
             )
         )
     )
     CompositionLocalProvider(
-        LocalReportSession provides remember { mutableStateOf(_reportSession) }
+        LocalLegacyReportSession provides remember { mutableStateOf(_reportSession) }
     ) {
         PtmTheme {
             ReportEditor(onSaved = {}, onBack = {})

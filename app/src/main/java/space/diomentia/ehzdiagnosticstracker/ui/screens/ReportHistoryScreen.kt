@@ -50,9 +50,9 @@ import space.diomentia.ehzdiagnosticstracker.data.Section
 import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
-import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.LocalReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
@@ -75,14 +75,14 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun ReportHistoryScreen(
-    diagnosticSession: DiagnosticSession,
+    reportSession: ReportSession,
     onEditReport: (DiagnosticReport) -> Unit,
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
 
     CompositionLocalProvider(
-        LocalDiagnosticSession provides remember { mutableStateOf(diagnosticSession) }
+        LocalReportSession provides remember { mutableStateOf(reportSession) }
     ) {
         PtmTheme {
             Scaffold(
@@ -132,7 +132,7 @@ fun ReportHistoryScreen(
 
                 val history by ReportDatabase.getInstance()
                     .routeDao()
-                    .getSectionPoints(diagnosticSession.section.id)
+                    .getSectionPoints(reportSession.section.id)
                     .collectAsStateWithLifecycle(emptyList())
                 val reports = history.flatMap { point ->
                     ReportDatabase.getInstance()
@@ -270,17 +270,12 @@ private fun ReportDetailsDialog(
     onEditReport: (DiagnosticReport) -> Unit,
     onDismissRequest: () -> Unit
 ) {
-    val parameters = AppState.reportConfig.value
-        ?.templates
-        ?.find { it.id == report.report.reportType }
-        ?.specIds
-        ?.asSequence()
-        ?.map { it.id to it }
+    val config = AppState.reportConfig.value
+    val template = config?.templates?.find { it.id == report.report.reportType }
+    val parameters = template?.specIds
+        ?.mapNotNull { id -> config.getSpec(id)?.let { id to it } }
         ?.toMap()
-    val reportType = AppState.reportConfig.value
-        ?.templates
-        ?.find { it.id == report.report.reportType }
-        ?.name
+    val reportType = template?.name
 
     @Composable
     fun DataEntryItem(entry: ReportDataEntry) {
@@ -421,9 +416,9 @@ private val previewReports = listOf(
 @Preview
 @Composable
 private fun ReportHistoryScreenPreview() = ReportHistoryScreen(
-    DiagnosticSession(
-        route = Route("", "", "Test Object"),
-        section = Section("", "Test Area", "", "")
+    ReportSession(
+        route = Route("", "Test Object"),
+        section = Section("", "Test Area", "")
     ), {}, {})
 
 @Preview

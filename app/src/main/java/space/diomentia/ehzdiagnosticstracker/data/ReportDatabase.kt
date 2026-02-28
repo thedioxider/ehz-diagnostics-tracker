@@ -24,18 +24,22 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Database(
-    version = 7,
+    version = 9,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
         Route::class,
         Section::class,
-        DiagnosticPoint::class
+        DiagnosticPoint::class,
+        Report::class,
+        Site::class,
+        ReportField::class
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
     abstract fun diagnosticReportDao(): DiagnosticReportDao
     abstract fun routeDao(): RouteDao
+    abstract fun reportDao(): ReportDao
 
     companion object {
         const val DB_NAME = "report-db"
@@ -152,12 +156,8 @@ interface DiagnosticReportDao {
 data class Route(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
-    @ColumnInfo(name = "inventory_id") @SerialName("inventory_id")
-    val inventoryId: String,
     @ColumnInfo(name = "name") @SerialName("name")
-    val name: String,
-    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
-    val additionalInfo: String? = null
+    val name: String
 ) {
     companion object {
         fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
@@ -175,12 +175,8 @@ data class Section(
     val name: String,
     @ColumnInfo(name = "route_id") @SerialName("route_id")
     val routeId: String,
-    @ColumnInfo(name = "danger_class") @SerialName("danger_class")
-    val dangerClass: String,
     @Embedded(prefix = "last_") @SerialName("last_location")
-    val lastLocation: Coordinates? = null,
-    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
-    val additionalInfo: String? = null
+    val lastLocation: Coordinates? = null
 ) {
     companion object {
         fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
@@ -291,4 +287,151 @@ interface RouteDao {
 
     @Delete
     fun deletePoint(point: DiagnosticPoint)
+}
+
+// --- New session-based entities ---
+
+@Entity(tableName = "reports")
+data class Report(
+    @PrimaryKey @ColumnInfo(name = "id")
+    val id: String,
+    @ColumnInfo(name = "route_id")
+    val routeId: String,
+    @ColumnInfo(name = "section_id")
+    val sectionId: String,
+    @ColumnInfo(name = "inspector_name")
+    val inspectorName: String,
+    @ColumnInfo(name = "start_time")
+    val startTime: Long,
+    @ColumnInfo(name = "end_time")
+    val endTime: Long? = null,
+    @ColumnInfo(name = "is_complete")
+    val isComplete: Boolean = false
+)
+
+@Entity(tableName = "sites")
+data class Site(
+    @PrimaryKey @ColumnInfo(name = "id")
+    val id: String,
+    @ColumnInfo(name = "report_id")
+    val reportId: String,
+    @ColumnInfo(name = "position_km")
+    val positionKm: Double? = null,
+    @ColumnInfo(name = "latitude")
+    val latitude: Double? = null,
+    @ColumnInfo(name = "longitude")
+    val longitude: Double? = null,
+    @ColumnInfo(name = "timestamp")
+    val timestamp: Long,
+    @ColumnInfo(name = "validation_id")
+    val validationId: String? = null,
+    @ColumnInfo(name = "location_only")
+    val locationOnly: Boolean = false
+)
+
+@Entity(
+    tableName = "report_fields",
+    primaryKeys = ["site_id", "spec_id"]
+)
+data class ReportField(
+    @ColumnInfo(name = "site_id")
+    val siteId: String,
+    @ColumnInfo(name = "spec_id")
+    val specId: String,
+    @ColumnInfo(name = "name")
+    val name: String,
+    @ColumnInfo(name = "type")
+    val type: String,
+    @ColumnInfo(name = "unit")
+    val unit: String? = null,
+    @ColumnInfo(name = "value")
+    val value: String = ""
+)
+
+data class SiteWithFields(
+    @Embedded val site: Site,
+    @Relation(parentColumn = "id", entityColumn = "site_id")
+    val fields: List<ReportField>
+)
+
+data class FullReport(
+    @Embedded val report: Report,
+    @Relation(
+        entity = Site::class,
+        parentColumn = "id",
+        entityColumn = "report_id"
+    )
+    val sites: List<SiteWithFields>
+)
+
+@Dao
+interface ReportDao {
+    @Transaction
+    @Query("SELECT * FROM reports WHERE id = :id")
+    fun getFullReport(id: String): Flow<FullReport?>
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 0 LIMIT 1")
+    fun getActiveReportForSection(sectionId: String): Flow<FullReport?>
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 0 LIMIT 1")
+    fun getActiveReportForSectionOnce(sectionId: String): FullReport?
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 1 ORDER BY start_time DESC")
+    fun getCompletedReportsForSection(sectionId: String): Flow<List<FullReport>>
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE route_id = :routeId AND is_complete = 1 ORDER BY start_time DESC")
+    fun getCompletedReportsForRoute(routeId: String): Flow<List<FullReport>>
+
+    @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
+    fun getSitesForReport(reportId: String): Flow<List<Site>>
+
+    @Transaction
+    @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
+    fun getSitesWithFieldsForReport(reportId: String): Flow<List<SiteWithFields>>
+
+    @Query("SELECT * FROM reports WHERE id = :id")
+    fun getReportByIdOnce(id: String): Report?
+
+    @Query("SELECT * FROM sites WHERE id = :id")
+    fun getSiteByIdOnce(id: String): Site?
+
+    @Query("SELECT * FROM report_fields WHERE site_id = :siteId")
+    fun getFieldsForSite(siteId: String): Flow<List<ReportField>>
+
+    @Query("SELECT * FROM report_fields WHERE site_id = :siteId")
+    fun getFieldsForSiteOnce(siteId: String): List<ReportField>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertReport(report: Report)
+
+    @Update
+    fun updateReport(report: Report)
+
+    @Delete
+    fun deleteReport(report: Report)
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertSite(site: Site)
+
+    @Update
+    fun updateSite(site: Site)
+
+    @Delete
+    fun deleteSite(site: Site)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertField(field: ReportField)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertFields(fields: List<ReportField>)
+
+    @Delete
+    fun deleteField(field: ReportField)
+
+    @Query("DELETE FROM report_fields WHERE site_id = :siteId AND spec_id = :specId")
+    fun deleteFieldByKey(siteId: String, specId: String)
 }

@@ -355,7 +355,6 @@ private fun DiagnosticObjectDialog(
                     .insertRoute(
                         Route(
                             id = v[R.string.registration_number]!!,
-                            inventoryId = v[R.string.registration_number]!!,
                             name = v[R.string.name]!!
                         )
                     )
@@ -427,8 +426,7 @@ private fun DiagnosticAreaDialog(
                         Section(
                             id = v[R.string.registration_number]!!,
                             name = v[R.string.name]!!,
-                            routeId = diagnosticObjectId,
-                            dangerClass = "0"
+                            routeId = diagnosticObjectId
                         )
                     )
             } else {
@@ -512,7 +510,7 @@ private fun AddObjectDialogPreview() = PtmTheme {
 @Composable
 private fun EditObjectDialogPreview() = PtmTheme {
     DiagnosticObjectChooseScreenPreview()
-    DiagnosticObjectDialog(Route("testes", "test", "Test"), {}, {})
+    DiagnosticObjectDialog(Route("testes", "Test"), {}, {})
 }
 
 @Preview
@@ -526,5 +524,5 @@ private fun AddAreaDialogPreview() = PtmTheme {
 @Composable
 private fun DeleteObjectDialogPreview() = PtmTheme {
     DiagnosticObjectChooseScreenPreview()
-    DeleteObjectDialog(Route("tsetsetset", "testse", "Test"), {})
+    DeleteObjectDialog(Route("tsetsetset", "Test"), {})
 }

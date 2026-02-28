@@ -13,10 +13,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import space.diomentia.ehzdiagnosticstracker.data.AppState
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
+import space.diomentia.ehzdiagnosticstracker.data.ReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
-import space.diomentia.ehzdiagnosticstracker.data.ReportSession
+import space.diomentia.ehzdiagnosticstracker.data.LegacyReportSession
 import space.diomentia.ehzdiagnosticstracker.ui.screens.AuthorizationScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.DiagnosticMenuScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.DiagnosticObjectsScreen
@@ -51,8 +51,8 @@ fun AppNavigation() {
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
     val navController = rememberNavController()
-    var diagnosticSession: DiagnosticSession? by remember { mutableStateOf(null) }
     var reportSession: ReportSession? by remember { mutableStateOf(null) }
+    var legacyReportSession: LegacyReportSession? by remember { mutableStateOf(null) }
 
     NavHost(
         navController,
@@ -109,7 +109,7 @@ fun AppNavigation() {
                 },
                 onAuthorized = {
                     navController.navigate(
-                        if (diagnosticSession == null)
+                        if (reportSession == null)
                             Screen.DiagnosticObjects.route
                         else
                             Screen.Diagnostics.Menu.route
@@ -135,7 +135,7 @@ fun AppNavigation() {
                     }
                 },
                 onAreaChosen = { diagnosticObject, diagnosticArea ->
-                    diagnosticSession = DiagnosticSession(diagnosticObject, diagnosticArea)
+                    reportSession = ReportSession(diagnosticObject, diagnosticArea)
                     navController.navigate(Screen.Diagnostics.route) {
                         popUpTo(0) { inclusive = true }
                     }
@@ -154,7 +154,7 @@ fun AppNavigation() {
             startDestination = Screen.Diagnostics.Menu.route
         ) {
             composable(Screen.Diagnostics.Menu.route) {
-                val mDiagnosticSession = remember { diagnosticSession }
+                val mDiagnosticSession = remember { reportSession }
                 if (mDiagnosticSession == null) {
                     navController.navigate(Screen.Initial.route) {
                         popUpTo(0) { inclusive = true }
@@ -162,7 +162,7 @@ fun AppNavigation() {
                     return@composable
                 }
                 DiagnosticMenuScreen(
-                    diagnosticSession = mDiagnosticSession,
+                    reportSession = mDiagnosticSession,
                     onAuthorize = {
                         navController.popBackStack()
                         navController.navigate(Screen.Authorization.route) {
@@ -174,7 +174,7 @@ fun AppNavigation() {
                         navController.navigate(Screen.DiagnosticObjects.route) {
                             launchSingleTop = true
                         }
-                        diagnosticSession = null
+                        reportSession = null
                     },
                     onSettings = {
                         navController.navigate(Screen.Settings.route) {
@@ -192,15 +192,15 @@ fun AppNavigation() {
                         }
                     },
                     onEditReport = { mReportSession ->
-                        reportSession = mReportSession
+                        legacyReportSession = mReportSession
                         navController.navigate(Screen.Diagnostics.ReportEditor.route)
                     },
-                    reportSession = remember { reportSession }
+                    legacyReportSession = remember { legacyReportSession }
                 )
             }
 
             composable(Screen.Diagnostics.History.route) {
-                val mDiagnosticSession = remember { diagnosticSession }
+                val mDiagnosticSession = remember { reportSession }
                 if (mDiagnosticSession == null) {
                     navController.navigate(Screen.Initial.route) {
                         popUpTo(0) { inclusive = true }
@@ -208,10 +208,10 @@ fun AppNavigation() {
                     return@composable
                 }
                 ReportHistoryScreen(
-                    diagnosticSession = mDiagnosticSession,
+                    reportSession = mDiagnosticSession,
                     onEditReport = { report ->
-                        reportSession = ReportSession.fromExisting(
-                            diagnosticSession = mDiagnosticSession,
+                        legacyReportSession = LegacyReportSession.fromExisting(
+                            reportSession = mDiagnosticSession,
                             reportId = report.id,
                             reportDb = ReportDatabase.getInstance(context)
                         )
@@ -224,7 +224,7 @@ fun AppNavigation() {
             }
 
             composable(Screen.Diagnostics.Points.route) {
-                val mDiagnosticSession = remember { diagnosticSession }
+                val mDiagnosticSession = remember { reportSession }
                 if (mDiagnosticSession == null) {
                     navController.navigate(Screen.Initial.route) {
                         popUpTo(0) { inclusive = true }
@@ -232,11 +232,11 @@ fun AppNavigation() {
                     return@composable
                 }
                 DiagnosticPointsScreen(
-                    diagnosticSession = mDiagnosticSession,
+                    reportSession = mDiagnosticSession,
                     onBack = { navController.popBackStack() },
                     onPointChosen = { diagnosticPoint ->
-                        reportSession = ReportSession(
-                            diagnosticSession = mDiagnosticSession,
+                        legacyReportSession = LegacyReportSession(
+                            reportSession = mDiagnosticSession,
                             diagnosticPoint = diagnosticPoint
                         )
                         navController.navigate(Screen.Diagnostics.ReportEditor.route) {
@@ -247,7 +247,7 @@ fun AppNavigation() {
             }
 
             composable(Screen.Diagnostics.ReportEditor.route) {
-                val mReportSession = remember { reportSession }
+                val mReportSession = remember { legacyReportSession }
                 if (mReportSession == null) {
                     navController.navigate(Screen.Initial.route) {
                         popUpTo(0) { inclusive = true }
@@ -256,7 +256,7 @@ fun AppNavigation() {
                 }
                 ReportEditorScreen(
                     mReportSession,
-                    onSaved = { reportSession = null },
+                    onSaved = { legacyReportSession = null },
                     onBack = { navController.popBackStack() }
                 )
             }
