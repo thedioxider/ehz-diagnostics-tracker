@@ -14,3 +14,5 @@ val LocalReportSession =
     compositionLocalOf { mutableStateOf<ReportSession>(throw error("no diagnostic session")) }
 val LocalLegacyReportSession =
     compositionLocalOf { mutableStateOf<LegacyReportSession>(throw error("no report session")) }
+val LocalSessionManager =
+    compositionLocalOf<SessionManager> { error("no session manager") }
