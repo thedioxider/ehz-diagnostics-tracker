@@ -78,7 +78,8 @@ fun ActionCancelDialog(
                         PtmFilledButton(
                             enabled = secondaryActionEnabled,
                             onClick = onSecondaryAction,
-                            content = secondaryActionLabel
+                            content = secondaryActionLabel,
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                     PtmFilledIconButton(
