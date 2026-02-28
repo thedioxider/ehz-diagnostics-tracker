@@ -90,22 +90,22 @@ import space.diomentia.ehzdiagnosticstracker.askCameraPermissions
 import space.diomentia.ehzdiagnosticstracker.checkCameraPermissions
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
+import space.diomentia.ehzdiagnosticstracker.data.Section
+import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalReportSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
-import space.diomentia.ehzdiagnosticstracker.data.ParameterType
+import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
-import space.diomentia.ehzdiagnosticstracker.data.ReportParameter
+import space.diomentia.ehzdiagnosticstracker.data.FieldSpec
 import space.diomentia.ehzdiagnosticstracker.data.ReportSession
-import space.diomentia.ehzdiagnosticstracker.data.ReportType
+import space.diomentia.ehzdiagnosticstracker.data.ReportTemplate
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.FullScreenImageDialog
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -203,14 +203,14 @@ fun ReportEditorScreen(
                             .padding(top = 24.dp)
                     )
                     Text(
-                        reportSession.diagnosticSession.diagnosticObject.name,
+                        reportSession.diagnosticSession.route.name,
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
                     )
                     Text(
-                        "${stringResource(R.string.area)} ${reportSession.diagnosticSession.diagnosticArea.name}",
+                        "${stringResource(R.string.area)} ${reportSession.diagnosticSession.section.name}",
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
@@ -235,7 +235,7 @@ fun ReportEditorScreen(
                     AnimatedVisibility(state == UiState.Editor) {
                         Text(
                             reportSession.reportType?.let { reportType ->
-                                AppState.reportConfig.value?.reportTypes[reportType]?.name
+                                AppState.reportConfig.value?.templates[reportType]?.name
                             } ?: stringResource(R.string.unknown),
                             style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier
@@ -299,7 +299,7 @@ private fun ReportTypesList(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        reportConfig.reportTypes.forEachIndexed { i, rClass ->
+        reportConfig.templates.forEachIndexed { i, rClass ->
             val interactionSource = remember { MutableInteractionSource() }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -478,7 +478,7 @@ private fun ReportEditor(
                         .padding(start = 32.dp, end = 16.dp)
                 )
 
-                AppState.reportConfig.value?.reportTypes[diagnosticType]?.parameters?.forEachIndexed { i, parameter ->
+                AppState.reportConfig.value?.templates[diagnosticType]?.specIds?.forEachIndexed { i, parameter ->
                     val value = remember {
                         reportSession.data[parameter.id] ?: mutableStateOf("").also {
                             reportSession.data[parameter.id] = it
@@ -707,7 +707,7 @@ private fun ValidationField(
 
 @Composable
 private fun ReportField(
-    parameter: ReportParameter,
+    parameter: FieldSpec,
     value: MutableState<String>,
     modifier: Modifier = Modifier
 ) {
@@ -727,7 +727,7 @@ private fun ReportField(
                     .weight(1f)
                     .padding(vertical = 4.dp)
             )
-            if (parameter.type == ParameterType.Bool) {
+            if (parameter.type == FieldType.Bool) {
                 var v by value
                 FilledTonalIconButton(
                     onClick = {
@@ -793,12 +793,12 @@ private fun ReportField(
             }
         }
         when (parameter.type) {
-            ParameterType.Text, ParameterType.Raw -> {
+            FieldType.Text, FieldType.Raw -> {
                 var v by value
                 ParamField(value = v) { v = it }
             }
 
-            ParameterType.Integer -> {
+            FieldType.Integer -> {
                 var v by value
                 ParamField(
                     value = v,
@@ -808,7 +808,7 @@ private fun ReportField(
                 }
             }
 
-            ParameterType.Decimal -> {
+            FieldType.Decimal -> {
                 var v by value
                 ParamField(
                     value = v,
@@ -822,11 +822,11 @@ private fun ReportField(
                 }
             }
 
-            ParameterType.Photo -> {
+            FieldType.Photo -> {
                 PhotoField(value, parameter)
             }
 
-            ParameterType.Bool -> Unit
+            FieldType.Bool -> Unit
         }
     }
 }
@@ -834,7 +834,7 @@ private fun ReportField(
 @Composable
 private fun PhotoField(
     value: MutableState<String>,
-    parameter: ReportParameter
+    parameter: FieldSpec
 ) {
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
@@ -1024,8 +1024,8 @@ private fun ExportButton(
 
 private val _reportSession = ReportSession(
     diagnosticSession = DiagnosticSession(
-        diagnosticObject = DiagnosticObject("", "", "Test Object"),
-        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+        route = Route("", "", "Test Object"),
+        section = Section("", "Test Area", "", "")
     ),
     diagnosticPoint = DiagnosticPoint("", "", "", "")
 )
@@ -1035,19 +1035,19 @@ private val _reportSession = ReportSession(
 private fun TechDiagnosticsScreenPreview() {
     AppState.reportConfig.value = ReportConfig(
         listOf(
-            ReportType(
+            ReportTemplate(
                 "foo0",
                 "Test", listOf(
-                    ReportParameter(
+                    FieldSpec(
                         "bar0",
                         "Very long and wordy parameter name with like lots of words in it " +
                                 "and that's why it doesn't even fit the screen",
-                        ParameterType.Bool
+                        FieldType.Bool
                     ),
-                    ReportParameter(
+                    FieldSpec(
                         "bar1",
                         "Some other parameter",
-                        ParameterType.Decimal,
+                        FieldType.Decimal,
                         "kV"
                     )
                 )
@@ -1066,19 +1066,19 @@ private fun TechDiagnosticsScreenPreview() {
 private fun ReportEditorPreview() {
     AppState.reportConfig.value = ReportConfig(
         listOf(
-            ReportType(
+            ReportTemplate(
                 "foo0",
                 "Test", listOf(
-                    ReportParameter(
+                    FieldSpec(
                         "bar0",
                         "Very long and wordy parameter name with like lots of words in it " +
                                 "and that's why it doesn't even fit the screen",
-                        ParameterType.Bool
+                        FieldType.Bool
                     ),
-                    ReportParameter(
+                    FieldSpec(
                         "bar1",
                         "Some other parameter",
-                        ParameterType.Decimal,
+                        FieldType.Decimal,
                         "kV"
                     )
                 )

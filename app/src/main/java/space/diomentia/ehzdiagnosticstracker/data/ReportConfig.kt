@@ -22,7 +22,7 @@ sealed class ReportFieldValue {
 }
 
 @Serializable
-enum class ParameterType {
+enum class FieldType {
     @SerialName("text")
     Text,
     @SerialName("bool")
@@ -40,34 +40,34 @@ enum class ParameterType {
         get() = this.name.lowercase()
 
     companion object {
-        fun parse(s: String): ParameterType? =
+        fun parse(s: String): FieldType? =
             entries.find { it.name.equals(s, ignoreCase = true) }
     }
 }
 
 @Serializable
-data class ReportParameter(
+data class FieldSpec(
     @SerialName("id") val id: String,
     @SerialName("name") val name: String,
-    @SerialName("type") val type: ParameterType,
+    @SerialName("type") val type: FieldType,
     @SerialName("unit") val unit: String? = null
 )
 
 @Serializable
-data class ReportType(
+data class ReportTemplate(
     @SerialName("id") val id: String,
     @SerialName("name") val name: String,
-    @SerialName("parameters") val parameters: List<ReportParameter>?
+    @SerialName("parameters") val specIds: List<FieldSpec>?
 )
 
 @Serializable
 data class ReportConfig(
-    @SerialName("report_types") val reportTypes: List<ReportType>
+    @SerialName("report_types") val templates: List<ReportTemplate>
 )
 
 @Serializable
 data class InitialAreaEntries(
-    @SerialName("diagnostic_objects") val diagnosticObjects: List<DiagnosticObject>,
-    @SerialName("diagnostic_areas") val diagnosticAreas: List<DiagnosticArea>,
+    @SerialName("diagnostic_objects") val routes: List<Route>,
+    @SerialName("diagnostic_areas") val sections: List<Section>,
     @SerialName("diagnostic_points") val diagnosticPoints: List<DiagnosticPoint>
 )

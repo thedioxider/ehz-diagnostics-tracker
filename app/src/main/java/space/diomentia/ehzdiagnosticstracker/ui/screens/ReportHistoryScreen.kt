@@ -46,15 +46,15 @@ import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
+import space.diomentia.ehzdiagnosticstracker.data.Section
+import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReport
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticReportWithData
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
-import space.diomentia.ehzdiagnosticstracker.data.ParameterType
+import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.ReportDataEntry
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
@@ -131,12 +131,12 @@ fun ReportHistoryScreen(
                 }
 
                 val history by ReportDatabase.getInstance()
-                    .diagnosticAreaDao()
-                    .getAreaPoints(diagnosticSession.diagnosticArea.id)
+                    .routeDao()
+                    .getSectionPoints(diagnosticSession.section.id)
                     .collectAsStateWithLifecycle(emptyList())
                 val reports = history.flatMap { point ->
                     ReportDatabase.getInstance()
-                        .diagnosticAreaDao()
+                        .routeDao()
                         .getPointReports(point.point.id)
                         .collectAsStateWithLifecycle(emptyList())
                         .value
@@ -193,7 +193,7 @@ private fun ReportItem(
     )
     val exportFilename = reportExporter.defaultFilename()
     val diagnosticPoint by ReportDatabase.getInstance()
-        .diagnosticAreaDao()
+        .routeDao()
         .getPointById(report.report.diagnosticPoint)
         .collectAsStateWithLifecycle(null)
     val exportFileLauncher = rememberLauncherForActivityResult(
@@ -271,14 +271,14 @@ private fun ReportDetailsDialog(
     onDismissRequest: () -> Unit
 ) {
     val parameters = AppState.reportConfig.value
-        ?.reportTypes
+        ?.templates
         ?.find { it.id == report.report.reportType }
-        ?.parameters
+        ?.specIds
         ?.asSequence()
         ?.map { it.id to it }
         ?.toMap()
     val reportType = AppState.reportConfig.value
-        ?.reportTypes
+        ?.templates
         ?.find { it.id == report.report.reportType }
         ?.name
 
@@ -286,14 +286,14 @@ private fun ReportDetailsDialog(
     fun DataEntryItem(entry: ReportDataEntry) {
         val parameter = parameters?.get(entry.characteristic)
         val value = when (parameter?.type) {
-            ParameterType.Bool -> when (ReportFieldValue.Bool.fromString(entry.value)) {
+            FieldType.Bool -> when (ReportFieldValue.Bool.fromString(entry.value)) {
                 true -> stringResource(R.string.is_true)
                 false -> stringResource(R.string.is_false)
                 else -> stringResource(R.string.unknown)
             }
 
-            ParameterType.Integer, ParameterType.Decimal,
-            ParameterType.Photo, ParameterType.Text, ParameterType.Raw, null -> entry.value
+            FieldType.Integer, FieldType.Decimal,
+            FieldType.Photo, FieldType.Text, FieldType.Raw, null -> entry.value
         } + (parameter?.unit?.let { " $it" } ?: "")
         Column(
             modifier = Modifier
@@ -303,8 +303,8 @@ private fun ReportDetailsDialog(
                 parameter?.name ?: entry.characteristic,
                 style = MaterialTheme.typography.titleSmall
             )
-            when (entry.datatype?.let { ParameterType.parse(it) }) {
-                ParameterType.Photo -> Text(
+            when (entry.datatype?.let { FieldType.parse(it) }) {
+                FieldType.Photo -> Text(
                     "[ ${stringResource(R.string.image)} ]",
                     fontStyle = FontStyle.Italic,
                     modifier = Modifier
@@ -422,8 +422,8 @@ private val previewReports = listOf(
 @Composable
 private fun ReportHistoryScreenPreview() = ReportHistoryScreen(
     DiagnosticSession(
-        diagnosticObject = DiagnosticObject("", "", "Test Object"),
-        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+        route = Route("", "", "Test Object"),
+        section = Section("", "Test Area", "", "")
     ), {}, {})
 
 @Preview

@@ -28,7 +28,7 @@ data class ReportSession(
             val report = reportDb.diagnosticReportDao()
                 .getReportByIdOnce(reportId)
             if (report == null) return null
-            val point = reportDb.diagnosticAreaDao()
+            val point = reportDb.routeDao()
                 .getPointByIdOnce(report.diagnosticPoint)
             if (point == null) return null
             val data = reportDb.diagnosticReportDao()
@@ -40,7 +40,7 @@ data class ReportSession(
                     Instant.ofEpochSecond(report.timestamp),
                     ZoneId.systemDefault()
                 ),
-                reportType = reportConfig.value?.reportTypes
+                reportType = reportConfig.value?.templates
                     ?.indexOfFirst { it.id == report.reportType }
                     ?.let { if (it != -1) it else null },
                 location = report.location,
@@ -66,12 +66,12 @@ data class ReportSession(
             || reportConfig == null
             || inspector == null
         ) return null
-        val typeConfig = reportConfig.reportTypes[diagnosticType]
+        val typeConfig = reportConfig.templates[diagnosticType]
         var report = DiagnosticReport(
             diagnosticPoint = diagnosticPoint.id,
             timestamp = dateTime.atZone(ZoneId.systemDefault()).toEpochSecond(),
             diagnosticsType = diagnosticSession.diagnosticType.toString(),
-            reportType = reportConfig.reportTypes[diagnosticType].id,
+            reportType = reportConfig.templates[diagnosticType].id,
             location = Coordinates(location.latitude, location.longitude),
             inspector = this.inspector ?: "${inspector.surname} ${inspector.name}",
             validationId = validationId
@@ -90,13 +90,13 @@ data class ReportSession(
                     report = newReportId,
                     characteristic = k,
                     value = v.value.toString(),
-                    datatype = typeConfig.parameters?.find { it.id == k }?.type?.datatype
+                    datatype = typeConfig.specIds?.find { it.id == k }?.type?.datatype
                 )
             }
             .toTypedArray()
         reportDb.diagnosticReportDao().insertData(*dataEntries)
-        reportDb.diagnosticAreaDao().updateDiagnosticArea(
-            diagnosticSession.diagnosticArea.copy(
+        reportDb.routeDao().updateSection(
+            diagnosticSession.section.copy(
                 lastLocation = Coordinates(
                     latitude = location.latitude,
                     longitude = location.longitude

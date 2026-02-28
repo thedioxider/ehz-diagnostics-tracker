@@ -48,20 +48,20 @@ object AppState {
                 resources?.openRawResource(R.raw.initial_area_entries)?.readBytes() ?: ByteArray(0)
             )
         )
-        initialAreaEntries.diagnosticObjects.forEach {
+        initialAreaEntries.routes.forEach {
             reportDb
-                .diagnosticAreaDao()
-                .insertDiagnosticObject(it)
+                .routeDao()
+                .insertRoute(it)
         }
-        initialAreaEntries.diagnosticAreas.forEach {
+        initialAreaEntries.sections.forEach {
             reportDb
-                .diagnosticAreaDao()
-                .insertDiagnosticArea(it)
+                .routeDao()
+                .insertSection(it)
         }
         initialAreaEntries.diagnosticPoints.forEach {
             reportDb
-                .diagnosticAreaDao()
-                .insertDiagnosticPoint(it)
+                .routeDao()
+                .insertPoint(it)
         }
     }
 

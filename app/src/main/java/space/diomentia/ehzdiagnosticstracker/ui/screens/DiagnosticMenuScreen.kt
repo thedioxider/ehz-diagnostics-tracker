@@ -49,8 +49,8 @@ import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
+import space.diomentia.ehzdiagnosticstracker.data.Section
+import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
@@ -79,8 +79,8 @@ fun DiagnosticMenuScreen(
     val context = LocalContext.current
     val snackbarHostState = LocalSnackbarHostState.current
     val history by ReportDatabase.getInstance()
-        .diagnosticAreaDao()
-        .getAreaPoints(diagnosticSession.diagnosticArea.id)
+        .routeDao()
+        .getSectionPoints(diagnosticSession.section.id)
         .collectAsStateWithLifecycle(emptyList())
     val latestReport = history.flatMap { it.history }.maxByOrNull { it.timestamp }
 
@@ -166,12 +166,12 @@ private fun AreaInfo(
         modifier = modifier
     ) {
         Text(
-            diagnosticSession.diagnosticObject.name,
+            diagnosticSession.route.name,
             textAlign = TextAlign.Companion.Center,
             style = MaterialTheme.typography.headlineSmall
         )
         Text(
-            "${stringResource(R.string.area)} ${diagnosticSession.diagnosticArea.name}",
+            "${stringResource(R.string.area)} ${diagnosticSession.section.name}",
             textAlign = TextAlign.Companion.Center,
             style = MaterialTheme.typography.headlineSmall
         )
@@ -269,7 +269,7 @@ private fun LastReport(
 ) {
     val context = LocalContext.current
     val diagnosticSession by LocalDiagnosticSession.current
-    val areaLastLocation = diagnosticSession.diagnosticArea.lastLocation
+    val areaLastLocation = diagnosticSession.section.lastLocation
     val rowHeight = 80.dp
 
     Column(
@@ -412,8 +412,8 @@ private fun DiagnosticsTypeSelector(
 private fun DiagnosticMenuScreenPreview() {
     AppState.reportConfig.value = ReportConfig(listOf())
     val diagnosticSession = DiagnosticSession(
-        diagnosticObject = DiagnosticObject("", "", "Test Object"),
-        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+        route = Route("", "", "Test Object"),
+        section = Section("", "Test Area", "", "")
     )
 
     PtmTheme {

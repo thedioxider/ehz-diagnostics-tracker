@@ -9,14 +9,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -42,8 +40,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
+import space.diomentia.ehzdiagnosticstracker.data.Section
+import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticPoint
 import space.diomentia.ehzdiagnosticstracker.data.DiagnosticSession
 import space.diomentia.ehzdiagnosticstracker.data.LocalDiagnosticSession
@@ -100,8 +98,8 @@ fun DiagnosticPointsScreen(
             ) { innerPadding ->
                 val diagnosticSession by LocalDiagnosticSession.current
                 val diagnosticPoints by ReportDatabase.getInstance()
-                    .diagnosticAreaDao()
-                    .getAreaPoints(diagnosticSession.diagnosticArea.id)
+                    .routeDao()
+                    .getSectionPoints(diagnosticSession.section.id)
                     .collectAsStateWithLifecycle(emptyList())
 
                 if (createPointRequest) {
@@ -231,18 +229,18 @@ private fun DiagnosticPointDialog(
         ),
         onAction = { v ->
             if (diagnosticPoint == null) {
-                ReportDatabase.getInstance(context).diagnosticAreaDao()
-                    .insertDiagnosticPoint(
+                ReportDatabase.getInstance(context).routeDao()
+                    .insertPoint(
                         DiagnosticPoint(
                             id = v[R.string.id]!!,
                             inventoryId = v[R.string.inventory_number]!!,
                             registrationNumber = v[R.string.id]!!,
-                            diagnosticArea = diagnosticSession.diagnosticArea.id
+                            sectionId = diagnosticSession.section.id
                         )
                     )
             } else {
-                ReportDatabase.getInstance(context).diagnosticAreaDao()
-                    .updateDiagnosticPoint(
+                ReportDatabase.getInstance(context).routeDao()
+                    .updatePoint(
                         diagnosticPoint.copy(inventoryId = v[R.string.inventory_number]!!)
                     )
             }
@@ -270,8 +268,8 @@ private fun DeletePointDialog(
     DeleteDialog(
         onDelete = {
             ReportDatabase.getInstance(context)
-                .diagnosticAreaDao()
-                .deleteDiagnosticPoint(diagnosticPoint)
+                .routeDao()
+                .deletePoint(diagnosticPoint)
             snacker.showMessage(context.getString(R.string.profile_deleted))
             onDismissRequest()
         },
@@ -287,6 +285,6 @@ private fun DeletePointDialog(
 @Composable
 private fun DiagnosticPointsScreenPreview() = DiagnosticPointsScreen(
     DiagnosticSession(
-        diagnosticObject = DiagnosticObject("", "", "Test Object"),
-        diagnosticArea = DiagnosticArea("", "Test Area", "", "")
+        route = Route("", "", "Test Object"),
+        section = Section("", "Test Area", "", "")
     ), {}, {})

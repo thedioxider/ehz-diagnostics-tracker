@@ -14,7 +14,7 @@ The app's requirements have evolved. The current structure (pre-created diagnost
 
 ---
 
-## Phase 1: Rename Entities & Config Restructure
+## Phase 1: Rename Entities & Config Restructure ✅
 
 ### 1a. Rename database entities
 
@@ -43,65 +43,13 @@ Rename classes and table names. Since the app uses `fallbackToDestructiveMigrati
 
 All screens and `AppNavigation.kt`: update references. Use IDE rename refactoring where possible.
 
-### 1b. Restructure YAML config
+### 1b. Restructure YAML config — **deferred to Phase 2**
 
-Change `report_conf.yaml` from report-type-centric to a flat parameter library + templates.
+Class renames done (`ParameterType` → `FieldType`, `ReportParameter` → `FieldSpec`, `ReportType` → `ReportTemplate`, `reportTypes` → `templates`). The full structural change (flat `field_specs` list + `templates` with `spec_ids` string references, deduplication, new YAML format) is deferred to Phase 2 since it's tightly coupled with the new data model.
 
-**New format for `ReportConfig`** (`data/ReportConfig.kt`):
+### 1c. Update initial data YAML
 
-```kotlin
-data class ReportConfig(
-    val fieldSpecs: List<FieldSpec>,      // flat list of all field definitions
-    val templates: List<ReportTemplate>   // groups of spec IDs
-)
-
-data class FieldSpec(
-    val id: String,
-    val name: String,
-    val type: FieldType,
-    val unit: String? = null
-)
-
-data class ReportTemplate(
-    val id: String,
-    val name: String,
-    val specIds: List<String>  // references into fieldSpecs list
-)
-```
-
-`ParameterType` → `FieldType`.
-
-**New `report_conf.yaml`** structure:
-
-```yaml
-field_specs:
-  - id: kilometer_location
-    name: Километраж
-    type: decimal
-  - id: 4528ba923e6204031d8ee663f6e1b018a6c86716
-    name: Сопротивление растеканию тока защитного заземления
-    type: decimal
-    unit: Ом
-  # ... all field specs from all report types, deduplicated
-
-templates:
-  - id: 85c906f60dff0f735be9ac84411d71e867e7104f
-    name: Состояние СКЗ (Станция Катодной Защиты)
-    spec_ids:
-      - kilometer_location
-      - 4528ba923e6204031d8ee663f6e1b018a6c86716
-      # ...
-```
-
-Add a helper on `ReportConfig` to resolve template → actual field specs:
-
-```kotlin
-fun resolveTemplate(template: ReportTemplate): List<FieldSpec>
-```
-
-### 1c. Update initial data YAML (demo-only, remove in final version)
-
-**`initial_area_entries.yaml`**: Demo fixture for pre-populating routes/sections for customer demos. Rename keys to `routes` and `sections`, remove `diagnostic_points` for now. **Remove entirely in the final version** along with its loading logic in `AppState.init()`.
+Updated field names in `initial_area_entries.yaml` (`diagnostic_object` → `route_id`, `diagnostic_area` → `section_id`). Top-level keys kept as-is (matching `InitialAreaEntries` SerialNames).
 
 **Files touched**: `ReportDatabase.kt`, `ReportConfig.kt`, `DiagnosticSession.kt` (→ rename), `AppState.kt`, `CompositionLocals.kt`, `AppNavigation.kt`, all screens, `report_conf.yaml`, `initial_area_entries.yaml`, `ReportExporter.kt`
 
@@ -111,7 +59,20 @@ fun resolveTemplate(template: ReportTemplate): List<FieldSpec>
 
 ## Phase 2: New Session & Site Data Model
 
-### 2a. New database entities
+### 2a. Revisit Route and Section entities
+
+The `Route` and `Section` classes inherited from Phase 1 likely have redundant fields from the old schema (e.g. `inventoryId`, `registrationNumber`, `dangerClass`, `additionalInfo`). Review and trim them to only what the new workflow needs before adding new entities.
+
+### 2b. Restructure YAML config (deferred from Phase 1)
+
+Change `report_conf.yaml` from report-type-centric to a flat parameter library + templates:
+- `field_specs`: flat list of all field definitions (deduplicated across all report types)
+- `templates`: named groups referencing spec IDs (strings, not embedded objects)
+- Update `ReportConfig` to have `fieldSpecs: List<FieldSpec>` + `templates: List<ReportTemplate>`
+- `ReportTemplate.specIds` becomes `List<String>` (references) instead of `List<FieldSpec>` (embedded)
+- Add `ReportConfig.resolveTemplate(template: ReportTemplate): List<FieldSpec>` helper
+
+### 2c. New database entities
 
 Add to `ReportDatabase.kt`:
 
@@ -170,7 +131,7 @@ data class ReportField(
 - Sites ordered by `timestamp` within a report
 - Fields for a site
 
-### 2b. Session state management
+### 2d. Session state management
 
 **`data/SessionManager.kt`** (new): Facade over `ReportDao`. No in-memory state duplication — all data lives in Room, read reactively via `Flow`.
 
@@ -206,7 +167,7 @@ How it works:
 - Every mutation method (`addSite`, `updateFieldValue`, etc.) writes to Room via DAO — Room triggers flow re-emission → UI updates
 - Auto-save is inherent: data is always in the database, never only in memory
 
-### 2c. Remove old entities
+### 2e. Remove old entities
 
 Drop `DiagnosticPoint`, `DiagnosticReport`, `ReportDataEntry`, `DiagnosticPointWithHistory`, `DiagnosticReportWithData`, `DiagnosticReportDao`. Remove old `ReportSession.kt` and rename `DiagnosticSession` → `ReportSession` (+ `LocalDiagnosticSession` → `LocalReportSession`).
 

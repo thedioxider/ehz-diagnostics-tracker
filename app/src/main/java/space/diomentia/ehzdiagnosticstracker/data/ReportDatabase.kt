@@ -3,7 +3,6 @@ package space.diomentia.ehzdiagnosticstracker.data
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.room.AutoMigration
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -25,22 +24,18 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Database(
-    version = 6,
+    version = 7,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
-        DiagnosticObject::class,
-        DiagnosticArea::class,
+        Route::class,
+        Section::class,
         DiagnosticPoint::class
-    ],
-    autoMigrations = [
-        AutoMigration(from = 3, to = 5),
-        AutoMigration(from = 5, to = 6)
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
     abstract fun diagnosticReportDao(): DiagnosticReportDao
-    abstract fun diagnosticAreaDao(): DiagnosticAreaDao
+    abstract fun routeDao(): RouteDao
 
     companion object {
         const val DB_NAME = "report-db"
@@ -66,7 +61,7 @@ abstract class ReportDatabase : RoomDatabase() {
 data class Coordinates(
     @ColumnInfo(name = "latitude") @SerialName("latitude")
     val latitude: Double,
-    @ColumnInfo(name = "altitude") @SerialName("altitude")
+    @ColumnInfo(name = "longitude") @SerialName("longitude")
     val longitude: Double
 )
 
@@ -153,8 +148,8 @@ interface DiagnosticReportDao {
 }
 
 @Serializable
-@Entity(tableName = "diagnostic_objects")
-data class DiagnosticObject(
+@Entity(tableName = "routes")
+data class Route(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
     @ColumnInfo(name = "inventory_id") @SerialName("inventory_id")
@@ -172,14 +167,14 @@ data class DiagnosticObject(
 }
 
 @Serializable
-@Entity(tableName = "diagnostic_areas")
-data class DiagnosticArea(
+@Entity(tableName = "sections")
+data class Section(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
     @ColumnInfo(name = "name") @SerialName("name")
     val name: String,
-    @ColumnInfo(name = "diagnostic_object") @SerialName("diagnostic_object")
-    val diagnosticObject: String,
+    @ColumnInfo(name = "route_id") @SerialName("route_id")
+    val routeId: String,
     @ColumnInfo(name = "danger_class") @SerialName("danger_class")
     val dangerClass: String,
     @Embedded(prefix = "last_") @SerialName("last_location")
@@ -199,8 +194,8 @@ data class DiagnosticArea(
 data class DiagnosticPoint(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
-    @ColumnInfo(name = "diagnostic_area") @SerialName("diagnostic_area")
-    val diagnosticArea: String,
+    @ColumnInfo(name = "section_id") @SerialName("section_id")
+    val sectionId: String,
     @ColumnInfo(name = "inventory_id") @SerialName("inventory_id")
     val inventoryId: String,
     @ColumnInfo(name = "registration_number") @SerialName("registration_number")
@@ -217,22 +212,13 @@ data class DiagnosticPoint(
     }
 }
 
-data class DiagnosticObjectWithAreas(
-    @Embedded val diagnosticObject: DiagnosticObject,
+data class RouteWithSections(
+    @Embedded val route: Route,
     @Relation(
         parentColumn = "id",
-        entityColumn = "diagnostic_object"
-    ) val areas: List<DiagnosticArea>
+        entityColumn = "route_id"
+    ) val sections: List<Section>
 )
-
-data class DiagnosticAreaWithPoints(
-    @Embedded val diagnosticArea: DiagnosticArea,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "diagnostic_area"
-    ) val points: List<DiagnosticPoint>
-)
-
 
 data class DiagnosticPointWithHistory(
     @Embedded val point: DiagnosticPoint,
@@ -243,24 +229,23 @@ data class DiagnosticPointWithHistory(
 )
 
 @Dao
-interface DiagnosticAreaDao {
+interface RouteDao {
     @Transaction
-    @Query("SELECT * FROM diagnostic_objects ORDER BY name ASC")
-    fun getAllObjects(): Flow<List<DiagnosticObjectWithAreas>>
-
-    @Transaction
-    @Query("SELECT * FROM diagnostic_objects WHERE id = :id")
-    fun getObjectById(id: String): Flow<DiagnosticObjectWithAreas>
-
-    @Query("SELECT * FROM diagnostic_objects WHERE id = :id")
-    fun getObjectByIdOnce(id: String): DiagnosticObject?
+    @Query("SELECT * FROM routes ORDER BY name ASC")
+    fun getAllRoutes(): Flow<List<RouteWithSections>>
 
     @Transaction
-    @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
-    fun getAreaById(id: String): Flow<DiagnosticAreaWithPoints>
+    @Query("SELECT * FROM routes WHERE id = :id")
+    fun getRouteById(id: String): Flow<RouteWithSections>
 
-    @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
-    fun getAreaByIdOnce(id: String): DiagnosticArea?
+    @Query("SELECT * FROM routes WHERE id = :id")
+    fun getRouteByIdOnce(id: String): Route?
+
+    @Query("SELECT * FROM sections WHERE id = :id")
+    fun getSectionById(id: String): Flow<Section>
+
+    @Query("SELECT * FROM sections WHERE id = :id")
+    fun getSectionByIdOnce(id: String): Section?
 
     @Transaction
     @Query("SELECT * FROM diagnostic_points WHERE id = :id")
@@ -269,42 +254,41 @@ interface DiagnosticAreaDao {
     @Query("SELECT * FROM diagnostic_points WHERE id = :id")
     fun getPointByIdOnce(id: String): DiagnosticPoint?
 
-    @Transaction
-    @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject ORDER BY id ASC")
-    fun getObjectAreas(diagnosticObject: String): Flow<List<DiagnosticAreaWithPoints>>
+    @Query("SELECT * FROM sections WHERE route_id = :routeId ORDER BY id ASC")
+    fun getRouteSections(routeId: String): Flow<List<Section>>
 
     @Transaction
-    @Query("SELECT * FROM diagnostic_points WHERE diagnostic_area = :diagnosticArea ORDER BY id ASC")
-    fun getAreaPoints(diagnosticArea: String): Flow<List<DiagnosticPointWithHistory>>
+    @Query("SELECT * FROM diagnostic_points WHERE section_id = :sectionId ORDER BY id ASC")
+    fun getSectionPoints(sectionId: String): Flow<List<DiagnosticPointWithHistory>>
 
     @Transaction
     @Query("SELECT * FROM diagnostic_reports WHERE diagnostic_point = :diagnosticPoint ORDER BY id ASC")
     fun getPointReports(diagnosticPoint: String): Flow<List<DiagnosticReportWithData>>
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertDiagnosticObject(diagnosticObject: DiagnosticObject)
+    fun insertRoute(route: Route)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertDiagnosticArea(diagnosticArea: DiagnosticArea)
+    fun insertSection(section: Section)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertDiagnosticPoint(diagnosticPoint: DiagnosticPoint)
+    fun insertPoint(diagnosticPoint: DiagnosticPoint)
 
     @Update
-    fun updateDiagnosticObject(diagnosticObject: DiagnosticObject)
+    fun updateRoute(route: Route)
 
     @Update
-    fun updateDiagnosticArea(area: DiagnosticArea)
+    fun updateSection(area: Section)
 
     @Update
-    fun updateDiagnosticPoint(point: DiagnosticPoint)
+    fun updatePoint(point: DiagnosticPoint)
 
     @Delete
-    fun deleteDiagnosticObject(diagnosticObject: DiagnosticObject)
+    fun deleteRoute(route: Route)
 
     @Delete
-    fun deleteDiagnosticArea(area: DiagnosticArea)
+    fun deleteSection(area: Section)
 
     @Delete
-    fun deleteDiagnosticPoint(point: DiagnosticPoint)
+    fun deletePoint(point: DiagnosticPoint)
 }

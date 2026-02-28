@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticArea
-import space.diomentia.ehzdiagnosticstracker.data.DiagnosticObject
+import space.diomentia.ehzdiagnosticstracker.data.Section
+import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -60,10 +60,10 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 @Composable
 fun DiagnosticObjectsScreen(
     onAuthorize: () -> Unit,
-    onAreaChosen: (DiagnosticObject, DiagnosticArea) -> Unit
+    onAreaChosen: (Route, Section) -> Unit
 ) {
     var createObjectRequest by remember { mutableStateOf(false) }
-    var selectedDiagnosticObject: DiagnosticObject? by remember { mutableStateOf(null) }
+    var selectedRoute: Route? by remember { mutableStateOf(null) }
 
     PtmTheme {
         Scaffold(
@@ -95,8 +95,8 @@ fun DiagnosticObjectsScreen(
             }
         ) { innerPadding ->
             val diagnosticObjects by ReportDatabase.Companion.getInstance()
-                .diagnosticAreaDao()
-                .getAllObjects()
+                .routeDao()
+                .getAllRoutes()
                 .collectAsStateWithLifecycle(emptyList())
 
             if (createObjectRequest) {
@@ -117,13 +117,13 @@ fun DiagnosticObjectsScreen(
                 return@Scaffold
             }
 
-            var addAreaRequest by remember { mutableStateOf<DiagnosticObject?>(null) }
+            var addAreaRequest by remember { mutableStateOf<Route?>(null) }
             addAreaRequest?.let { diagnosticObject ->
                 DiagnosticAreaDialog(diagnosticObject.id, null) { addAreaRequest = null }
             }
 
-            var editObjectRequest by remember { mutableStateOf<DiagnosticObject?>(null) }
-            var deleteObjectRequest: DiagnosticObject? by remember { mutableStateOf(null) }
+            var editObjectRequest by remember { mutableStateOf<Route?>(null) }
+            var deleteObjectRequest: Route? by remember { mutableStateOf(null) }
             editObjectRequest?.let {
                 DiagnosticObjectDialog(
                     editObjectRequest,
@@ -131,11 +131,11 @@ fun DiagnosticObjectsScreen(
                 ) { editObjectRequest = null }
             }
 
-            var editAreaRequest by remember { mutableStateOf<DiagnosticArea?>(null) }
-            var deleteAreaRequest: DiagnosticArea? by remember { mutableStateOf(null) }
+            var editAreaRequest by remember { mutableStateOf<Section?>(null) }
+            var deleteAreaRequest: Section? by remember { mutableStateOf(null) }
             editAreaRequest?.let { diagnosticArea ->
                 DiagnosticAreaDialog(
-                    diagnosticArea.diagnosticObject,
+                    diagnosticArea.routeId,
                     diagnosticArea,
                     onDelete = { deleteAreaRequest = diagnosticArea },
                     onDismissRequest = { editAreaRequest = null }
@@ -150,51 +150,51 @@ fun DiagnosticObjectsScreen(
                 DeleteAreaDialog(diagnosticArea) { deleteAreaRequest = null }
             }
 
-            val selectedObjectAreas by selectedDiagnosticObject?.let {
+            val selectedObjectAreas by selectedRoute?.let {
                 ReportDatabase.getInstance()
-                    .diagnosticAreaDao()
-                    .getObjectAreas(it.id)
+                    .routeDao()
+                    .getRouteSections(it.id)
                     .collectAsStateWithLifecycle(emptyList())
             } ?: remember { mutableStateOf(emptyList()) }
             FullscreenLazyColumn(innerPadding) {
                 items(diagnosticObjects) { diagnosticObject ->
                     AnimatedVisibility(
-                        selectedDiagnosticObject == null || selectedDiagnosticObject?.id == diagnosticObject.diagnosticObject.id
+                        selectedRoute == null || selectedRoute?.id == diagnosticObject.route.id
                     ) {
                         DiagnosticObjectItem(
-                            diagnosticObject.diagnosticObject.name,
-                            onBack = if (selectedDiagnosticObject?.id == diagnosticObject.diagnosticObject.id) { ->
-                                selectedDiagnosticObject = null
+                            diagnosticObject.route.name,
+                            onBack = if (selectedRoute?.id == diagnosticObject.route.id) { ->
+                                selectedRoute = null
                             } else null,
-                            onClick = if (selectedDiagnosticObject == null) { ->
-                                selectedDiagnosticObject = diagnosticObject.diagnosticObject
+                            onClick = if (selectedRoute == null) { ->
+                                selectedRoute = diagnosticObject.route
                             } else null,
                             onLongClick = {
                                 if (AppState.adminSession) {
-                                    editObjectRequest = diagnosticObject.diagnosticObject
+                                    editObjectRequest = diagnosticObject.route
                                 }
                             },
-                            onNew = if (selectedDiagnosticObject?.id == diagnosticObject.diagnosticObject.id
+                            onNew = if (selectedRoute?.id == diagnosticObject.route.id
                                 && AppState.adminSession
                             ) { ->
-                                addAreaRequest = diagnosticObject.diagnosticObject
+                                addAreaRequest = diagnosticObject.route
                             } else null
                         )
                     }
                 }
-                items(selectedObjectAreas) { area ->
-                    AnimatedVisibility(selectedDiagnosticObject != null) {
+                items(selectedObjectAreas) { section ->
+                    AnimatedVisibility(selectedRoute != null) {
                         DiagnosticAreaItem(
-                            area.diagnosticArea.name,
+                            section.name,
                             modifier = Modifier.Companion.padding(start = 64.dp),
                             onLongClick = {
                                 if (AppState.adminSession) {
-                                    editAreaRequest = area.diagnosticArea
+                                    editAreaRequest = section
                                 }
                             }
                         ) {
-                            selectedDiagnosticObject?.let { diagnosticObject ->
-                                onAreaChosen(diagnosticObject, area.diagnosticArea)
+                            selectedRoute?.let { route ->
+                                onAreaChosen(route, section)
                             }
                         }
                     }
@@ -326,7 +326,7 @@ private fun DiagnosticObjectItem(
 
 @Composable
 private fun DiagnosticObjectDialog(
-    diagnosticObject: DiagnosticObject?,
+    route: Route?,
     onDelete: () -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
@@ -336,33 +336,33 @@ private fun DiagnosticObjectDialog(
         fields = listOf(
             R.string.registration_number to DialogField(
                 stringResource(R.string.registration_number),
-                checker = { DiagnosticObject.checkId(it) },
+                checker = { Route.checkId(it) },
                 supportingText = stringResource(R.string.only_letters_or_numbers),
-                mutable = diagnosticObject == null,
-                initValue = diagnosticObject?.id,
+                mutable = route == null,
+                initValue = route?.id,
                 keyboardType = KeyboardType.Ascii
             ),
             R.string.name to DialogField(
                 stringResource(R.string.name),
-                checker = { DiagnosticObject.checkName(it) },
+                checker = { Route.checkName(it) },
                 supportingText = stringResource(R.string.only_letters_or_numbers),
-                initValue = diagnosticObject?.name
+                initValue = route?.name
             )
         ),
         onAction = { v ->
-            if (diagnosticObject == null) {
-                ReportDatabase.getInstance(context).diagnosticAreaDao()
-                    .insertDiagnosticObject(
-                        DiagnosticObject(
+            if (route == null) {
+                ReportDatabase.getInstance(context).routeDao()
+                    .insertRoute(
+                        Route(
                             id = v[R.string.registration_number]!!,
                             inventoryId = v[R.string.registration_number]!!,
                             name = v[R.string.name]!!
                         )
                     )
             } else {
-                ReportDatabase.getInstance(context).diagnosticAreaDao()
-                    .updateDiagnosticObject(
-                        diagnosticObject.copy(name = v[R.string.name]!!)
+                ReportDatabase.getInstance(context).routeDao()
+                    .updateRoute(
+                        route.copy(name = v[R.string.name]!!)
                     )
             }
             onDismissRequest()
@@ -370,7 +370,7 @@ private fun DiagnosticObjectDialog(
         actionLabel = {
             Text(
                 stringResource(
-                    if (diagnosticObject == null)
+                    if (route == null)
                         R.string.create
                     else R.string.save
                 )
@@ -380,11 +380,11 @@ private fun DiagnosticObjectDialog(
             onDelete()
             onDismissRequest()
         },
-        secondaryActionLabel = if (diagnosticObject != null) { -> Text(stringResource(R.string.delete)) } else null,
+        secondaryActionLabel = if (route != null) { -> Text(stringResource(R.string.delete)) } else null,
         label = {
             Text(
                 stringResource(
-                    if (diagnosticObject == null)
+                    if (route == null)
                         R.string.create_object
                     else R.string.edit_object
                 )
@@ -397,7 +397,7 @@ private fun DiagnosticObjectDialog(
 @Composable
 private fun DiagnosticAreaDialog(
     diagnosticObjectId: String,
-    diagnosticArea: DiagnosticArea?,
+    section: Section?,
     onDelete: () -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
@@ -407,52 +407,52 @@ private fun DiagnosticAreaDialog(
         fields = listOf(
             R.string.registration_number to DialogField(
                 stringResource(R.string.registration_number),
-                checker = { DiagnosticArea.checkId(it) },
+                checker = { Section.checkId(it) },
                 supportingText = stringResource(R.string.only_letters_or_numbers),
-                mutable = diagnosticArea == null,
-                initValue = diagnosticArea?.id,
+                mutable = section == null,
+                initValue = section?.id,
                 keyboardType = KeyboardType.Ascii
             ),
             R.string.name to DialogField(
                 stringResource(R.string.name),
-                checker = { DiagnosticArea.checkName(it) },
+                checker = { Section.checkName(it) },
                 supportingText = stringResource(R.string.only_letters_or_numbers),
-                initValue = diagnosticArea?.name
+                initValue = section?.name
             )
         ),
         onAction = { v ->
-            if (diagnosticArea == null) {
-                ReportDatabase.getInstance(context).diagnosticAreaDao()
-                    .insertDiagnosticArea(
-                        DiagnosticArea(
+            if (section == null) {
+                ReportDatabase.getInstance(context).routeDao()
+                    .insertSection(
+                        Section(
                             id = v[R.string.registration_number]!!,
                             name = v[R.string.name]!!,
-                            diagnosticObject = diagnosticObjectId,
+                            routeId = diagnosticObjectId,
                             dangerClass = "0"
                         )
                     )
             } else {
-                ReportDatabase.getInstance(context).diagnosticAreaDao()
-                    .updateDiagnosticArea(
-                        diagnosticArea.copy(name = v[R.string.name]!!)
+                ReportDatabase.getInstance(context).routeDao()
+                    .updateSection(
+                        section.copy(name = v[R.string.name]!!)
                     )
             }
             onDismissRequest()
         },
-        actionLabel = { Text(stringResource(if (diagnosticArea == null) R.string.create else R.string.save)) },
+        actionLabel = { Text(stringResource(if (section == null) R.string.create else R.string.save)) },
         onSecondaryAction = {
             onDelete()
             onDismissRequest()
         },
-        secondaryActionLabel = if (diagnosticArea != null) { -> Text(stringResource(R.string.delete)) } else null,
-        label = { Text(stringResource(if (diagnosticArea == null) R.string.create_area else R.string.edit_area)) },
+        secondaryActionLabel = if (section != null) { -> Text(stringResource(R.string.delete)) } else null,
+        label = { Text(stringResource(if (section == null) R.string.create_area else R.string.edit_area)) },
         onCancel = onDismissRequest
     )
 }
 
 @Composable
 private fun DeleteObjectDialog(
-    diagnosticObject: DiagnosticObject,
+    route: Route,
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
@@ -461,21 +461,21 @@ private fun DeleteObjectDialog(
     DeleteDialog(
         onDelete = {
             ReportDatabase.getInstance(context)
-                .diagnosticAreaDao()
-                .deleteDiagnosticObject(diagnosticObject)
+                .routeDao()
+                .deleteRoute(route)
             snacker.showMessage(context.getString(R.string.profile_deleted))
             onDismissRequest()
         },
         label = { Text("${stringResource(R.string.delete_object)}?") },
         onCancel = onDismissRequest,
-        name = diagnosticObject.name,
-        details = diagnosticObject.id
+        name = route.name,
+        details = route.id
     )
 }
 
 @Composable
 private fun DeleteAreaDialog(
-    diagnosticArea: DiagnosticArea,
+    section: Section,
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
@@ -484,15 +484,15 @@ private fun DeleteAreaDialog(
     DeleteDialog(
         onDelete = {
             ReportDatabase.getInstance(context)
-                .diagnosticAreaDao()
-                .deleteDiagnosticArea(diagnosticArea)
+                .routeDao()
+                .deleteSection(section)
             snacker.showMessage(context.getString(R.string.profile_deleted))
             onDismissRequest()
         },
         label = { Text("${stringResource(R.string.delete_area)}?") },
         onCancel = onDismissRequest,
-        name = diagnosticArea.name,
-        details = diagnosticArea.id
+        name = section.name,
+        details = section.id
     )
 }
 
@@ -512,7 +512,7 @@ private fun AddObjectDialogPreview() = PtmTheme {
 @Composable
 private fun EditObjectDialogPreview() = PtmTheme {
     DiagnosticObjectChooseScreenPreview()
-    DiagnosticObjectDialog(DiagnosticObject("testes", "test", "Test"), {}, {})
+    DiagnosticObjectDialog(Route("testes", "test", "Test"), {}, {})
 }
 
 @Preview
@@ -526,5 +526,5 @@ private fun AddAreaDialogPreview() = PtmTheme {
 @Composable
 private fun DeleteObjectDialogPreview() = PtmTheme {
     DiagnosticObjectChooseScreenPreview()
-    DeleteObjectDialog(DiagnosticObject("tsetsetset", "testse", "Test"), {})
+    DeleteObjectDialog(Route("tsetsetset", "testse", "Test"), {})
 }

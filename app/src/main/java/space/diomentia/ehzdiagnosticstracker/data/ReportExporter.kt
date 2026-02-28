@@ -18,9 +18,9 @@ class ReportExporter(
     @Serializable
     data class ExportReport(
         @SerialName("timestamp") val timestamp: Long,
-        @SerialName("diagnostic_object") val diagnosticObject: ExportDiagnosticObject,
-        @SerialName("diagnostic_area") val diagnosticArea: ExportDiagnosticArea,
-        @SerialName("diagnostic_point") val diagnosticPoint: ExportDiagnosticPoint,
+        @SerialName("diagnostic_object") val diagnosticObject: ExportRoute,
+        @SerialName("diagnostic_area") val diagnosticArea: ExportSection,
+        @SerialName("diagnostic_point") val diagnosticPoint: ExportSite,
         @SerialName("diagnostics_type") val diagnosticsType: String,
         @SerialName("report_type") val reportType: String,
         @SerialName("location") val location: Coordinates,
@@ -41,23 +41,23 @@ class ReportExporter(
                     .getReportByIdOnce(reportId)
                     ?: return null
                 val reportTypeConfig = reportConfig
-                    ?.reportTypes
+                    ?.templates
                     ?.find { it.id == r.reportType }
                 val data = db.diagnosticReportDao().getReportDataOnce(r.id)
                     .map { ExportDataEntry(it, reportTypeConfig) }
                 val diagnosticPoint =
-                    db.diagnosticAreaDao().getPointByIdOnce(r.diagnosticPoint) ?: return null
+                    db.routeDao().getPointByIdOnce(r.diagnosticPoint) ?: return null
                 val diagnosticArea =
-                    db.diagnosticAreaDao().getAreaByIdOnce(diagnosticPoint.diagnosticArea)
+                    db.routeDao().getSectionByIdOnce(diagnosticPoint.sectionId)
                         ?: return null
                 val diagnosticObject =
-                    db.diagnosticAreaDao().getObjectByIdOnce(diagnosticArea.diagnosticObject)
+                    db.routeDao().getRouteByIdOnce(diagnosticArea.routeId)
                         ?: return null
                 return ExportReport(
                     timestamp = r.timestamp,
-                    diagnosticObject = ExportDiagnosticObject(diagnosticObject),
-                    diagnosticArea = ExportDiagnosticArea(diagnosticArea),
-                    diagnosticPoint = ExportDiagnosticPoint(diagnosticPoint),
+                    diagnosticObject = ExportRoute(diagnosticObject),
+                    diagnosticArea = ExportSection(diagnosticArea),
+                    diagnosticPoint = ExportSite(diagnosticPoint),
                     diagnosticsType = r.diagnosticsType,
                     reportType = r.reportType,
                     location = r.location,
@@ -70,12 +70,12 @@ class ReportExporter(
         }
 
         @Serializable
-        data class ExportDiagnosticObject(
+        data class ExportRoute(
             @SerialName("id") val id: String,
             @SerialName("name") val name: String,
             @SerialName("additional_info") val additionalInfo: String? = null
         ) {
-            constructor(ref: DiagnosticObject) : this(
+            constructor(ref: Route) : this(
                 id = ref.id,
                 name = ref.name,
                 additionalInfo = ref.additionalInfo
@@ -83,13 +83,13 @@ class ReportExporter(
         }
 
         @Serializable
-        data class ExportDiagnosticArea(
+        data class ExportSection(
             @SerialName("id") val id: String,
             @SerialName("name") val name: String,
             @SerialName("danger_class") val dangerClass: String,
             @SerialName("additional_info") val additionalInfo: String? = null
         ) {
-            constructor(ref: DiagnosticArea) : this(
+            constructor(ref: Section) : this(
                 id = ref.id,
                 name = ref.name,
                 dangerClass = ref.dangerClass,
@@ -98,7 +98,7 @@ class ReportExporter(
         }
 
         @Serializable
-        data class ExportDiagnosticPoint(
+        data class ExportSite(
             @SerialName("id") val id: String,
             @SerialName("name") val name: String,
             @SerialName("additional_info") val additionalInfo: String? = null
@@ -118,12 +118,12 @@ class ReportExporter(
             @SerialName("datatype") var datatype: String? = null,
             @SerialName("unit") var unit: String? = null
         ) {
-            constructor(ref: ReportDataEntry, reportType: ReportType? = null) : this(
+            constructor(ref: ReportDataEntry, reportTemplate: ReportTemplate? = null) : this(
                 characteristic = ref.characteristic,
                 value = ref.value
             ) {
-                val paramConfig = reportType
-                    ?.parameters
+                val paramConfig = reportTemplate
+                    ?.specIds
                     ?.find { it.id == characteristic }
                 name = paramConfig?.name
                 datatype = paramConfig?.type?.datatype
