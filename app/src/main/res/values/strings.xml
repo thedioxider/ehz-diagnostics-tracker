@@ -125,6 +125,7 @@
     <string name="image">Изображение</string>
     <string name="unable_access_camera">Не удалось получить доступ к камере</string>
     <string name="location_site">Точка местоположения</string>
+    <string name="zero_km">Нулевой километр</string>
     <string name="measurement_site">Точка диагностирования</string>
     <string name="position_km">Позиция, км</string>
     <string name="coordinates">Координаты</string>
