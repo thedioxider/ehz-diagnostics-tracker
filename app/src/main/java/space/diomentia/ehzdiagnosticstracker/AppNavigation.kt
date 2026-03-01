@@ -51,7 +51,8 @@ sealed class Screen(val route: String) {
         fun open(reportId: String) = "report/$reportId"
     }
 
-    object ReportList : Screen("report_list?$ARG_ROUTE_ID={$ARG_ROUTE_ID}&$ARG_SECTION_ID={$ARG_SECTION_ID}") {
+    object ReportList :
+        Screen("report_list?$ARG_ROUTE_ID={$ARG_ROUTE_ID}&$ARG_SECTION_ID={$ARG_SECTION_ID}") {
         fun open(routeId: String? = null, sectionId: String? = null) =
             "report_list?$ARG_ROUTE_ID=${routeId ?: ""}&$ARG_SECTION_ID=${sectionId ?: ""}"
     }
@@ -167,8 +168,9 @@ fun AppNavigation() {
                             return@RouteSelectionScreen
                         }
                         val isNew = sessionManager.startOrResumeSession(route, section)
+                        val needsZeroKm = isNew || sessionManager.hasNoSites()
                         navController.navigate(
-                            if (isNew) Screen.LocationSiteEditor.create()
+                            if (needsZeroKm) Screen.LocationSiteEditor.create()
                             else Screen.SessionHub.route
                         )
                     },
@@ -220,6 +222,8 @@ fun AppNavigation() {
             ) { backStackEntry ->
                 val siteId = backStackEntry.arguments?.getString(Screen.ARG_SITE_ID)
                     ?.takeIf { it != "_" }
+                val isZeroKmCreation = siteId == null &&
+                        (navController.previousBackStackEntry?.destination?.route == Screen.RouteSelection.route)
                 LocationSiteEditorScreen(
                     siteId = siteId,
                     onSaved = {
@@ -233,7 +237,12 @@ fun AppNavigation() {
                             }
                         }
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = {
+                        if (isZeroKmCreation) {
+                            sessionManager.cancelReport()
+                        }
+                        navController.popBackStack()
+                    }
                 )
             }
 

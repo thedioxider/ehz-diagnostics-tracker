@@ -10,6 +10,13 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
 
     var profile: Profile? = null
 
+    fun hasNoSites(): Boolean {
+        val reportId = activeReportId ?: return true
+        val report = dao.getReportByIdOnce(reportId) ?: return true
+        return dao.getActiveReportForSectionOnce(report.sectionId)
+            ?.sites.isNullOrEmpty()
+    }
+
     val fullReport: Flow<FullReport?>
         get() = activeReportId?.let { dao.getFullReport(it) } ?: flowOf(null)
 
@@ -121,6 +128,13 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
 
     fun removeFieldFromSite(siteId: String, specId: String) {
         dao.deleteFieldByKey(siteId, specId)
+    }
+
+    fun cancelReport() {
+        val reportId = activeReportId ?: return
+        val report = dao.getReportByIdOnce(reportId) ?: return
+        dao.deleteReport(report)
+        activeReportId = null
     }
 
     fun completeReport() {

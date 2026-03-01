@@ -118,9 +118,8 @@ private fun ReportScreenContent(
                         onBack()
                     }
                 },
-                actions = {
-                    // TODO: export report button
-                }
+                // TODO: export report button
+                actions = null
             )
         }
     ) { innerPadding ->
