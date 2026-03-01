@@ -146,7 +146,10 @@
     <string name="preview">Просмотр</string>
     <string name="new_measurement_site">Новая точка измерения</string>
     <string name="new_location_marker">Новая точка местоположения</string>
+    <string name="new_location_marker_short">Маркер</string>
     <string name="view_report">Просмотреть отчёт</string>
+    <string name="view_report_short">Отчёт</string>
+    <string name="open_last_site_on_map_short">Карта</string>
     <string name="complete_session">Завершить сессию</string>
     <string name="session_completed">Сессия завершена</string>
     <string name="open_last_site_on_map">Открыть последнюю точку на карте</string>
@@ -158,6 +161,10 @@
     <string name="location_only">Местоположение</string>
     <string name="confirm_complete_session">Завершить текущую сессию?</string>
     <string name="no_active_session">Нет активной сессии</string>
+    <string name="unsaved_draft_exists">Есть несохранённый черновик</string>
+    <string name="continue_draft">Продолжить черновик</string>
+    <string name="delete_draft_and_create">Удалить и создать новую</string>
+    <string name="confirm_delete_draft">Удалить несохранённый черновик?</string>
     <string name="report_list">История отчётов</string>
     <string name="not_set">—</string>
     <string name="lipsum"> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris consequat, augue sed pulvinar sodales, sem lectus volutpat lacus, eget tincidunt felis lacus eu tellus. Nulla posuere id ante vel fermentum. Maecenas rutrum dui nec est ornare, sit amet pellentesque lectus ultricies. Nam a vehicula eros. Aliquam id ligula leo. Etiam vel ante sed eros ultricies molestie vel sed nisl. In nec felis vitae sem ullamcorper lacinia. Cras leo nunc, luctus non gravida vitae, interdum quis nisi. Aliquam eget interdum justo. Vestibulum sit amet lorem lectus. Nam bibendum odio vel justo egestas, et sagittis risus dignissim. Duis ut elit accumsan, pretium lectus et, commodo leo. Nullam lobortis est at elementum blandit. Morbi vel tellus in sapien condimentum egestas eu id purus.</string>

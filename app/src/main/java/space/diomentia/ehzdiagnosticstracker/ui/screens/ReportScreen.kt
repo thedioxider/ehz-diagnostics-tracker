@@ -40,6 +40,8 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.Report
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportField
+import space.diomentia.ehzdiagnosticstracker.data.Route
+import space.diomentia.ehzdiagnosticstracker.data.Section
 import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
@@ -282,6 +284,8 @@ private val previewReport = FullReport(
         inspectorName = "Иванов И.И.",
         startTime = 1700000000
     ),
+    route = Route("route1", "Газопровод Тест"),
+    section = Section("section1", "ПК 0 — ПК 10", "route1"),
     sites = previewSites
 )
 
@@ -305,7 +309,9 @@ private fun ReportScreenEmptyPreview() {
         ReportScreenContent(
             fullReport = FullReport(
                 report = previewReport.report,
-                sites = emptyList()
+                sites = emptyList(),
+                route = previewReport.route,
+                section = previewReport.section
             ),
             onSiteClicked = { _, _ -> },
             onDeleteSite = {},

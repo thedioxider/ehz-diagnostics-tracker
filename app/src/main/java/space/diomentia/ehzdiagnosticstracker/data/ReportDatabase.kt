@@ -363,7 +363,17 @@ data class FullReport(
         parentColumn = "id",
         entityColumn = "report_id"
     )
-    val sites: List<SiteWithFields>
+    val sites: List<SiteWithFields>,
+    @Relation(
+        parentColumn = "route_id",
+        entityColumn = "id"
+    )
+    val route: Route?,
+    @Relation(
+        parentColumn = "section_id",
+        entityColumn = "id"
+    )
+    val section: Section?
 )
 
 @Dao
