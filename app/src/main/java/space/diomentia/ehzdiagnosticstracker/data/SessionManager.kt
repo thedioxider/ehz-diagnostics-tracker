@@ -8,22 +8,29 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     var activeReportId: String? = null
         private set
 
+    var profile: Profile? = null
+
     val fullReport: Flow<FullReport?>
         get() = activeReportId?.let { dao.getFullReport(it) } ?: flowOf(null)
 
-    fun startReport(route: Route, section: Section, inspectorName: String): String {
+    fun startOrResumeSession(route: Route, section: Section): Boolean {
+        val active = dao.getActiveReportForSectionOnce(section.id)
+        if (active != null) {
+            activeReportId = active.report.id
+            return false
+        }
         val id = UUID.randomUUID().toString()
         dao.insertReport(
             Report(
                 id = id,
                 routeId = route.id,
                 sectionId = section.id,
-                inspectorName = inspectorName,
+                inspectorName = profile?.fullName ?: "",
                 startTime = System.currentTimeMillis() / 1000
             )
         )
         activeReportId = id
-        return id
+        return true
     }
 
     fun resumeReport(reportId: String) {
