@@ -1,5 +1,9 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
+// TODO: Rewrite for new data model (Report/Site/ReportField).
+//  Old implementation preserved below for reference.
+
+/*
 import android.content.ContentResolver
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
@@ -144,3 +148,4 @@ class ReportExporter(
         return@withContext true
     }
 }
+*/

@@ -76,6 +76,5 @@ data class ReportConfig(
 @Serializable
 data class InitialAreaEntries(
     @SerialName("diagnostic_objects") val routes: List<Route>,
-    @SerialName("diagnostic_areas") val sections: List<Section>,
-    @SerialName("diagnostic_points") val diagnosticPoints: List<DiagnosticPoint>
+    @SerialName("diagnostic_areas") val sections: List<Section>
 )

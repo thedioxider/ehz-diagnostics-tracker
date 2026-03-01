@@ -58,11 +58,6 @@ object AppState {
                 .routeDao()
                 .insertSection(it)
         }
-        initialAreaEntries.diagnosticPoints.forEach {
-            reportDb
-                .routeDao()
-                .insertPoint(it)
-        }
     }
 
     var adminSession by mutableStateOf(false)
