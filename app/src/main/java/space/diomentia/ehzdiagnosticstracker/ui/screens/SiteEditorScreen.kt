@@ -177,7 +177,7 @@ private fun SitePreviewContent(
     // Position
     site.positionKm?.let { km ->
         Text(
-            "${stringResource(R.string.position_km)}: ${"%.3f".format(km)}",
+            "${stringResource(R.string.position_km)}: ${"%.2f".format(km)}",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -303,7 +303,7 @@ private fun SiteEditContent(
 
     // Position (editable)
     var positionKmText by remember(site.positionKm) {
-        mutableStateOf(site.positionKm?.let { "%.3f".format(it) } ?: "")
+        mutableStateOf(site.positionKm?.let { "%.2f".format(it) } ?: "")
     }
     Text(
         stringResource(R.string.position_km),

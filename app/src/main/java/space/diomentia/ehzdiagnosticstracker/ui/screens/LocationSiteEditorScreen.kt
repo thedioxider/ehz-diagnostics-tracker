@@ -137,7 +137,7 @@ fun LocationSiteEditorScreen(
                             results
                         )
                         val displacementKm = results[0] / 1000.0
-                        positionKmText = "%.3f".format(previousSite.positionKm + displacementKm)
+                        positionKmText = "%.2f".format(previousSite.positionKm + displacementKm)
                     } else {
                         positionKmText = "0.0"
                     }

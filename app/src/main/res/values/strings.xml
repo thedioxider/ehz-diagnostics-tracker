@@ -62,6 +62,8 @@
     <string name="cancel">Отмена</string>
     <string name="remove">Удалить</string>
     <string name="question_delete_report">Вы точно хотите удалить этот отчёт?</string>
+    <string name="question_delete_site">Удалить эту точку?</string>
+    <string name="cannot_delete_zero_km">Невозможно удалить нулевой километр</string>
     <string name="is_true">Да</string>
     <string name="is_false">Нет</string>
     <string name="now_you_pay_us">Период пользования истёк</string>
