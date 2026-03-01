@@ -10,6 +10,7 @@ import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.ui.setupEdgeToEdge
+import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -21,7 +22,9 @@ class MainActivity : ComponentActivity() {
                 LocalCoroutineScope provides lifecycleScope,
                 LocalSnackbarHostState provides SnackbarHostState()
             ) {
-                AppNavigation()
+                PtmTheme {
+                    AppNavigation()
+                }
             }
         }
     }

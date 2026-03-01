@@ -63,102 +63,100 @@ fun AuthorizationScreen(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     var adminPasswordRequest by remember { mutableStateOf(false) }
-    val profiles by ProfileDatabase.Companion.getInstance()
+    val profiles by ProfileDatabase.getInstance()
         .profileDao()
         .getProfiles()
         .collectAsStateWithLifecycle(emptyList())
 
-    PtmTheme {
-        Scaffold(
-            snackbarHost = { PtmSnackbarHost(snackbarHostState) },
-            topBar = { PtmTopBar(title = { Text(stringResource(R.string.authorization)) }) },
-            bottomBar = {
-                PtmBottomBar(
-                    actions = {
+    Scaffold(
+        snackbarHost = { PtmSnackbarHost(snackbarHostState) },
+        topBar = { PtmTopBar(title = { Text(stringResource(R.string.authorization)) }) },
+        bottomBar = {
+            PtmBottomBar(
+                actions = {
+                    ActionButton(
+                        painterResource(R.drawable.ic_manage_accounts),
+                        label = "${stringResource(R.string.login_as)} ${stringResource(R.string.administrator)}",
+                        tint = if (AppState.adminSession)
+                            MaterialTheme.colorScheme.background
+                        else
+                            MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .background(
+                                color = if (AppState.adminSession)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    Color.Transparent,
+                                shape = RectangleShape
+                            )
+                    ) { adminPasswordRequest = true }
+                    if (AppState.adminSession) {
                         ActionButton(
-                            painterResource(R.drawable.ic_manage_accounts),
-                            label = "${stringResource(R.string.login_as)} ${stringResource(R.string.administrator)}",
-                            tint = if (AppState.adminSession)
-                                MaterialTheme.colorScheme.background
-                            else
-                                MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.Companion
-                                .background(
-                                    color = if (AppState.adminSession)
-                                        MaterialTheme.colorScheme.primary
-                                    else
-                                        Color.Companion.Transparent,
-                                    shape = RectangleShape
-                                )
-                        ) { adminPasswordRequest = true }
-                        if (AppState.adminSession) {
-                            ActionButton(
-                                rememberVectorPainter(Icons.Outlined.Edit),
-                                label = stringResource(R.string.edit_profile)
-                            ) {
-                                onEditProfile()
-                            }
-                        }
-                    }
-                )
-            }
-        ) { innerPadding ->
-            if (adminPasswordRequest) AuthorizeDialog(null) { adminPasswordRequest = false }
-
-            var addUserRequest by remember { mutableStateOf(false) }
-            if (addUserRequest) {
-                AddProfileDialog { addUserRequest = false }
-            }
-
-            var authorizeRequest by remember { mutableStateOf<Profile?>(null) }
-            authorizeRequest?.let {
-                AuthorizeDialog(authorizeRequest, onAuthorized) { authorizeRequest = null }
-            }
-
-            FullscreenLazyColumn(
-                innerPadding,
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(profiles) { profile ->
-                    ProfileItem(profile) {
-                        if (AppState.adminSession) {
-                            AppState.profileSession = profile
-                        }
-                        if (AppState.profileSession == profile) {
-                            onAuthorized()
-                        } else {
-                            authorizeRequest = profile
+                            rememberVectorPainter(Icons.Outlined.Edit),
+                            label = stringResource(R.string.edit_profile)
+                        ) {
+                            onEditProfile()
                         }
                     }
                 }
-                item {
-                    PtmFilledButton(
-                        onClick = {
-                            if (!AppState.adminSession) {
-                                coroutineScope?.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(context.getString(R.string.authorize_as_admin))
-                                }
-                                return@PtmFilledButton
+            )
+        }
+    ) { innerPadding ->
+        if (adminPasswordRequest) AuthorizeDialog(null) { adminPasswordRequest = false }
+
+        var addUserRequest by remember { mutableStateOf(false) }
+        if (addUserRequest) {
+            AddProfileDialog { addUserRequest = false }
+        }
+
+        var authorizeRequest by remember { mutableStateOf<Profile?>(null) }
+        authorizeRequest?.let {
+            AuthorizeDialog(authorizeRequest, onAuthorized) { authorizeRequest = null }
+        }
+
+        FullscreenLazyColumn(
+            innerPadding,
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(profiles) { profile ->
+                ProfileItem(profile) {
+                    if (AppState.adminSession) {
+                        AppState.profileSession = profile
+                    }
+                    if (AppState.profileSession == profile) {
+                        onAuthorized()
+                    } else {
+                        authorizeRequest = profile
+                    }
+                }
+            }
+            item {
+                PtmFilledButton(
+                    onClick = {
+                        if (!AppState.adminSession) {
+                            coroutineScope?.launch {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                snackbarHostState.showSnackbar(context.getString(R.string.authorize_as_admin))
                             }
-                            addUserRequest = true
-                        },
-                        modifier = Modifier.Companion.padding(8.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.Companion.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Outlined.Add,
-                                contentDescription = stringResource(R.string.add_profile)
-                            )
-                            Text(
-                                stringResource(R.string.add_profile),
-                                modifier = Modifier.Companion.padding(start = 8.dp)
-                            )
+                            return@PtmFilledButton
                         }
+                        addUserRequest = true
+                    },
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Outlined.Add,
+                            contentDescription = stringResource(R.string.add_profile)
+                        )
+                        Text(
+                            stringResource(R.string.add_profile),
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
                     }
                 }
             }
@@ -296,7 +294,7 @@ private fun ProfileItem(
 
 @Preview
 @Composable
-private fun AuthorizationScreenPreview() = AuthorizationScreen({}, {})
+private fun AuthorizationScreenPreview() = PtmTheme { AuthorizationScreen({}, {}) }
 
 @Preview
 @Composable

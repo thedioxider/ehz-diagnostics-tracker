@@ -18,21 +18,19 @@ import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
 fun OutOfServiceScreen() {
-    PtmTheme {
-        Scaffold { innerPadding ->
-            Box(
-                contentAlignment = Alignment.Companion.Center,
-                modifier = Modifier.Companion
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                Text(
-                    "${stringResource(R.string.now_you_pay_us)}\n:(",
-                    style = MaterialTheme.typography.headlineLarge,
-                    textAlign = TextAlign.Companion.Center,
-                    modifier = Modifier.Companion.padding(24.dp)
-                )
-            }
+    Scaffold { innerPadding ->
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            Text(
+                "${stringResource(R.string.now_you_pay_us)}\n:(",
+                style = MaterialTheme.typography.headlineLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(24.dp)
+            )
         }
     }
 }
@@ -40,4 +38,4 @@ fun OutOfServiceScreen() {
 
 @Preview
 @Composable
-private fun OutOfServiceScreenPreview() = OutOfServiceScreen()
+private fun OutOfServiceScreenPreview() = PtmTheme { OutOfServiceScreen() }

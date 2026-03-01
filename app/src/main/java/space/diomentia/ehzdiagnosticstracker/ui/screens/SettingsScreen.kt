@@ -32,31 +32,29 @@ fun SettingsScreen(
             AppState.reportConfig.value = it
         }
 
-    PtmTheme {
-        Scaffold(
-            topBar = { PtmTopBar { Text(stringResource(R.string.settings)) } },
-            bottomBar = {
-                PtmBottomBar(
-                    navigation = {
-                        ActionButton(
-                            icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
-                            label = stringResource(R.string.back)
-                        ) {
-                            onBack()
-                        }
+    Scaffold(
+        topBar = { PtmTopBar { Text(stringResource(R.string.settings)) } },
+        bottomBar = {
+            PtmBottomBar(
+                navigation = {
+                    ActionButton(
+                        icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                        label = stringResource(R.string.back)
+                    ) {
+                        onBack()
                     }
-                )
-            },
-            snackbarHost = { PtmSnackbarHost(snackbarHostState) }
-        ) { innerPadding ->
-            ScrollableColumn(innerPadding) {
-                SettingsOption(
-                    label = stringResource(R.string.report_configuration),
-                    secondaryLabel = stringResource(R.string.report_configuration_description),
-                    icon = painterResource(R.drawable.ic_file_open)
-                ) {
-                    reportConfigChooser.launch(arrayOf("application/*"))
                 }
+            )
+        },
+        snackbarHost = { PtmSnackbarHost(snackbarHostState) }
+    ) { innerPadding ->
+        ScrollableColumn(innerPadding) {
+            SettingsOption(
+                label = stringResource(R.string.report_configuration),
+                secondaryLabel = stringResource(R.string.report_configuration_description),
+                icon = painterResource(R.drawable.ic_file_open)
+            ) {
+                reportConfigChooser.launch(arrayOf("application/*"))
             }
         }
     }
@@ -65,4 +63,4 @@ fun SettingsScreen(
 
 @Preview
 @Composable
-private fun SettingsScreenPreview() = SettingsScreen({})
+private fun SettingsScreenPreview() = PtmTheme { SettingsScreen({}) }
