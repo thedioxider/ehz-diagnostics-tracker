@@ -79,12 +79,12 @@ fun ActionCancelDialog(
                             enabled = secondaryActionEnabled,
                             onClick = onSecondaryAction,
                             content = secondaryActionLabel,
-                            modifier = Modifier.padding(start = 8.dp)
+                            modifier = Modifier.padding(start = 4.dp)
                         )
                     }
                     PtmFilledIconButton(
                         onClick = onCancel,
-                        modifier = Modifier.padding(start = 8.dp),
+                        modifier = Modifier.padding(start = 4.dp),
                     ) {
                         Icon(
                             Icons.Outlined.Close,

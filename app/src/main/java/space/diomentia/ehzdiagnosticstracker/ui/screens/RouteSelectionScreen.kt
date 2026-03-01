@@ -1,0 +1,555 @@
+package space.diomentia.ehzdiagnosticstracker.ui.screens
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.Route
+import space.diomentia.ehzdiagnosticstracker.data.Section
+import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
+import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
+import space.diomentia.ehzdiagnosticstracker.ui.DeleteDialog
+import space.diomentia.ehzdiagnosticstracker.ui.DialogField
+import space.diomentia.ehzdiagnosticstracker.ui.EditFieldsDialog
+import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
+import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
+import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
+import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
+import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+
+@Composable
+fun RouteSelectionScreen(
+    onAuthorize: () -> Unit,
+    onSectionChosen: (Route, Section) -> Unit,
+    onHistory: (routeId: String?, sectionId: String?) -> Unit
+) {
+    var selectedRoute: Route? by remember { mutableStateOf(null) }
+
+    // Admin CRUD state
+    var createRouteRequest by remember { mutableStateOf(false) }
+    var editRouteRequest by remember { mutableStateOf<Route?>(null) }
+    var deleteRouteRequest by remember { mutableStateOf<Route?>(null) }
+    var addSectionRequest by remember { mutableStateOf<Route?>(null) }
+    var editSectionRequest by remember { mutableStateOf<Section?>(null) }
+    var deleteSectionRequest by remember { mutableStateOf<Section?>(null) }
+
+    // Section action dialog state
+    var sectionActionTarget by remember { mutableStateOf<Section?>(null) }
+
+    // Dialogs
+    if (createRouteRequest) {
+        RouteDialog(null) { createRouteRequest = false }
+    }
+    editRouteRequest?.let {
+        RouteDialog(
+            it,
+            onDelete = { deleteRouteRequest = it }
+        ) { editRouteRequest = null }
+    }
+    deleteRouteRequest?.let { route ->
+        DeleteRouteDialog(route) { deleteRouteRequest = null }
+    }
+    addSectionRequest?.let { route ->
+        SectionDialog(route.id, null) { addSectionRequest = null }
+    }
+    editSectionRequest?.let { section ->
+        SectionDialog(
+            section.routeId,
+            section,
+            onDelete = { deleteSectionRequest = section },
+            onDismissRequest = { editSectionRequest = null }
+        )
+    }
+    deleteSectionRequest?.let { section ->
+        DeleteSectionDialog(section) { deleteSectionRequest = null }
+    }
+
+    sectionActionTarget?.let { section ->
+        ActionCancelDialog(
+            onAction = {
+                sectionActionTarget = null
+                selectedRoute?.let { route -> onSectionChosen(route, section) }
+            },
+            actionLabel = { Text(stringResource(R.string.start_diagnostics)) },
+            onCancel = { sectionActionTarget = null },
+            onSecondaryAction = {
+                sectionActionTarget = null
+                onHistory(null, section.id)
+            },
+            secondaryActionLabel = { Text(stringResource(R.string.report_list)) }
+        ) {
+            Text(
+                "${stringResource(R.string.area)} ${section.name}",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
+        topBar = {
+            PtmTopBar(title = {
+                Text(stringResource(R.string.diagnostic_object))
+            })
+        },
+        bottomBar = {
+            PtmBottomBar(
+                navigation = {
+                    ActionButton(
+                        painterResource(R.drawable.ic_person),
+                        label = stringResource(R.string.authorization)
+                    ) {
+                        onAuthorize()
+                    }
+                }
+            )
+        }
+    ) { innerPadding ->
+        val diagnosticObjects by ReportDatabase.getInstance()
+            .routeDao()
+            .getAllRoutes()
+            .collectAsStateWithLifecycle(emptyList())
+
+        if (diagnosticObjects.isEmpty()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Text(
+                    stringResource(R.string.entries_not_found),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.alpha(.3f)
+                )
+            }
+            return@Scaffold
+        }
+
+        val selectedRouteSections by selectedRoute?.let {
+            ReportDatabase.getInstance()
+                .routeDao()
+                .getRouteSections(it.id)
+                .collectAsStateWithLifecycle(emptyList())
+        } ?: remember { mutableStateOf(emptyList()) }
+
+        FullscreenLazyColumn(innerPadding) {
+            items(diagnosticObjects) { routeWithSections ->
+                AnimatedVisibility(
+                    selectedRoute == null || selectedRoute?.id == routeWithSections.route.id
+                ) {
+                    RouteItem(
+                        routeWithSections.route.name,
+                        onBack = if (selectedRoute?.id == routeWithSections.route.id) { ->
+                            selectedRoute = null
+                        } else null,
+                        onClick = if (selectedRoute == null) { ->
+                            selectedRoute = routeWithSections.route
+                        } else null,
+                        onLongClick = if (AppState.adminSession) { ->
+                            editRouteRequest = routeWithSections.route
+                        } else null,
+                        onHistory = if (selectedRoute?.id == routeWithSections.route.id) { ->
+                            onHistory(routeWithSections.route.id, null)
+                        } else null
+                    )
+                }
+            }
+            items(selectedRouteSections) { section ->
+                AnimatedVisibility(selectedRoute != null) {
+                    SectionItem(
+                        section.name,
+                        modifier = Modifier.padding(start = 64.dp),
+                        onClick = { sectionActionTarget = section },
+                        onLongClick = if (AppState.adminSession) { ->
+                            editSectionRequest = section
+                        } else null
+                    )
+                }
+            }
+            if (selectedRoute != null && AppState.adminSession) {
+                item {
+                    AddItemButton(
+                        label = stringResource(R.string.add_section),
+                        modifier = Modifier.padding(start = 64.dp),
+                        onClick = { addSectionRequest = selectedRoute }
+                    )
+                }
+            }
+            if (selectedRoute == null && AppState.adminSession) {
+                item {
+                    AddItemButton(
+                        label = stringResource(R.string.add_object),
+                        onClick = { createRouteRequest = true }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddItemButton(
+    label: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(16.dp)
+            .then(modifier)
+    ) {
+        Icon(
+            Icons.Outlined.Add,
+            contentDescription = null,
+            modifier = Modifier
+                .padding(end = 12.dp)
+                .alpha(.5f)
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.alpha(.5f)
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SectionItem(
+    name: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
+            .padding(16.dp)
+            .defaultMinSize(minHeight = 24.dp)
+            .height(IntrinsicSize.Min)
+            .then(modifier)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f)
+        ) {
+            Text(
+                "${stringResource(R.string.area)} $name",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun RouteItem(
+    name: String,
+    modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
+    onHistory: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                enabled = onClick != null,
+                onClick = onClick ?: {},
+                onLongClick = onLongClick
+            )
+            .padding(24.dp)
+            .defaultMinSize(minHeight = 36.dp)
+            .height(IntrinsicSize.Min)
+            .then(modifier)
+    ) {
+        AnimatedVisibility(onBack != null) {
+            Icon(
+                Icons.AutoMirrored.Outlined.ArrowBack,
+                contentDescription = null,
+                modifier = Modifier
+                    .clickable(onClick = onBack ?: {})
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
+                    .padding(end = 12.dp)
+            )
+        }
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f)
+        ) {
+            Text(
+                name,
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
+        AnimatedVisibility(onHistory != null) {
+            Icon(
+                painterResource(R.drawable.ic_history),
+                contentDescription = stringResource(R.string.report_list),
+                modifier = Modifier
+                    .clickable(onClick = onHistory ?: {})
+                    .fillMaxHeight()
+                    .aspectRatio(1f)
+                    .padding(end = 12.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RouteDialog(
+    route: Route?,
+    onDelete: () -> Unit = {},
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+
+    EditFieldsDialog(
+        fields = listOf(
+            R.string.registration_number to DialogField(
+                stringResource(R.string.registration_number),
+                checker = { Route.checkId(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                mutable = route == null,
+                initValue = route?.id,
+                keyboardType = KeyboardType.Ascii
+            ),
+            R.string.name to DialogField(
+                stringResource(R.string.name),
+                checker = { Route.checkName(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                initValue = route?.name
+            )
+        ),
+        onAction = { v ->
+            if (route == null) {
+                ReportDatabase.getInstance(context).routeDao()
+                    .insertRoute(
+                        Route(
+                            id = v[R.string.registration_number]!!,
+                            name = v[R.string.name]!!
+                        )
+                    )
+            } else {
+                ReportDatabase.getInstance(context).routeDao()
+                    .updateRoute(
+                        route.copy(name = v[R.string.name]!!)
+                    )
+            }
+            onDismissRequest()
+        },
+        actionLabel = {
+            Text(
+                stringResource(
+                    if (route == null) R.string.create
+                    else R.string.save
+                )
+            )
+        },
+        onSecondaryAction = {
+            onDelete()
+            onDismissRequest()
+        },
+        secondaryActionLabel = if (route != null) { -> Text(stringResource(R.string.delete)) } else null,
+        label = {
+            Text(
+                stringResource(
+                    if (route == null) R.string.create_object
+                    else R.string.edit_object
+                )
+            )
+        },
+        onCancel = onDismissRequest
+    )
+}
+
+@Composable
+private fun SectionDialog(
+    routeId: String,
+    section: Section?,
+    onDelete: () -> Unit = {},
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+
+    EditFieldsDialog(
+        fields = listOf(
+            R.string.registration_number to DialogField(
+                stringResource(R.string.registration_number),
+                checker = { Section.checkId(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                mutable = section == null,
+                initValue = section?.id,
+                keyboardType = KeyboardType.Ascii
+            ),
+            R.string.name to DialogField(
+                stringResource(R.string.name),
+                checker = { Section.checkName(it) },
+                supportingText = stringResource(R.string.only_letters_or_numbers),
+                initValue = section?.name
+            )
+        ),
+        onAction = { v ->
+            if (section == null) {
+                ReportDatabase.getInstance(context).routeDao()
+                    .insertSection(
+                        Section(
+                            id = v[R.string.registration_number]!!,
+                            name = v[R.string.name]!!,
+                            routeId = routeId
+                        )
+                    )
+            } else {
+                ReportDatabase.getInstance(context).routeDao()
+                    .updateSection(
+                        section.copy(name = v[R.string.name]!!)
+                    )
+            }
+            onDismissRequest()
+        },
+        actionLabel = { Text(stringResource(if (section == null) R.string.create else R.string.save)) },
+        onSecondaryAction = {
+            onDelete()
+            onDismissRequest()
+        },
+        secondaryActionLabel = if (section != null) { -> Text(stringResource(R.string.delete)) } else null,
+        label = { Text(stringResource(if (section == null) R.string.create_area else R.string.edit_area)) },
+        onCancel = onDismissRequest
+    )
+}
+
+@Composable
+private fun DeleteRouteDialog(
+    route: Route,
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+    val snacker = rememberSnacker()
+
+    DeleteDialog(
+        onDelete = {
+            ReportDatabase.getInstance(context)
+                .routeDao()
+                .deleteRoute(route)
+            snacker.showMessage(context.getString(R.string.profile_deleted))
+            onDismissRequest()
+        },
+        label = { Text("${stringResource(R.string.delete_object)}?") },
+        onCancel = onDismissRequest,
+        name = route.name,
+        details = route.id
+    )
+}
+
+@Composable
+private fun DeleteSectionDialog(
+    section: Section,
+    onDismissRequest: () -> Unit
+) {
+    val context = LocalContext.current
+    val snacker = rememberSnacker()
+
+    DeleteDialog(
+        onDelete = {
+            ReportDatabase.getInstance(context)
+                .routeDao()
+                .deleteSection(section)
+            snacker.showMessage(context.getString(R.string.profile_deleted))
+            onDismissRequest()
+        },
+        label = { Text("${stringResource(R.string.delete_area)}?") },
+        onCancel = onDismissRequest,
+        name = section.name,
+        details = section.id
+    )
+}
+
+// --- Previews ---
+
+@Preview
+@Composable
+private fun RouteSelectionScreenPreview() = PtmTheme {
+    RouteSelectionScreen({}, { _, _ -> }, { _, _ -> })
+}
+
+@Preview
+@Composable
+private fun AddRouteDialogPreview() = PtmTheme {
+    RouteDialog(null) {}
+}
+
+@Preview
+@Composable
+private fun EditRouteDialogPreview() = PtmTheme {
+    RouteDialog(Route("testes", "Test"), {}, {})
+}
+
+@Preview
+@Composable
+private fun AddSectionDialogPreview() = PtmTheme {
+    SectionDialog("", null) {}
+}
+
+@Preview
+@Composable
+private fun DeleteRouteDialogPreview() = PtmTheme {
+    DeleteRouteDialog(Route("tsetsetset", "Test"), {})
+}
