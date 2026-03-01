@@ -10,6 +10,9 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
 
     var profile: Profile? = null
 
+    fun getSite(siteId: String): Site? = dao.getSiteByIdOnce(siteId)
+    fun getFieldsForSite(siteId: String): List<ReportField> = dao.getFieldsForSiteOnce(siteId)
+
     fun hasNoSites(): Boolean {
         val reportId = activeReportId ?: return true
         val report = dao.getReportByIdOnce(reportId) ?: return true
@@ -122,6 +125,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     }
 
     fun removeSite(siteId: String) {
+        // TODO: no removing fields of site?
         val site = dao.getSiteByIdOnce(siteId) ?: return
         dao.deleteSite(site)
     }

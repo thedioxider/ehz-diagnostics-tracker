@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.icu.text.DecimalFormatSymbols
 import android.provider.MediaStore
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -44,11 +43,15 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -64,6 +67,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
@@ -72,6 +76,11 @@ import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.BuildConfig
 import space.diomentia.ehzdiagnosticstracker.R
@@ -85,8 +94,12 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportField
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
+import space.diomentia.ehzdiagnosticstracker.data.ReportTemplate
+import space.diomentia.ehzdiagnosticstracker.data.SessionManager
+import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.FieldSpecChooserDialog
@@ -98,11 +111,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.TemplateChooserDialog
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.tooling.preview.Preview
-import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
-import space.diomentia.ehzdiagnosticstracker.data.SessionManager
-import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -115,19 +123,19 @@ fun SiteEditorScreen(
     initialEditMode: Boolean = false,
     onBack: () -> Unit
 ) {
-    val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
     val sessionManager = LocalSessionManager.current
+
+    var editMode by remember { mutableStateOf(initialEditMode) }
+    val currentSite = remember(siteId, editMode) { sessionManager.getSite(siteId) }
+    if (currentSite == null) return
 
     val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
     val siteWithFields = remember(fullReport, siteId) {
         fullReport?.sites?.find { it.site.id == siteId }
-    }
+    } ?: return
 
-    var editMode by remember { mutableStateOf(initialEditMode) }
-
-    if (siteWithFields == null) return
+    val editState = rememberSiteEditState(currentSite)
 
     Scaffold(
         topBar = {
@@ -155,9 +163,9 @@ fun SiteEditorScreen(
             Spacer(Modifier.height(16.dp))
 
             if (editMode) {
-                SiteEditContent(siteWithFields!!, onBack)
-            } else {
-                SitePreviewContent(siteWithFields!!) { editMode = true }
+                SiteEditContent(editState) { editMode = false }
+            } else if (siteWithFields != null) {
+                SitePreviewContent(siteWithFields) { editMode = true }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -292,33 +300,18 @@ private fun formatFieldValue(field: ReportField): String {
 
 @Composable
 private fun SiteEditContent(
-    siteWithFields: SiteWithFields,
-    onBack: () -> Unit
+    editState: SiteEditState,
+    onSave: () -> Unit
 ) {
-    val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    val sessionManager = LocalSessionManager.current
-    val site = siteWithFields.site
-
     // Position (editable)
-    var positionKmText by remember(site.positionKm) {
-        mutableStateOf(site.positionKm?.let { "%.2f".format(it) } ?: "")
-    }
     Text(
         stringResource(R.string.position_km),
         style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.padding(bottom = 4.dp)
     )
     TextField(
-        value = positionKmText,
-        onValueChange = { input ->
-            positionKmText = input.filter { it.isDigit() || it == '.' || it == ',' }
-            val parsed = positionKmText.replace(',', '.').toDoubleOrNull()
-            if (parsed != null && parsed >= 0.0) {
-                sessionManager.updateSitePosition(site.id, parsed)
-            }
-        },
+        value = editState.positionKmText,
+        onValueChange = { editState.positionKmText = it },
         placeholder = {
             Text(
                 stringResource(R.string.input_value),
@@ -337,12 +330,12 @@ private fun SiteEditContent(
     )
 
     // GPS
-    GpsSection(site.id)
+    GpsSection(editState)
 
     Spacer(Modifier.height(16.dp))
 
     // QR Scan
-    QrScanSection(site.id)
+    QrScanSection(editState)
 
     Spacer(Modifier.height(16.dp))
 
@@ -376,7 +369,7 @@ private fun SiteEditContent(
         TemplateChooserDialog(
             templates = config.templates,
             onTemplateChosen = { template ->
-                sessionManager.applyTemplateToSite(site.id, template)
+                editState.applyTemplate(template)
             },
             onCancel = { showTemplateDialog = false }
         )
@@ -384,9 +377,9 @@ private fun SiteEditContent(
     if (showFieldSpecDialog && config != null) {
         FieldSpecChooserDialog(
             allSpecs = config.fieldSpecs,
-            addedSpecIds = siteWithFields.fields.map { it.specId }.toSet(),
+            addedSpecIds = editState.fieldSpecs.map { it.specId }.toSet(),
             onSpecsChosen = { specs ->
-                specs.forEach { sessionManager.addFieldToSite(site.id, it) }
+                specs.forEach { editState.addField(it) }
             },
             onCancel = { showFieldSpecDialog = false }
         )
@@ -396,7 +389,7 @@ private fun SiteEditContent(
 
     // Fields editor
     var manageFields by remember { mutableStateOf(false) }
-    if (siteWithFields.fields.isNotEmpty()) {
+    if (editState.fieldSpecs.isNotEmpty()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -416,7 +409,7 @@ private fun SiteEditContent(
         }
     }
 
-    siteWithFields.fields.forEach { field ->
+    editState.fieldSpecs.forEach { field ->
         val fieldType = FieldType.parse(field.type)
         if (fieldType != null) {
             Row(
@@ -427,7 +420,8 @@ private fun SiteEditContent(
                     EditableField(
                         field = field,
                         fieldType = fieldType,
-                        siteId = site.id,
+                        value = editState.fieldValues[field.specId] ?: "",
+                        onValueChange = { editState.fieldValues[field.specId] = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp)
@@ -436,7 +430,7 @@ private fun SiteEditContent(
                 AnimatedVisibility(manageFields) {
                     PtmFilledIconButton(
                         onClick = {
-                            sessionManager.removeFieldFromSite(site.id, field.specId)
+                            editState.removeField(field.specId)
                         }
                     ) {
                         Icon(
@@ -454,8 +448,8 @@ private fun SiteEditContent(
     // Save button
     PtmFilledButton(
         onClick = {
-            sessionManager.confirmSite(site.id)
-            onBack()
+            editState.saveAndConfirm()
+            onSave()
         },
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -484,11 +478,10 @@ private fun SiteEditContent(
 }
 
 @Composable
-private fun GpsSection(siteId: String) {
+private fun GpsSection(editState: SiteEditState) {
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val sessionManager = LocalSessionManager.current
     val locationProvider = LocalLocationProvider.current
         ?: LocationServices.getFusedLocationProviderClient(context)
 
@@ -523,7 +516,8 @@ private fun GpsSection(siteId: String) {
             .build()
         locationProvider.getCurrentLocation(request, null)
             .addOnSuccessListener {
-                sessionManager.updateSiteCoordinates(siteId, it.latitude, it.longitude)
+                editState.latitude = it.latitude
+                editState.longitude = it.longitude
             }
             .addOnFailureListener {
                 coroutineScope?.launch {
@@ -562,21 +556,18 @@ private fun GpsSection(siteId: String) {
 }
 
 @Composable
-private fun QrScanSection(siteId: String) {
+private fun QrScanSection(editState: SiteEditState) {
     val context = LocalContext.current
-    val sessionManager = LocalSessionManager.current
 
     val qrLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode != Activity.RESULT_OK) return@rememberLauncherForActivityResult
         val data = result.data?.getStringExtra(ScanIdQrActivity.QR_DATA)
-        sessionManager.setSiteValidation(siteId, data)
+        editState.validationId = data
     }
 
-    val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
-    val site = fullReport?.sites?.find { it.site.id == siteId }?.site
-    val validated = site?.validationId?.isNotBlank() == true
+    val validated = editState.validationId?.isNotBlank() == true
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -621,11 +612,10 @@ private fun QrScanSection(siteId: String) {
 private fun EditableField(
     field: ReportField,
     fieldType: FieldType,
-    siteId: String,
+    value: String,
+    onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val sessionManager = LocalSessionManager.current
-
     Column(
         horizontalAlignment = Alignment.Start,
         modifier = modifier
@@ -642,43 +632,35 @@ private fun EditableField(
                     .padding(vertical = 4.dp)
             )
             if (fieldType == FieldType.Bool) {
-                BoolToggle(field.value) { newValue ->
-                    sessionManager.updateFieldValue(siteId, field.specId, newValue)
-                }
+                BoolToggle(value, onValueChange)
             }
         }
 
         when (fieldType) {
             FieldType.Text, FieldType.Raw -> {
                 FieldTextField(
-                    value = field.value,
+                    value = value,
                     unit = field.unit,
-                    onValueChange = {
-                        sessionManager.updateFieldValue(siteId, field.specId, it)
-                    }
+                    onValueChange = onValueChange
                 )
             }
             FieldType.Integer -> {
                 FieldTextField(
-                    value = field.value,
+                    value = value,
                     unit = field.unit,
                     keyboardType = KeyboardType.Number,
                     onValueChange = { input ->
-                        sessionManager.updateFieldValue(
-                            siteId, field.specId,
-                            input.filter { it.isDigit() || it == '-' }
-                        )
+                        onValueChange(input.filter { it.isDigit() || it == '-' })
                     }
                 )
             }
             FieldType.Decimal -> {
                 FieldTextField(
-                    value = field.value,
+                    value = value,
                     unit = field.unit,
                     keyboardType = KeyboardType.Decimal,
                     onValueChange = { input ->
-                        sessionManager.updateFieldValue(
-                            siteId, field.specId,
+                        onValueChange(
                             input.filter {
                                 it.isDigit()
                                         || it == '.' || it == ','
@@ -689,7 +671,7 @@ private fun EditableField(
                 )
             }
             FieldType.Photo -> {
-                PhotoField(siteId, field)
+                PhotoField(value, onValueChange)
             }
             FieldType.Bool -> Unit
         }
@@ -770,13 +752,12 @@ private fun FieldTextField(
 
 @Composable
 private fun PhotoField(
-    siteId: String,
-    field: ReportField
+    value: String,
+    onValueChange: (String) -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
-    val sessionManager = LocalSessionManager.current
 
     var cameraPermission: Boolean? by remember { mutableStateOf(context.checkCameraPermissions()) }
     if (cameraPermission == false)
@@ -788,9 +769,9 @@ private fun PhotoField(
             }
         }
 
-    val pic: Bitmap? = remember(field.value) {
-        if (field.value.isBlank()) null
-        else Base64.decode(field.value, Base64.DEFAULT).let {
+    val pic: Bitmap? = remember(value) {
+        if (value.isBlank()) null
+        else Base64.decode(value, Base64.DEFAULT).let {
             BitmapFactory.decodeByteArray(it, 0, it.size)
         }
     }
@@ -801,7 +782,7 @@ private fun PhotoField(
         FileProvider.getUriForFile(
             context,
             BuildConfig.APPLICATION_ID,
-            File.createTempFile("FIELD_${field.specId}", ".png", picStorage)
+            File.createTempFile("FIELD_PHOTO", ".png", picStorage)
         )
     }
     val photoLauncher = rememberLauncherForActivityResult(
@@ -814,10 +795,7 @@ private fun PhotoField(
                 .getBitmap(context.contentResolver, picUri)
             ByteArrayOutputStream().use {
                 bitmap.compress(Bitmap.CompressFormat.WEBP, 80, it)
-                sessionManager.updateFieldValue(
-                    siteId, field.specId,
-                    Base64.encodeToString(it.toByteArray(), Base64.DEFAULT)
-                )
+                onValueChange(Base64.encodeToString(it.toByteArray(), Base64.DEFAULT))
             }
         } catch (e: Exception) {
             when (e) {
@@ -860,14 +838,14 @@ private fun PhotoField(
                 Text(label)
             }
             Surface(
-                color = if (field.value.isNotBlank()) MaterialTheme.colorScheme.primary
+                color = if (value.isNotBlank()) MaterialTheme.colorScheme.primary
                 else Color.Gray,
                 modifier = Modifier
                     .fillMaxHeight()
                     .padding(start = 16.dp)
             ) {
                 Icon(
-                    if (field.value.isNotBlank()) Icons.Outlined.Check
+                    if (value.isNotBlank()) Icons.Outlined.Check
                     else Icons.Outlined.Close,
                     tint = MaterialTheme.colorScheme.background,
                     contentDescription = null,
@@ -893,6 +871,110 @@ private fun PhotoField(
                 )
             }
         }
+    }
+}
+
+// --- State Holder ---
+
+@OptIn(FlowPreview::class)
+private class SiteEditState(
+    site: Site,
+    fields: List<ReportField>,
+    private val sessionManager: SessionManager,
+    scope: CoroutineScope
+) {
+    val siteId = site.id
+
+    var latitude by mutableStateOf(site.latitude)
+    var longitude by mutableStateOf(site.longitude)
+    var validationId by mutableStateOf(site.validationId)
+
+    private var _positionKmText = mutableStateOf(site.positionKm?.let { "%.2f".format(it) } ?: "")
+    var positionKmText: String
+        get() = _positionKmText.value
+        set(value) {
+            _positionKmText.value = value.filter { it.isDigit() || it == '.' || it == ',' }
+        }
+
+    val positionKm: Double?
+        get() = positionKmText.replace(',', '.').toDoubleOrNull()
+
+    val fieldValues = mutableStateMapOf<String, String>().apply {
+        fields.forEach { put(it.specId, it.value) }
+    }
+
+    var fieldSpecs by mutableStateOf(fields)
+        private set
+
+    init {
+        scope.launch(Dispatchers.IO) {
+            snapshotFlow { Triple(positionKm, latitude to longitude, validationId) }
+                .debounce(500)
+                .collectLatest { (km, coords, valId) ->
+                    km?.let { sessionManager.updateSitePosition(siteId, it) }
+                    val (lat, lon) = coords
+                    if (lat != null && lon != null) sessionManager.updateSiteCoordinates(
+                        siteId,
+                        lat,
+                        lon
+                    )
+                    sessionManager.setSiteValidation(siteId, valId)
+                }
+        }
+        scope.launch(Dispatchers.IO) {
+            snapshotFlow { fieldValues.toMap() }
+                .debounce(500)
+                .collectLatest { values ->
+                    values.forEach { (specId, value) ->
+                        sessionManager.updateFieldValue(siteId, specId, value)
+                    }
+                }
+        }
+    }
+
+    fun addField(spec: FieldSpec) {
+        sessionManager.addFieldToSite(siteId, spec)
+        if (fieldValues.containsKey(spec.id)) return
+        fieldSpecs =
+            fieldSpecs + ReportField(siteId, spec.id, spec.name, spec.type.datatype, spec.unit)
+        fieldValues[spec.id] = ""
+    }
+
+    fun applyTemplate(template: ReportTemplate) {
+        sessionManager.applyTemplateToSite(siteId, template)
+        val fresh = sessionManager.getFieldsForSite(siteId)
+        fieldSpecs = fresh
+        fresh.forEach { fieldValues.putIfAbsent(it.specId, it.value) }
+    }
+
+    fun removeField(specId: String) {
+        sessionManager.removeFieldFromSite(siteId, specId)
+        fieldSpecs = fieldSpecs.filter { it.specId != specId }
+        fieldValues.remove(specId)
+    }
+
+    fun saveAndConfirm() {
+        positionKm?.let { sessionManager.updateSitePosition(siteId, it) }
+        latitude?.let { lat ->
+            longitude?.let { lon ->
+                sessionManager.updateSiteCoordinates(siteId, lat, lon)
+            }
+        }
+        sessionManager.setSiteValidation(siteId, validationId)
+        fieldValues.forEach { (specId, value) ->
+            sessionManager.updateFieldValue(siteId, specId, value)
+        }
+        sessionManager.confirmSite(siteId)
+    }
+}
+
+@Composable
+private fun rememberSiteEditState(site: Site): SiteEditState {
+    val sessionManager = LocalSessionManager.current
+    val scope = rememberCoroutineScope()
+    return remember(site) {
+        val fields = sessionManager.getFieldsForSite(site.id)
+        SiteEditState(site, fields, sessionManager, scope)
     }
 }
 
@@ -928,27 +1010,29 @@ private fun SitePreviewModePreview() = PtmTheme {
 
 @Preview(showBackground = true)
 @Composable
-private fun SiteEditModePreview() {
-    val context = LocalContext.current
-    val sessionManager = SessionManager(
-        ReportDatabase.getInstance(context).reportDao(),
-        null
-    )
-    CompositionLocalProvider(LocalSessionManager provides sessionManager) {
-        PtmTheme {
-            Column(Modifier.padding(16.dp)) {
-                SiteEditContent(previewSiteWithFields, onBack = {})
-            }
-        }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
 private fun SitePreviewUnverifiedPreview() = PtmTheme {
     val unverifiedSite = previewSite.copy(validationId = null)
     val siteWithFields = SiteWithFields(unverifiedSite, previewFields.take(2))
     Column(Modifier.padding(16.dp)) {
         SitePreviewContent(siteWithFields) {}
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SiteEditModePreview() {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val sessionManager = SessionManager(
+        ReportDatabase.getInstance(context).reportDao(),
+        null
+    )
+    val editState = SiteEditState(previewSite, previewFields, sessionManager, coroutineScope)
+    CompositionLocalProvider(LocalSessionManager provides sessionManager) {
+        PtmTheme {
+            Column(Modifier.padding(16.dp)) {
+                SiteEditContent(editState) {}
+            }
+        }
     }
 }

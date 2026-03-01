@@ -253,6 +253,10 @@ interface ReportDao {
     @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
     fun getSitesForReport(reportId: String): Flow<List<Site>>
 
+
+    @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
+    fun getSitesForReportOnce(reportId: String): List<Site>
+
     @Transaction
     @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
     fun getSitesWithFieldsForReport(reportId: String): Flow<List<SiteWithFields>>

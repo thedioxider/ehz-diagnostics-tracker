@@ -2,6 +2,7 @@ package space.diomentia.ehzdiagnosticstracker.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -22,11 +23,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -37,19 +41,26 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import android.location.Location
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.Priority
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.SessionManager
+import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
@@ -58,10 +69,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.tooling.preview.Preview
-import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
-import space.diomentia.ehzdiagnosticstracker.data.SessionManager
 
 @Composable
 fun LocationSiteEditorScreen(
@@ -74,24 +81,20 @@ fun LocationSiteEditorScreen(
     val snackbarHostState = LocalSnackbarHostState.current
     val locationProvider = LocalLocationProvider.current
     val sessionManager = LocalSessionManager.current
+    val reportDao = ReportDatabase.getInstance().reportDao()
 
-    val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
-    val existingSite = remember(fullReport, siteId) {
-        siteId?.let { id -> fullReport?.sites?.find { it.site.id == id }?.site }
+    val existingSite =
+        remember(siteId) { siteId?.let { siteId -> sessionManager.getSite(siteId) } }
+    val editState = rememberLocationSiteEditState(existingSite)
+    val reportId =
+        remember(existingSite) { existingSite?.reportId ?: sessionManager.activeReportId }
+    val reportSites = remember(reportId) {
+        reportId?.let { reportDao.getSitesForReportOnce(it) }.orEmpty()
+            .filter { it.id != siteId }
     }
+    val isZeroKm = remember(reportSites) { reportSites.isEmpty() }
 
-    var latitude by remember { mutableStateOf(existingSite?.latitude) }
-    var longitude by remember { mutableStateOf(existingSite?.longitude) }
-    var positionKmText by remember {
-        mutableStateOf(existingSite?.positionKm?.toString() ?: "")
-    }
-
-    val isZeroKm = remember(fullReport, siteId) {
-        val sites = fullReport?.sites.orEmpty()
-        sites.isEmpty() || sites.firstOrNull()?.site?.id == siteId
-    }
-
-    var isSyncingLocation by remember { mutableStateOf(existingSite == null) }
+    var isSyncingLocation by remember { mutableStateOf(siteId == null) }
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
@@ -117,16 +120,14 @@ fun LocationSiteEditorScreen(
         val currentLocationRequest = CurrentLocationRequest.Builder()
             .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
             .setGranularity(Granularity.GRANULARITY_FINE)
-            .setMaxUpdateAgeMillis(15000L)
+            .setMaxUpdateAgeMillis(10000L)
             .build()
         locationProvider?.getCurrentLocation(currentLocationRequest, null)
             ?.addOnSuccessListener { location ->
-                latitude = location.latitude
-                longitude = location.longitude
-                if (positionKmText.isBlank()) {
-                    val sites = fullReport?.sites.orEmpty()
-                        .filter { it.site.id != siteId }
-                    val previousSite = sites.lastOrNull()?.site
+                editState.latitude = location.latitude
+                editState.longitude = location.longitude
+                if (editState.positionKmText.isBlank()) {
+                    val previousSite = reportSites.lastOrNull()
                     if (previousSite?.latitude != null && previousSite.longitude != null
                         && previousSite.positionKm != null
                     ) {
@@ -137,9 +138,10 @@ fun LocationSiteEditorScreen(
                             results
                         )
                         val displacementKm = results[0] / 1000.0
-                        positionKmText = "%.2f".format(previousSite.positionKm + displacementKm)
+                        editState.positionKmText =
+                            "%.2f".format(previousSite.positionKm + displacementKm)
                     } else {
-                        positionKmText = "0.0"
+                        editState.positionKmText = "0.0"
                     }
                 }
             }
@@ -200,13 +202,13 @@ fun LocationSiteEditorScreen(
                     .padding(start = 16.dp)
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    if (latitude != null && longitude != null) {
+                    if (editState.latitude != null && editState.longitude != null) {
                         Text(
-                            "${stringResource(R.string.latitude)}: ${"%.6f".format(latitude)}",
+                            "${stringResource(R.string.latitude)}: ${"%.6f".format(editState.latitude)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            "${stringResource(R.string.longitude)}: ${"%.6f".format(longitude)}",
+                            "${stringResource(R.string.longitude)}: ${"%.6f".format(editState.longitude)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     } else {
@@ -240,12 +242,8 @@ fun LocationSiteEditorScreen(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
             TextField(
-                value = positionKmText,
-                onValueChange = { input ->
-                    positionKmText = input.filter {
-                        it.isDigit() || it == '.' || it == ','
-                    }
-                },
+                value = editState.positionKmText,
+                onValueChange = { editState.positionKmText = it },
                 placeholder = {
                     Text(
                         stringResource(R.string.input_value),
@@ -266,33 +264,10 @@ fun LocationSiteEditorScreen(
             Spacer(Modifier.height(32.dp))
 
             // Save button
-            val positionKm = positionKmText.replace(',', '.').toDoubleOrNull()
-            val canSave = latitude != null && longitude != null
-                    && positionKm != null && positionKm >= 0.0
             PtmFilledButton(
-                enabled = canSave,
+                enabled = editState.canSave,
                 onClick = {
-                    if (siteId != null && existingSite != null) {
-                        // Editing existing site
-                        positionKm?.let {
-                            sessionManager.updateSitePosition(siteId, it)
-                        }
-                        latitude?.let { lat ->
-                            longitude?.let { lon ->
-                                sessionManager.updateSiteCoordinates(siteId, lat, lon)
-                            }
-                        }
-                        sessionManager.confirmSite(siteId)
-                    } else {
-                        // Creating new site
-                        val site = sessionManager.addSite(
-                            latitude = latitude,
-                            longitude = longitude,
-                            positionKm = positionKm,
-                            locationOnly = true
-                        )
-                        sessionManager.confirmSite(site.id)
-                    }
+                    editState.save()
                     onSaved()
                 },
                 modifier = Modifier
@@ -311,6 +286,81 @@ fun LocationSiteEditorScreen(
         }
     }
 }
+
+// --- State Holder ---
+
+@OptIn(FlowPreview::class)
+private class LocationSiteEditState(
+    existingSite: Site?,
+    private val sessionManager: SessionManager,
+    scope: CoroutineScope
+) {
+    private val existingSiteId = existingSite?.id
+
+    var latitude by mutableStateOf(existingSite?.latitude)
+    var longitude by mutableStateOf(existingSite?.longitude)
+
+    private var _positionKmText = mutableStateOf(existingSite?.positionKm?.toString() ?: "")
+    var positionKmText: String
+        get() = _positionKmText.value
+        set(value) {
+            _positionKmText.value = value.filter { it.isDigit() || it == '.' || it == ',' }
+        }
+
+    val positionKm: Double?
+        get() = positionKmText.replace(',', '.').toDoubleOrNull()
+
+    val canSave: Boolean
+        get() = latitude != null && longitude != null && positionKm != null && positionKm!! >= 0.0
+
+    init {
+        if (existingSiteId != null) {
+            scope.launch(Dispatchers.IO) {
+                snapshotFlow { Triple(positionKm, latitude, longitude) }
+                    .debounce(500)
+                    .collectLatest { (km, lat, lon) ->
+                        km?.let { sessionManager.updateSitePosition(existingSiteId, it) }
+                        if (lat != null && lon != null) sessionManager.updateSiteCoordinates(
+                            existingSiteId,
+                            lat,
+                            lon
+                        )
+                    }
+            }
+        }
+    }
+
+    fun save(): String {
+        if (existingSiteId != null) {
+            positionKm?.let { sessionManager.updateSitePosition(existingSiteId, it) }
+            latitude?.let { lat ->
+                longitude?.let { lon ->
+                    sessionManager.updateSiteCoordinates(existingSiteId, lat, lon)
+                }
+            }
+            sessionManager.confirmSite(existingSiteId)
+            return existingSiteId
+        } else {
+            val site = sessionManager.addSite(
+                latitude = latitude, longitude = longitude,
+                positionKm = positionKm, locationOnly = true
+            )
+            sessionManager.confirmSite(site.id)
+            return site.id
+        }
+    }
+}
+
+@Composable
+private fun rememberLocationSiteEditState(site: Site?): LocationSiteEditState {
+    val sessionManager = LocalSessionManager.current
+    val scope = rememberCoroutineScope()
+    return remember(site) {
+        LocationSiteEditState(site, sessionManager, scope)
+    }
+}
+
+// --- Previews ---
 
 @Preview(showBackground = true)
 @Composable

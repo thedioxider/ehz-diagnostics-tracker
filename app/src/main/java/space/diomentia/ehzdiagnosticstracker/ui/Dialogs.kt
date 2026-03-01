@@ -150,10 +150,10 @@ fun EditFieldsDialog(
     }
 
     ActionCancelDialog(
-        onAction = { onAction(valuesErrors.mapValues { (k, v) -> v.first.value }) },
+        onAction = { onAction(valuesErrors.mapValues { (_, v) -> v.first.value }) },
         actionLabel = actionLabel,
-        actionEnabled = valuesErrors.all { (k, v) -> !v.first.value.isBlank() && !v.second.value },
-        onSecondaryAction = { onSecondaryAction(valuesErrors.mapValues { (k, v) -> v.first.value }) },
+        actionEnabled = valuesErrors.all { (_, v) -> !v.first.value.isBlank() && !v.second.value },
+        onSecondaryAction = { onSecondaryAction(valuesErrors.mapValues { (_, v) -> v.first.value }) },
         secondaryActionLabel = secondaryActionLabel,
         label = label,
         onCancel = onCancel
@@ -203,6 +203,8 @@ private fun ActionCancelDialogPreview() = PtmTheme {
         {},
         { Text("Принять") },
         {},
+        onSecondaryAction = {},
+        secondaryActionLabel = { Text("Отклонить") },
         label = { Text("Label") }
     ) {
         Text(stringResource(R.string.lipsum), maxLines = 10)
