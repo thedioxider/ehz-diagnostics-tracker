@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.AnimBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -206,11 +207,20 @@ fun AppNavigation() {
                             popUpTo(Screen.RouteSelection.route) { inclusive = true }
                         }
                     },
-                    onBack = {
-                        navController.navigate(Screen.RouteSelection.route) {
-                            popUpTo(Screen.RouteSelection.route) { inclusive = true }
+                    onAuthorize = {
+                        navController.popBackStack()
+                        navController.navigate(Screen.Authorization.route) {
+                            launchSingleTop = true
                         }
-                    }
+                        sessionManager.leaveSession()
+                    },
+                    onChooseArea = {
+                        navController.popBackStack()
+                        navController.navigate(Screen.RouteSelection.route) {
+                            launchSingleTop = true
+                        }
+                        sessionManager.leaveSession()
+                    },
                 )
             }
 

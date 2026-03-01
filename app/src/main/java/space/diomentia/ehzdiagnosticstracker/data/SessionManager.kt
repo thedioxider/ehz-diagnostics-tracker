@@ -40,8 +40,8 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         return true
     }
 
-    fun resumeReport(reportId: String) {
-        activeReportId = reportId
+    fun leaveSession() {
+        activeReportId = null
     }
 
     fun addSite(

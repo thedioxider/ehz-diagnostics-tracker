@@ -70,7 +70,8 @@ fun SessionHubScreen(
     onEditDraftSite: (siteId: String) -> Unit,
     onViewReport: (reportId: String) -> Unit,
     onSessionCompleted: () -> Unit,
-    onBack: () -> Unit
+    onAuthorize: () -> Unit,
+    onChooseArea: () -> Unit
 ) {
     val sessionManager = LocalSessionManager.current
     val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
@@ -87,7 +88,8 @@ fun SessionHubScreen(
             sessionManager.completeReport()
             onSessionCompleted()
         },
-        onBack = onBack
+        onAuthorize = onAuthorize,
+        onChooseArea = onChooseArea
     )
 }
 
@@ -100,7 +102,8 @@ private fun SessionHubContent(
     onDeleteDraft: (siteId: String) -> Unit,
     onViewReport: () -> Unit,
     onCompleteSession: () -> Unit,
-    onBack: () -> Unit
+    onAuthorize: () -> Unit,
+    onChooseArea: () -> Unit
 ) {
     val context = LocalContext.current
     val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
@@ -173,10 +176,15 @@ private fun SessionHubContent(
             PtmBottomBar(
                 navigation = {
                     ActionButton(
-                        icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
-                        label = stringResource(R.string.back)
+                        icon = painterResource(R.drawable.ic_person),
+                        label = stringResource(R.string.change_account)
                     ) {
-                        onBack()
+                        onAuthorize()
+                    }
+                    ActionButton(
+                        icon = rememberVectorPainter(Icons.Outlined.LocationOn)
+                    ) {
+                        onChooseArea()
                     }
                 },
                 actions = {
@@ -413,7 +421,8 @@ private fun SessionHubPreview() {
             onDeleteDraft = {},
             onViewReport = {},
             onCompleteSession = {},
-            onBack = {}
+            onAuthorize = {},
+            onChooseArea = {}
         )
     }
 }
