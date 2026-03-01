@@ -62,8 +62,8 @@
     <string name="cancel">Отмена</string>
     <string name="remove">Удалить</string>
     <string name="question_delete_report">Вы точно хотите удалить этот отчёт?</string>
-    <string name="is_true">верно</string>
-    <string name="is_false">ложно</string>
+    <string name="is_true">Да</string>
+    <string name="is_false">Нет</string>
     <string name="now_you_pay_us">Период пользования истёк</string>
     <string name="authorization">Авторизация</string>
     <string name="developer_name" translatable="false">ООО НПК \"ПромТехМастер\"</string>
@@ -157,6 +157,7 @@
     <string name="confirm_complete_session">Завершить текущую сессию?</string>
     <string name="no_active_session">Нет активной сессии</string>
     <string name="report_list">История отчётов</string>
+    <string name="not_set">—</string>
     <string name="lipsum"> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris consequat, augue sed pulvinar sodales, sem lectus volutpat lacus, eget tincidunt felis lacus eu tellus. Nulla posuere id ante vel fermentum. Maecenas rutrum dui nec est ornare, sit amet pellentesque lectus ultricies. Nam a vehicula eros. Aliquam id ligula leo. Etiam vel ante sed eros ultricies molestie vel sed nisl. In nec felis vitae sem ullamcorper lacinia. Cras leo nunc, luctus non gravida vitae, interdum quis nisi. Aliquam eget interdum justo. Vestibulum sit amet lorem lectus. Nam bibendum odio vel justo egestas, et sagittis risus dignissim. Duis ut elit accumsan, pretium lectus et, commodo leo. Nullam lobortis est at elementum blandit. Morbi vel tellus in sapien condimentum egestas eu id purus.</string>
     <string name="add">Добавить</string>
 </resources>

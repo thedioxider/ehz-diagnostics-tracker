@@ -97,6 +97,16 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         dao.insertField(field.copy(value = value))
     }
 
+    fun confirmSite(siteId: String) {
+        val site = dao.getSiteByIdOnce(siteId) ?: return
+        dao.updateSite(site.copy(isDraft = false))
+    }
+
+    fun getDraftSite(): SiteWithFields? {
+        val reportId = activeReportId ?: return null
+        return dao.getDraftSiteForReport(reportId)
+    }
+
     fun removeSite(siteId: String) {
         val site = dao.getSiteByIdOnce(siteId) ?: return
         dao.deleteSite(site)

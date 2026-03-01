@@ -282,14 +282,16 @@ fun LocationSiteEditorScreen(
                                 sessionManager.updateSiteCoordinates(siteId, lat, lon)
                             }
                         }
+                        sessionManager.confirmSite(siteId)
                     } else {
                         // Creating new site
-                        sessionManager.addSite(
+                        val site = sessionManager.addSite(
                             latitude = latitude,
                             longitude = longitude,
                             positionKm = positionKm,
                             locationOnly = true
                         )
+                        sessionManager.confirmSite(site.id)
                     }
                     onSaved()
                 },

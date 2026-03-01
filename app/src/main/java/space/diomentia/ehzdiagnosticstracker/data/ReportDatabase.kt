@@ -24,7 +24,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Database(
-    version = 9,
+    version = 10,
     entities = [
         DiagnosticReport::class,
         ReportDataEntry::class,
@@ -326,7 +326,9 @@ data class Site(
     @ColumnInfo(name = "validation_id")
     val validationId: String? = null,
     @ColumnInfo(name = "location_only")
-    val locationOnly: Boolean = false
+    val locationOnly: Boolean = false,
+    @ColumnInfo(name = "is_draft")
+    val isDraft: Boolean = true
 )
 
 @Entity(
@@ -398,6 +400,10 @@ interface ReportDao {
 
     @Query("SELECT * FROM sites WHERE id = :id")
     fun getSiteByIdOnce(id: String): Site?
+
+    @Transaction
+    @Query("SELECT * FROM sites WHERE report_id = :reportId AND is_draft = 1 LIMIT 1")
+    fun getDraftSiteForReport(reportId: String): SiteWithFields?
 
     @Query("SELECT * FROM report_fields WHERE site_id = :siteId")
     fun getFieldsForSite(siteId: String): Flow<List<ReportField>>
