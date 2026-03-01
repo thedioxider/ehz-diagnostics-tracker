@@ -398,6 +398,10 @@ interface ReportDao {
     @Query("SELECT * FROM reports WHERE route_id = :routeId AND is_complete = 1 ORDER BY start_time DESC")
     fun getCompletedReportsForRoute(routeId: String): Flow<List<FullReport>>
 
+    @Transaction
+    @Query("SELECT * FROM reports WHERE is_complete = 1 ORDER BY start_time DESC")
+    fun getAllCompletedReports(): Flow<List<FullReport>>
+
     @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
     fun getSitesForReport(reportId: String): Flow<List<Site>>
 
