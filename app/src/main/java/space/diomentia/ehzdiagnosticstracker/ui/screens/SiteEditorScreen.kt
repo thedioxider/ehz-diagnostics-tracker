@@ -10,10 +10,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -98,7 +96,7 @@ import space.diomentia.ehzdiagnosticstracker.data.distanceKmTo
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FieldSpecChooserDialog
-import space.diomentia.ehzdiagnosticstracker.ui.FullScreenImageDialog
+import space.diomentia.ehzdiagnosticstracker.ui.ImageWithFullscreenView
 import space.diomentia.ehzdiagnosticstracker.ui.LocationField
 import space.diomentia.ehzdiagnosticstracker.ui.LocationIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -237,7 +235,10 @@ private fun SitePreviewContent(
     // Fields
     if (siteWithFields.fields.isNotEmpty()) {
         siteWithFields.fields.forEach { field ->
-            val displayValue = formatFieldValue(field)
+            val fieldType = if (field.value.isBlank())
+                FieldType.Raw
+            else FieldType.parse(field.type) ?: FieldType.Raw
+            val value = field.value
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -251,12 +252,45 @@ private fun SitePreviewContent(
                         .weight(1f)
                         .padding(end = 6.dp)
                 )
-                Text(
-                    displayValue,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.End
-                )
+                when (fieldType) {
+                    FieldType.Text, FieldType.Bool, FieldType.Integer, FieldType.Decimal, FieldType.Raw -> {
+                        var displayValue = when (fieldType) {
+                            FieldType.Raw, FieldType.Text -> value
+                            FieldType.Integer -> value
+                            FieldType.Decimal -> DecimalFormat("#.##").format(value)
+                            FieldType.Bool -> when (ReportFieldValue.Bool.fromString(value)) {
+                                true -> stringResource(R.string.is_true)
+                                false -> stringResource(R.string.is_false)
+                                else -> stringResource(R.string.unknown)
+                            }
+
+                            FieldType.Photo -> ""
+                        }
+                        if (displayValue.isBlank()) {
+                            displayValue = "\u2014"
+                        } else {
+                            displayValue += (field.unit?.let { " $it" } ?: "")
+                        }
+                        Text(
+                            displayValue,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.End
+                        )
+                    }
+
+                    FieldType.Photo -> {
+                        val pic: Bitmap = remember(value) {
+                            Base64.decode(value, Base64.DEFAULT).let {
+                                BitmapFactory.decodeByteArray(it, 0, it.size)
+                            }
+                        }
+                        ImageWithFullscreenView(
+                            pic.asImageBitmap(),
+                            modifier = Modifier.fillMaxWidth(.3f)
+                        )
+                    }
+                }
             }
         }
         Spacer(Modifier.height(16.dp))
@@ -276,24 +310,6 @@ private fun SitePreviewContent(
     }
 }
 
-// TODO: display images in preview mode
-
-@Composable
-private fun formatFieldValue(field: ReportField): String {
-    if (field.value.isBlank()) return stringResource(R.string.not_set)
-    val fieldType = FieldType.parse(field.type)
-    return when (fieldType) {
-        FieldType.Bool -> when (ReportFieldValue.Bool.fromString(field.value)) {
-            true -> stringResource(R.string.is_true)
-            false -> stringResource(R.string.is_false)
-            else -> stringResource(R.string.unknown)
-        }
-
-        FieldType.Photo -> stringResource(R.string.image)
-        else -> field.value + (field.unit?.let { " $it" } ?: "")
-    }
-}
-
 // --- Edit Mode ---
 
 @Composable
@@ -303,7 +319,6 @@ private fun SiteEditContent(
     onSave: () -> Unit
 ) {
     // Position (editable)
-    // TODO: auto calculate position on coordinates
     Text(
         stringResource(R.string.position),
         style = MaterialTheme.typography.titleSmall,
@@ -724,9 +739,6 @@ private fun PhotoField(
         }
     }
 
-    var fullView by remember { mutableStateOf(false) }
-    if (fullView) pic?.asImageBitmap()?.let { FullScreenImageDialog(it) { fullView = false } }
-
     var deletePhotoDialog by remember(pic) { mutableStateOf(false) }
     if (deletePhotoDialog && pic != null) {
         ActionCancelDialog(
@@ -735,12 +747,9 @@ private fun PhotoField(
             onCancel = { deletePhotoDialog = false },
             label = { Text(stringResource(R.string.delete_photo)) }
         ) {
-            Image(
+            ImageWithFullscreenView(
                 pic.asImageBitmap(),
-                contentDescription = "",
-                modifier = Modifier
-                    .height(150.dp)
-                    .clickable { fullView = true }
+                modifier = Modifier.height(150.dp)
             )
         }
     }
@@ -797,15 +806,11 @@ private fun PhotoField(
             ) {
                 @Suppress("DEPRECATION")
                 Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = "")
-                Image(
+                ImageWithFullscreenView(
                     it.asImageBitmap(),
-                    contentDescription = "",
+                    onLongClick = { deletePhotoDialog = true },
                     modifier = Modifier
                         .height(150.dp)
-                        .combinedClickable(
-                            onClick = { fullView = true },
-                            onLongClick = { deletePhotoDialog = true }
-                        )
                 )
             }
         }

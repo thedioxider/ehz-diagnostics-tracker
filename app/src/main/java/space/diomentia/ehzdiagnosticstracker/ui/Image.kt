@@ -5,6 +5,7 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
@@ -127,6 +128,7 @@ fun FullScreenImageDialog(
                 onClick = onDismiss,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
+                    .padding(top = 8.dp)
                     .padding(16.dp)
             ) {
                 Icon(
@@ -156,5 +158,26 @@ private fun coerceOffset(
     return Offset(
         offset.x.coerceIn(-maxX, maxX),
         offset.y.coerceIn(-maxY, maxY)
+    )
+}
+
+@Composable
+fun ImageWithFullscreenView(
+    bitmap: ImageBitmap,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null
+) {
+    var fullView by remember { mutableStateOf(false) }
+    if (fullView) FullScreenImageDialog(bitmap) { fullView = false }
+
+    Image(
+        bitmap,
+        contentDescription = "",
+        modifier = Modifier
+            .combinedClickable(
+                onClick = { fullView = true },
+                onLongClick = onLongClick
+            )
+            .then(modifier)
     )
 }
