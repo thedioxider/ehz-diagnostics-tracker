@@ -75,14 +75,20 @@ fun ActionCancelDialog(
                 ) {
                     PtmFilledButton(
                         enabled = actionEnabled,
-                        onClick = onAction,
+                        onClick = {
+                            onCancel()
+                            onAction()
+                        },
                         content = actionLabel,
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
                     secondaryActionLabel?.let {
                         PtmFilledButton(
                             enabled = secondaryActionEnabled,
-                            onClick = onSecondaryAction,
+                            onClick = {
+                                onCancel()
+                                onSecondaryAction()
+                            },
                             content = secondaryActionLabel,
                             modifier = Modifier.padding(horizontal = 4.dp)
                         )

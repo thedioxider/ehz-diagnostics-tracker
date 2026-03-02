@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.util.UUID
 
-// TODO: remove drafts on save
 class SessionManager(private val dao: ReportDao, private val config: ReportConfig?) {
     var activeReportId: String? = null
         private set
@@ -144,6 +143,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     fun completeReport() {
         val reportId = activeReportId ?: return
         val report = dao.getReportByIdOnce(reportId) ?: return
+        dao.deleteDraftSiteForReport(reportId)
         dao.updateReport(
             report.copy(
                 endTime = System.currentTimeMillis() / 1000,

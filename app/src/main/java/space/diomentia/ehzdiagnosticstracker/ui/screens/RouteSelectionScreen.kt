@@ -111,10 +111,7 @@ fun RouteSelectionScreen(
 
     sectionActionTarget?.let { section ->
         ActionCancelDialog(
-            onAction = {
-                sectionActionTarget = null
-                selectedRoute?.let { route -> onSectionChosen(route, section) }
-            },
+            onAction = { selectedRoute?.let { route -> onSectionChosen(route, section) } },
             actionLabel = { Text(stringResource(R.string.start_diagnostics)) },
             onCancel = { sectionActionTarget = null },
             onSecondaryAction = {

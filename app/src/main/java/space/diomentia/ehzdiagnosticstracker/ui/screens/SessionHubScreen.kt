@@ -80,6 +80,7 @@ fun SessionHubScreen(
         onNewMeasurementSite = onNewMeasurementSite,
         onNewLocationSite = onNewLocationSite,
         onEditDraftSite = onEditDraftSite,
+        onSaveDraft = { siteId -> sessionManager.confirmSite(siteId) },
         onDeleteDraft = { siteId -> sessionManager.removeSite(siteId) },
         onViewReport = { reportId?.let { onViewReport(it) } },
         onCompleteSession = {
@@ -97,6 +98,7 @@ private fun SessionHubContent(
     onNewMeasurementSite: () -> Unit,
     onNewLocationSite: () -> Unit,
     onEditDraftSite: (siteId: String) -> Unit,
+    onSaveDraft: (siteId: String) -> Unit,
     onDeleteDraft: (siteId: String) -> Unit,
     onViewReport: () -> Unit,
     onCompleteSession: () -> Unit,
@@ -106,7 +108,8 @@ private fun SessionHubContent(
     val context = LocalContext.current
     val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
     var showCompleteDialog by remember { mutableStateOf(false) }
-    var showDraftDialog by remember { mutableStateOf(false) }
+    var showSaveDraftDialog by remember { mutableStateOf(false) }
+    var showOpenDraftDialog by remember { mutableStateOf(false) }
     var showDeleteDraftConfirm by remember { mutableStateOf(false) }
 
     val report = fullReport?.report
@@ -119,30 +122,42 @@ private fun SessionHubContent(
     val lastSite = confirmedSites.maxByOrNull { it.site.timestamp }
 
     if (showCompleteDialog) {
+        if (draftSite != null) {
+            showSaveDraftDialog = true
+            showCompleteDialog = false
+        }
         ActionCancelDialog(
-            onAction = {
-                showCompleteDialog = false
-                onCompleteSession()
-            },
+            onAction = { onCompleteSession() },
             actionLabel = { Text(stringResource(R.string.complete_session)) },
             onCancel = { showCompleteDialog = false },
             label = { Text(stringResource(R.string.confirm_complete_session)) }
         ) { }
     }
 
-    if (showDraftDialog && draftSite != null) {
-        // TODO: instead of long text buttons, add outlined buttons with icons and descriptions under them
+    if (showSaveDraftDialog && draftSite != null) {
         ActionCancelDialog(
             onAction = {
-                showDraftDialog = false
-                onEditDraftSite(draftSite.site.id)
+                onSaveDraft(draftSite.site.id)
+                onCompleteSession()
             },
-            actionLabel = { Text(stringResource(R.string.continue_draft)) },
-            onCancel = { showDraftDialog = false },
+            actionLabel = { Text(stringResource(R.string.save)) },
             onSecondaryAction = {
-                showDraftDialog = false
-                showDeleteDraftConfirm = true
+                onDeleteDraft(draftSite.site.id)
+                onCompleteSession()
             },
+            secondaryActionLabel = { Text(stringResource(R.string.delete)) },
+            onCancel = { showSaveDraftDialog = false },
+            label = { Text(stringResource(R.string.unsaved_draft_exists)) },
+        ) { }
+    }
+
+    if (showOpenDraftDialog && draftSite != null) {
+        // TODO: instead of long text buttons, add outlined buttons with icons and descriptions under them
+        ActionCancelDialog(
+            onAction = { onEditDraftSite(draftSite.site.id) },
+            actionLabel = { Text(stringResource(R.string.continue_draft)) },
+            onCancel = { showOpenDraftDialog = false },
+            onSecondaryAction = { showDeleteDraftConfirm = true },
             secondaryActionLabel = { Text(stringResource(R.string.delete_draft_and_create)) },
             label = { Text(stringResource(R.string.unsaved_draft_exists)) }
         ) { }
@@ -151,7 +166,6 @@ private fun SessionHubContent(
     if (showDeleteDraftConfirm && draftSite != null) {
         ActionCancelDialog(
             onAction = {
-                showDeleteDraftConfirm = false
                 onDeleteDraft(draftSite.site.id)
                 onNewMeasurementSite()
             },
@@ -258,7 +272,7 @@ private fun SessionHubContent(
                     buttonHeight = 140.dp,
                     textStyle = MaterialTheme.typography.titleMedium,
                     onClick = {
-                        if (draftSite != null) showDraftDialog = true
+                        if (draftSite != null) showOpenDraftDialog = true
                         else onNewMeasurementSite()
                     }
                 )
@@ -420,7 +434,8 @@ private fun SessionHubPreview() {
             onViewReport = {},
             onCompleteSession = {},
             onAuthorize = {},
-            onChooseArea = {}
+            onChooseArea = {},
+            onSaveDraft = {}
         )
     }
 }

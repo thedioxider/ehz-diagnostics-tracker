@@ -182,4 +182,5 @@
     <string name="route_deleted">Объект удалён</string>
     <string name="section_deleted">Участок удалён</string>
     <string name="delete_photo">Удалить фото?</string>
+    <string name="commit_report_unsaved_draft_message">Несохранённый черновик будет удалён после сохранения отчёта.\nХотите сохранить черновик или удалить его?</string>
 </resources>

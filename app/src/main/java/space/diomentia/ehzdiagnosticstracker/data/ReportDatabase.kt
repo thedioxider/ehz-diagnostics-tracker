@@ -297,6 +297,9 @@ interface ReportDao {
     @Query("SELECT * FROM sites WHERE report_id = :reportId AND is_draft = 1 LIMIT 1")
     fun getDraftSiteForReport(reportId: String): SiteWithFields?
 
+    @Query("DELETE FROM sites WHERE report_id = :reportId AND is_draft = 1")
+    fun deleteDraftSiteForReport(reportId: String)
+
     @Query("SELECT * FROM report_fields WHERE site_id = :siteId")
     fun getFieldsForSite(siteId: String): Flow<List<ReportField>>
 

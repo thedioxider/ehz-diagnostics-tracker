@@ -65,7 +65,6 @@ fun FieldSpecChooserDialog(
         onAction = {
             val chosen = allSpecs.filter { selectedIds[it.id] == true }
             onSpecsChosen(chosen)
-            onCancel()
         },
         actionLabel = { Text(stringResource(R.string.add)) },
         actionEnabled = hasSelection,
@@ -148,7 +147,6 @@ fun TemplateChooserDialog(
             sortedTemplates.getOrNull(selectedIndex)?.let {
                 onTemplateChosen(it)
             }
-            onCancel()
         },
         actionLabel = { Text(stringResource(R.string.add)) },
         actionEnabled = selectedIndex >= 0,
