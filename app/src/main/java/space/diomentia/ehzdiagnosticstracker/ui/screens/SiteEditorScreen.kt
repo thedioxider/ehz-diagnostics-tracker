@@ -38,10 +38,10 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -315,25 +315,11 @@ private fun SiteEditContent(
         style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.padding(bottom = 4.dp)
     )
-    TextField(
+    FieldTextField(
         value = editState.positionKmText,
-        onValueChange = { editState.positionKmText = it },
-        placeholder = {
-            Text(
-                stringResource(R.string.input_value),
-                fontStyle = FontStyle.Italic,
-                modifier = Modifier.alpha(.5f)
-            )
-        },
-        keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Decimal,
-            imeAction = ImeAction.Done
-        ),
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 8.dp)
-    )
+        unit = stringResource(R.string.km),
+        keyboardType = KeyboardType.Decimal
+    ) { editState.positionKmText = it }
 
     // GPS
     GpsSection(editState)
@@ -734,7 +720,7 @@ private fun FieldTextField(
             .fillMaxWidth()
             .padding(vertical = 4.dp, horizontal = 16.dp)
     ) {
-        TextField(
+        OutlinedTextField(
             value,
             onValueChange = onValueChange,
             placeholder = {

@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,9 +25,12 @@ import androidx.compose.runtime.toMutableStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import space.diomentia.ehzdiagnosticstracker.R
@@ -68,7 +73,6 @@ fun FieldSpecChooserDialog(
         label = { Text(stringResource(R.string.add_field)) },
     ) {
         Column {
-            // TODO: default look of this text field doesn't match searching
             TextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
@@ -80,6 +84,14 @@ fun FieldSpecChooserDialog(
                     )
                 },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                colors = TextFieldDefaults.colors().copy(
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
@@ -87,7 +99,7 @@ fun FieldSpecChooserDialog(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(300.dp)
+                    .height(300.dp)
             ) {
                 items(filteredSpecs) { spec ->
                     val alreadyAdded = spec.id in addedSpecIds

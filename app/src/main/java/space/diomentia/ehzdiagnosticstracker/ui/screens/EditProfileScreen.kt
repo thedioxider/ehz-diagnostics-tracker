@@ -8,9 +8,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -156,7 +156,7 @@ fun EditProfileScreen(
                         stringResource(R.string.name),
                         style = MaterialTheme.typography.titleSmall
                     )
-                    TextField(
+                    OutlinedTextField(
                         nameInput,
                         onValueChange = {
                             nameError = false
@@ -181,7 +181,7 @@ fun EditProfileScreen(
                         stringResource(R.string.surname),
                         style = MaterialTheme.typography.titleSmall
                     )
-                    TextField(
+                    OutlinedTextField(
                         surnameInput,
                         onValueChange = {
                             surnameError = false

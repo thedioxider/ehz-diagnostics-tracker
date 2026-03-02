@@ -129,6 +129,7 @@
     <string name="location_site">Точка местоположения</string>
     <string name="zero_km">Нулевой километр</string>
     <string name="measurement_site">Точка диагностирования</string>
+    <string name="position">Позиция</string>
     <string name="position_km">Позиция, км</string>
     <string name="coordinates">Координаты</string>
     <string name="latitude">Широта</string>

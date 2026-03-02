@@ -14,9 +14,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -174,7 +174,7 @@ fun EditFieldsDialog(
                 if (field.mutable) {
                     var v by ve.first
                     var e by ve.second
-                    TextField(
+                    OutlinedTextField(
                         v,
                         onValueChange = { input: String ->
                             if (field.allowUnchecked || field.checker(input)) {
