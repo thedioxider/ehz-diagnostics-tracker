@@ -54,6 +54,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
@@ -127,16 +128,13 @@ fun LocationSiteEditorScreen(
             .build()
         locationProvider?.getCurrentLocation(currentLocationRequest, null)
             ?.addOnSuccessListener { location ->
-                editState.latitude = location.latitude
-                editState.longitude = location.longitude
+                editState.location = Coordinates(lat = location.latitude, lng = location.longitude)
                 if (editState.positionKmText.isBlank()) {
                     val previousSite = reportSites.lastOrNull()
-                    if (previousSite?.latitude != null && previousSite.longitude != null
-                        && previousSite.positionKm != null
-                    ) {
+                    if (previousSite?.location != null && previousSite.positionKm != null) {
                         val results = FloatArray(1)
                         Location.distanceBetween(
-                            previousSite.latitude, previousSite.longitude,
+                            previousSite.location.lat, previousSite.location.lng,
                             location.latitude, location.longitude,
                             results
                         )
@@ -207,13 +205,14 @@ fun LocationSiteEditorScreen(
                 // TODO: show on map button instead of text
                 // TODO: should not be able to edit coordinates in saved location site
                 Column(modifier = Modifier.weight(1f)) {
-                    if (editState.latitude != null && editState.longitude != null) {
+                    val loc = editState.location
+                    if (loc != null) {
                         Text(
-                            "${stringResource(R.string.latitude)}: ${"%.6f".format(editState.latitude)}",
+                            "${stringResource(R.string.latitude)}: ${"%.6f".format(loc.lat)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(
-                            "${stringResource(R.string.longitude)}: ${"%.6f".format(editState.longitude)}",
+                            "${stringResource(R.string.longitude)}: ${"%.6f".format(loc.lng)}",
                             style = MaterialTheme.typography.bodyMedium
                         )
                     } else {
@@ -302,8 +301,7 @@ private class LocationSiteEditState(
 ) {
     private val existingSiteId = existingSite?.id
 
-    var latitude by mutableStateOf(existingSite?.latitude)
-    var longitude by mutableStateOf(existingSite?.longitude)
+    var location by mutableStateOf(existingSite?.location)
 
     private var _positionKmText = mutableStateOf(existingSite?.positionKm?.toString() ?: "")
     var positionKmText: String
@@ -316,20 +314,16 @@ private class LocationSiteEditState(
         get() = positionKmText.replace(',', '.').toDoubleOrNull()
 
     val canSave: Boolean
-        get() = latitude != null && longitude != null && positionKm != null && positionKm!! >= 0.0
+        get() = location != null && positionKm != null && positionKm!! >= 0.0
 
     init {
         if (existingSiteId != null) {
             scope.launch(Dispatchers.IO) {
-                snapshotFlow { Triple(positionKm, latitude, longitude) }
+                snapshotFlow { positionKm to location }
                     .debounce(500)
-                    .collectLatest { (km, lat, lon) ->
+                    .collectLatest { (km, loc) ->
                         km?.let { sessionManager.updateSitePosition(existingSiteId, it) }
-                        if (lat != null && lon != null) sessionManager.updateSiteCoordinates(
-                            existingSiteId,
-                            lat,
-                            lon
-                        )
+                        if (loc != null) sessionManager.updateSiteLocation(existingSiteId, loc)
                     }
             }
         }
@@ -338,17 +332,16 @@ private class LocationSiteEditState(
     fun save(): String {
         if (existingSiteId != null) {
             positionKm?.let { sessionManager.updateSitePosition(existingSiteId, it) }
-            latitude?.let { lat ->
-                longitude?.let { lon ->
-                    sessionManager.updateSiteCoordinates(existingSiteId, lat, lon)
-                }
+            location?.let { loc ->
+                sessionManager.updateSiteLocation(existingSiteId, loc)
             }
             sessionManager.confirmSite(existingSiteId)
             return existingSiteId
         } else {
             val site = sessionManager.addSite(
-                latitude = latitude, longitude = longitude,
-                positionKm = positionKm, locationOnly = true
+                location = location,
+                positionKm = positionKm,
+                locationOnly = true
             )
             sessionManager.confirmSite(site.id)
             return site.id

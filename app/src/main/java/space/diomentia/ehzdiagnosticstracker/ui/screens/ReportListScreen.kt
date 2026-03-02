@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FullReport
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.Report
@@ -228,8 +229,7 @@ private val previewReports = listOf(
                     id = "1",
                     reportId = "r1",
                     positionKm = 0.0,
-                    latitude = 55.75,
-                    longitude = 37.62,
+                    location = Coordinates(lat = 55.75, lng = 37.62),
                     timestamp = 1700000000,
                     locationOnly = true,
                     isDraft = false

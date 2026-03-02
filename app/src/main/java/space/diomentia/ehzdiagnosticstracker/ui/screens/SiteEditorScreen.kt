@@ -89,6 +89,7 @@ import space.diomentia.ehzdiagnosticstracker.ScanIdQrActivity
 import space.diomentia.ehzdiagnosticstracker.askCameraPermissions
 import space.diomentia.ehzdiagnosticstracker.checkCameraPermissions
 import space.diomentia.ehzdiagnosticstracker.data.AppState
+import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FieldSpec
 import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
@@ -196,13 +197,13 @@ private fun SitePreviewContent(
 
     // Coordinates
     // TODO: button to show on map instead of numbers
-    if (site.latitude != null && site.longitude != null) {
+    if (site.location != null) {
         Text(
-            "${stringResource(R.string.latitude)}: ${"%.6f".format(site.latitude)}",
+            "${stringResource(R.string.latitude)}: ${"%.6f".format(site.location.lat)}",
             style = MaterialTheme.typography.bodyMedium
         )
         Text(
-            "${stringResource(R.string.longitude)}: ${"%.6f".format(site.longitude)}",
+            "${stringResource(R.string.longitude)}: ${"%.6f".format(site.location.lng)}",
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
@@ -514,8 +515,7 @@ private fun GpsSection(editState: SiteEditState) {
             .build()
         locationProvider.getCurrentLocation(request, null)
             .addOnSuccessListener {
-                editState.latitude = it.latitude
-                editState.longitude = it.longitude
+                editState.location = Coordinates(lat = it.latitude, lng = it.longitude)
             }
             .addOnFailureListener {
                 coroutineScope?.launch {
@@ -910,8 +910,7 @@ private class SiteEditState(
 ) {
     val siteId = site.id
 
-    var latitude by mutableStateOf(site.latitude)
-    var longitude by mutableStateOf(site.longitude)
+    var location by mutableStateOf(site.location)
     var validationId by mutableStateOf(site.validationId)
 
     private var _positionKmText = mutableStateOf(site.positionKm?.let { "%.2f".format(it) } ?: "")
@@ -933,16 +932,11 @@ private class SiteEditState(
 
     init {
         scope.launch(Dispatchers.IO) {
-            snapshotFlow { Triple(positionKm, latitude to longitude, validationId) }
+            snapshotFlow { Triple(positionKm, location, validationId) }
                 .debounce(500)
                 .collectLatest { (km, coords, valId) ->
                     km?.let { sessionManager.updateSitePosition(siteId, it) }
-                    val (lat, lon) = coords
-                    if (lat != null && lon != null) sessionManager.updateSiteCoordinates(
-                        siteId,
-                        lat,
-                        lon
-                    )
+                    if (coords != null) sessionManager.updateSiteLocation(siteId, coords)
                     sessionManager.setSiteValidation(siteId, valId)
                 }
         }
@@ -980,10 +974,8 @@ private class SiteEditState(
 
     fun saveAndConfirm() {
         positionKm?.let { sessionManager.updateSitePosition(siteId, it) }
-        latitude?.let { lat ->
-            longitude?.let { lon ->
-                sessionManager.updateSiteCoordinates(siteId, lat, lon)
-            }
+        location?.let { loc ->
+            sessionManager.updateSiteLocation(siteId, loc)
         }
         sessionManager.setSiteValidation(siteId, validationId)
         fieldValues.forEach { (specId, value) ->
@@ -1009,8 +1001,7 @@ private val previewSite = Site(
     id = "preview",
     reportId = "r1",
     positionKm = 12.345,
-    latitude = 55.751244,
-    longitude = 37.618423,
+    location = Coordinates(lat = 55.751244, lng = 37.618423),
     timestamp = 0,
     validationId = "QR-123",
     locationOnly = false

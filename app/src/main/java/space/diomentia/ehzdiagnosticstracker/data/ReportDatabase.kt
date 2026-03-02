@@ -169,6 +169,13 @@ data class Report(
     val isComplete: Boolean = false
 )
 
+data class Coordinates(
+    @ColumnInfo(name = "latitude")
+    val lat: Double,
+    @ColumnInfo(name = "longitude")
+    val lng: Double
+)
+
 @Entity(
     tableName = "sites",
     foreignKeys = [ForeignKey(
@@ -185,10 +192,8 @@ data class Site(
     val reportId: String,
     @ColumnInfo(name = "position_km")
     val positionKm: Double? = null,
-    @ColumnInfo(name = "latitude")
-    val latitude: Double? = null,
-    @ColumnInfo(name = "longitude")
-    val longitude: Double? = null,
+    @Embedded
+    val location: Coordinates? = null,
     @ColumnInfo(name = "timestamp")
     val timestamp: Long,
     @ColumnInfo(name = "validation_id")

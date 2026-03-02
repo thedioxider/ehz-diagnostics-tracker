@@ -34,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FullReport
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
@@ -236,8 +237,7 @@ private val previewSites = listOf(
             id = "1",
             reportId = "r1",
             positionKm = 0.0,
-            latitude = 55.75,
-            longitude = 37.62,
+            location = Coordinates(lat = 55.75, lng = 37.62),
             timestamp = 1700000000,
             locationOnly = true,
             isDraft = false
@@ -249,8 +249,7 @@ private val previewSites = listOf(
             id = "2",
             reportId = "r1",
             positionKm = 1.234,
-            latitude = 55.76,
-            longitude = 37.63,
+            location = Coordinates(lat = 55.76, lng = 37.63),
             timestamp = 1700001000,
             validationId = "QR-123",
             isDraft = false
@@ -265,8 +264,7 @@ private val previewSites = listOf(
             id = "3",
             reportId = "r1",
             positionKm = 2.567,
-            latitude = 55.77,
-            longitude = 37.64,
+            location = Coordinates(lat = 55.77, lng = 37.64),
             timestamp = 1700002000,
             isDraft = false
         ),

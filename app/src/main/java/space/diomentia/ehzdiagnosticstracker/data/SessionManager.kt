@@ -48,8 +48,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     }
 
     fun addSite(
-        latitude: Double? = null,
-        longitude: Double? = null,
+        location: Coordinates? = null,
         positionKm: Double? = null,
         locationOnly: Boolean = false
     ): Site {
@@ -58,8 +57,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
             id = UUID.randomUUID().toString(),
             reportId = reportId,
             positionKm = positionKm,
-            latitude = latitude,
-            longitude = longitude,
+            location = location,
             timestamp = System.currentTimeMillis() / 1000,
             locationOnly = locationOnly
         )
@@ -72,9 +70,9 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         dao.updateSite(sites.copy(positionKm = positionKm))
     }
 
-    fun updateSiteCoordinates(siteId: String, latitude: Double, longitude: Double) {
+    fun updateSiteLocation(siteId: String, location: Coordinates) {
         val site = dao.getSiteByIdOnce(siteId) ?: return
-        dao.updateSite(site.copy(latitude = latitude, longitude = longitude))
+        dao.updateSite(site.copy(location = location))
     }
 
     fun setSiteValidation(siteId: String, validationId: String?) {

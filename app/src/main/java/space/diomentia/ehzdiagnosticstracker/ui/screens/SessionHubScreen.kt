@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
+import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FullReport
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
@@ -312,15 +313,15 @@ private fun SessionHubContent(
                     description = stringResource(R.string.open_last_site_on_map),
                     shortDescription = stringResource(R.string.open_last_site_on_map_short),
                     icon = painterResource(R.drawable.ic_explore),
-                    enabled = lastSite?.site?.latitude != null,
+                    enabled = lastSite?.site?.location != null,
                     modifier = Modifier.weight(1f),
                     onClick = {
                         lastSite?.site?.let { site ->
-                            if (site.latitude != null && site.longitude != null) {
+                            if (site.location != null) {
                                 context.startActivity(
                                     Intent(
                                         Intent.ACTION_VIEW,
-                                        "geo:0,0?q=${site.latitude},${site.longitude}".toUri()
+                                        "geo:0,0?q=${site.location.lat},${site.location.lng}".toUri()
                                     )
                                 )
                             }
@@ -398,8 +399,7 @@ private val previewReport = FullReport(
                 id = "1",
                 reportId = "r1",
                 positionKm = 0.0,
-                latitude = 55.75,
-                longitude = 37.62,
+                location = Coordinates(lat = 55.75, lng = 37.62),
                 timestamp = 1700000000,
                 locationOnly = true,
                 isDraft = false
@@ -411,8 +411,7 @@ private val previewReport = FullReport(
                 id = "2",
                 reportId = "r1",
                 positionKm = 1.5,
-                latitude = 55.76,
-                longitude = 37.63,
+                location = Coordinates(lat = 55.76, lng = 37.63),
                 timestamp = 1700001000,
                 isDraft = false
             ),
