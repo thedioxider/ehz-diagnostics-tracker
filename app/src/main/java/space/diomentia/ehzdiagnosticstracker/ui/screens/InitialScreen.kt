@@ -29,7 +29,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.SideArrowContainer
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
-// TODO: animation is freaked up
 @Composable
 fun InitialScreen(
     onAuthorize: () -> Unit
