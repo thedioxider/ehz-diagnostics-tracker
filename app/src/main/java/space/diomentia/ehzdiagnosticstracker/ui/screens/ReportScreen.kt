@@ -284,7 +284,7 @@ private val previewReport = FullReport(
         startTime = 1700000000
     ),
     route = Route("route1", "Газопровод Тест"),
-    section = Section("section1", "ПК 0 — ПК 10", "route1"),
+    section = Section("section1", 0, 10, "route1"),
     sites = previewSites
 )
 

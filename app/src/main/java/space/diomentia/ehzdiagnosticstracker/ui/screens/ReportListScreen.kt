@@ -184,7 +184,7 @@ private fun ReportListItem(
                 )
                 fullReport.section?.let {
                     Text(
-                        it.name,
+                        it.displayName(),
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.alpha(.5f)
                     )
@@ -221,7 +221,7 @@ private val previewReports = listOf(
             isComplete = true
         ),
         route = Route("route1", "Газопровод Тест"),
-        section = Section("section1", "ПК 0 — ПК 10", "route1"),
+        section = Section("section1", 0, 10, "route1"),
         sites = listOf(
             SiteWithFields(
                 site = Site(
@@ -258,7 +258,7 @@ private val previewReports = listOf(
             isComplete = true
         ),
         route = Route("route1", "Газопровод Тест"),
-        section = Section("section1", "ПК 0 — ПК 10", "route1"),
+        section = Section("section1", 0, 10, "route1"),
         sites = emptyList()
     )
 )

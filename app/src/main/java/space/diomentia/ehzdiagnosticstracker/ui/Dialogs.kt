@@ -131,7 +131,8 @@ data class DialogField(
     val supportingText: String? = null,
     val mutable: Boolean = true,
     val initValue: String? = null,
-    val keyboardType: KeyboardType = KeyboardType.Text
+    val keyboardType: KeyboardType = KeyboardType.Text,
+    val allowUnchecked: Boolean = true
 )
 
 // TODO: auto focus on first field
@@ -169,8 +170,10 @@ fun EditFieldsDialog(
                     TextField(
                         v,
                         onValueChange = { input: String ->
-                            v = input
-                            e = !field.checker(input)
+                            if (field.allowUnchecked || field.checker(input)) {
+                                v = input
+                                e = !field.checker(input)
+                            }
                         },
                         label = { Text(field.name) },
                         keyboardOptions = KeyboardOptions(

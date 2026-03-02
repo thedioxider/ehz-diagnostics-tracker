@@ -215,7 +215,7 @@ private fun SessionHubContent(
                 }
                 section?.let {
                     Text(
-                        "${stringResource(R.string.area)} ${it.name}",
+                        "${stringResource(R.string.area)} ${it.displayName()}",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.headlineSmall
                     )
@@ -377,7 +377,7 @@ private val previewReport = FullReport(
         startTime = 1700000000
     ),
     route = Route("route1", "Газопровод Тест"),
-    section = Section("section1", "ПК 0 — ПК 10", "route1"),
+    section = Section("section1", 0, 10, "route1"),
     sites = listOf(
         SiteWithFields(
             site = Site(

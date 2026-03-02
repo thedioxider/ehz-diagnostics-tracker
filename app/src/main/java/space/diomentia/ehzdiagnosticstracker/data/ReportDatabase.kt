@@ -3,6 +3,7 @@ package space.diomentia.ehzdiagnosticstracker.data
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -21,9 +22,10 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import space.diomentia.ehzdiagnosticstracker.R
 
 @Database(
-    version = 11,
+    version = 12,
     entities = [
         Route::class,
         Section::class,
@@ -76,12 +78,16 @@ data class Route(
 data class Section(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
-    // TODO: instead of name beginning and ending km, and name with getter
-    @ColumnInfo(name = "name") @SerialName("name")
-    val name: String,
+    @ColumnInfo(name = "begin_km") @SerialName("begin_km")
+    val beginKm: Int,
+    @ColumnInfo(name = "end_km") @SerialName("end_km")
+    val endKm: Int,
     @ColumnInfo(name = "route_id") @SerialName("route_id")
     val routeId: String
 ) {
+    @Composable
+    fun displayName(): String = stringResource(R.string.section_display_name, beginKm, endKm)
+
     companion object {
         fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
         fun checkName(name: String): Boolean =

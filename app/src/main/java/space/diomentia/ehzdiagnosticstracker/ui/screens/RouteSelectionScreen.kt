@@ -35,8 +35,10 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.AppState
@@ -117,7 +119,7 @@ fun RouteSelectionScreen(
                 onHistory(null, section.id)
             },
             secondaryActionLabel = { Text(stringResource(R.string.report_list)) },
-            label = { Text("${stringResource(R.string.area)} ${section.name}") }
+            label = { Text("${stringResource(R.string.area)} ${section.displayName()}") }
         ) { }
     }
 
@@ -193,7 +195,7 @@ fun RouteSelectionScreen(
             items(selectedRouteSections) { section ->
                 AnimatedVisibility(selectedRoute != null) {
                     SectionItem(
-                        section.name,
+                        section.displayName(),
                         modifier = Modifier.padding(start = 32.dp),
                         onClick = { sectionActionTarget = section },
                         onLongClick = if (AppState.adminSession) { ->
@@ -428,11 +430,20 @@ private fun SectionDialog(
                 mutable = false,
                 initValue = section?.id ?: UUID.randomUUID().toString()
             ),
-            R.string.name to DialogField(
-                stringResource(R.string.name),
-                checker = { Section.checkName(it) },
-                supportingText = stringResource(R.string.only_letters_or_numbers),
-                initValue = section?.name
+            // TODO: edit fields accordingly
+            R.string.section_begin_km to DialogField(
+                stringResource(R.string.section_begin_km),
+                checker = { it.isDigitsOnly() },
+                keyboardType = KeyboardType.Decimal,
+                initValue = section?.beginKm?.toString(),
+                allowUnchecked = false
+            ),
+            R.string.section_end_km to DialogField(
+                stringResource(R.string.section_end_km),
+                checker = { it.isDigitsOnly() },
+                keyboardType = KeyboardType.Decimal,
+                initValue = section?.endKm?.toString(),
+                allowUnchecked = false
             )
         ),
         onAction = { v ->
@@ -441,14 +452,18 @@ private fun SectionDialog(
                     .insertSection(
                         Section(
                             id = v[R.string.registration_number]!!,
-                            name = v[R.string.name]!!,
+                            beginKm = v[R.string.section_begin_km]!!.toInt(),
+                            endKm = v[R.string.section_end_km]!!.toInt(),
                             routeId = routeId
                         )
                     )
             } else {
                 ReportDatabase.getInstance(context).routeDao()
                     .updateSection(
-                        section.copy(name = v[R.string.name]!!)
+                        section.copy(
+                            beginKm = v[R.string.section_begin_km]!!.toInt(),
+                            endKm = v[R.string.section_end_km]!!.toInt()
+                        )
                     )
             }
             onDismissRequest()
@@ -505,7 +520,7 @@ private fun DeleteSectionDialog(
         },
         label = { Text("${stringResource(R.string.delete_area)}?") },
         onCancel = onDismissRequest,
-        name = section.name,
+        name = section.displayName(),
         details = section.id
     )
 }
