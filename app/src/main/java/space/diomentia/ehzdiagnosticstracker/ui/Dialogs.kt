@@ -73,20 +73,19 @@ fun ActionCancelDialog(
                     PtmFilledButton(
                         enabled = actionEnabled,
                         onClick = onAction,
-                        content = actionLabel
+                        content = actionLabel,
+                        modifier = Modifier.padding(horizontal = 4.dp)
                     )
                     secondaryActionLabel?.let {
                         PtmFilledButton(
                             enabled = secondaryActionEnabled,
                             onClick = onSecondaryAction,
                             content = secondaryActionLabel,
-                            modifier = Modifier.padding(start = 4.dp)
+                            modifier = Modifier.padding(horizontal = 4.dp)
                         )
                     }
-                    // TODO: somehow padding after cancel button
                     PtmFilledIconButton(
                         onClick = onCancel,
-                        modifier = Modifier.padding(start = 4.dp),
                     ) {
                         Icon(
                             Icons.Outlined.Close,
