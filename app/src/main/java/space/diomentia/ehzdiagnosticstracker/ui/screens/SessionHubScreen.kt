@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Icon
@@ -127,13 +125,13 @@ private fun SessionHubContent(
                 onCompleteSession()
             },
             actionLabel = { Text(stringResource(R.string.complete_session)) },
-            onCancel = { showCompleteDialog = false }
-        ) {
-            Text(stringResource(R.string.confirm_complete_session))
-        }
+            onCancel = { showCompleteDialog = false },
+            label = { Text(stringResource(R.string.confirm_complete_session)) }
+        ) { }
     }
 
     if (showDraftDialog && draftSite != null) {
+        // TODO: instead of long text buttons, add outlined buttons with icons and descriptions under them
         ActionCancelDialog(
             onAction = {
                 showDraftDialog = false
@@ -145,10 +143,9 @@ private fun SessionHubContent(
                 showDraftDialog = false
                 showDeleteDraftConfirm = true
             },
-            secondaryActionLabel = { Text(stringResource(R.string.delete_draft_and_create)) }
-        ) {
-            Text(stringResource(R.string.unsaved_draft_exists))
-        }
+            secondaryActionLabel = { Text(stringResource(R.string.delete_draft_and_create)) },
+            label = { Text(stringResource(R.string.unsaved_draft_exists)) }
+        ) { }
     }
 
     if (showDeleteDraftConfirm && draftSite != null) {
@@ -159,10 +156,9 @@ private fun SessionHubContent(
                 onNewMeasurementSite()
             },
             actionLabel = { Text(stringResource(R.string.delete)) },
-            onCancel = { showDeleteDraftConfirm = false }
-        ) {
-            Text(stringResource(R.string.confirm_delete_draft))
-        }
+            onCancel = { showDeleteDraftConfirm = false },
+            label = { Text(stringResource(R.string.confirm_delete_draft)) }
+        ) { }
     }
 
     Scaffold(
@@ -252,6 +248,20 @@ private fun SessionHubContent(
                         .padding(top = 2.dp)
                         .alpha(.7f)
                 )
+            }
+
+            // Primary action — new measurement site
+            Column {
+                HubActionButton(
+                    description = stringResource(R.string.new_measurement_site),
+                    icon = painterResource(R.drawable.ic_edit_location),
+                    buttonHeight = 140.dp,
+                    textStyle = MaterialTheme.typography.titleMedium,
+                    onClick = {
+                        if (draftSite != null) showDraftDialog = true
+                        else onNewMeasurementSite()
+                    }
+                )
                 if (draftSite != null) {
                     Text(
                         stringResource(R.string.unsaved_draft_exists),
@@ -263,18 +273,6 @@ private fun SessionHubContent(
                     )
                 }
             }
-
-            // Primary action — new measurement site
-            HubActionButton(
-                description = stringResource(R.string.new_measurement_site),
-                icon = painterResource(R.drawable.ic_edit_location),
-                buttonHeight = 140.dp,
-                textStyle = MaterialTheme.typography.titleMedium,
-                onClick = {
-                    if (draftSite != null) showDraftDialog = true
-                    else onNewMeasurementSite()
-                }
-            )
 
             // Secondary actions
             Row(

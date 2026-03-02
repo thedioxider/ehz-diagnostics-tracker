@@ -67,7 +67,7 @@ data class Route(
     companion object {
         fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
         fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
+            name.all { c -> c.isLetterOrDigit() || c in ",.;:()-" }
     }
 }
 
@@ -76,6 +76,7 @@ data class Route(
 data class Section(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
+    // TODO: instead of name beginning and ending km, and name with getter
     @ColumnInfo(name = "name") @SerialName("name")
     val name: String,
     @ColumnInfo(name = "route_id") @SerialName("route_id")

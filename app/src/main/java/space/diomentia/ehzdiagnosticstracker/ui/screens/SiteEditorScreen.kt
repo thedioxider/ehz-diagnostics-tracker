@@ -158,6 +158,7 @@ fun SiteEditorScreen(
     ) { innerPadding ->
         ScrollableColumn(
             innerPadding,
+            horizontalAlignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             Spacer(Modifier.height(16.dp))
@@ -192,6 +193,7 @@ private fun SitePreviewContent(
     }
 
     // Coordinates
+    // TODO: button to show on map instead of numbers
     if (site.latitude != null && site.longitude != null) {
         Text(
             "${stringResource(R.string.latitude)}: ${"%.6f".format(site.latitude)}",
@@ -230,6 +232,7 @@ private fun SitePreviewContent(
         siteWithFields.fields.forEach { field ->
             val displayValue = formatFieldValue(field)
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
@@ -237,7 +240,9 @@ private fun SitePreviewContent(
                 Text(
                     field.name,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 4.dp)
                 )
                 Text(
                     displayValue,
@@ -304,6 +309,7 @@ private fun SiteEditContent(
     onSave: () -> Unit
 ) {
     // Position (editable)
+    // TODO: auto calculate position on coordinates
     Text(
         stringResource(R.string.position_km),
         style = MaterialTheme.typography.titleSmall,
@@ -485,6 +491,8 @@ private fun GpsSection(editState: SiteEditState) {
     val locationProvider = LocalLocationProvider.current
         ?: LocationServices.getFusedLocationProviderClient(context)
 
+    // TODO: sync location automatically on start
+    // TODO: don't allow to change location in finished sites
     var isSyncingLocation by remember { mutableStateOf(false) }
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -541,6 +549,7 @@ private fun GpsSection(editState: SiteEditState) {
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
+        // TODO: show on map button, enabled if location exists
         PtmFilledButton(
             onClick = { isSyncingLocation = true },
             modifier = Modifier.weight(1f)
@@ -575,6 +584,7 @@ private fun QrScanSection(editState: SiteEditState) {
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
     ) {
+        // TODO: QR and NFC buttons
         PtmFilledButton(
             onClick = {
                 qrLauncher.launch(Intent(context, ScanIdQrActivity::class.java))

@@ -56,6 +56,7 @@ fun FieldSpecChooserDialog(
 
     val hasSelection = selectedIds.any { it.value }
 
+    // TODO: Fix first height, so it won't wobble when searching
     ActionCancelDialog(
         onAction = {
             val chosen = allSpecs.filter { selectedIds[it.id] == true }
@@ -68,6 +69,7 @@ fun FieldSpecChooserDialog(
         label = { Text(stringResource(R.string.add_field)) }
     ) {
         Column {
+            // TODO: default look of this text field doesn't match searching
             TextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },

@@ -20,7 +20,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,11 +32,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,6 +55,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.util.UUID
 
 @Composable
 fun RouteSelectionScreen(
@@ -118,13 +116,9 @@ fun RouteSelectionScreen(
                 sectionActionTarget = null
                 onHistory(null, section.id)
             },
-            secondaryActionLabel = { Text(stringResource(R.string.report_list)) }
-        ) {
-            Text(
-                "${stringResource(R.string.area)} ${section.name}",
-                style = MaterialTheme.typography.titleMedium
-            )
-        }
+            secondaryActionLabel = { Text(stringResource(R.string.report_list)) },
+            label = { Text("${stringResource(R.string.area)} ${section.name}") }
+        ) { }
     }
 
     Scaffold(
@@ -173,6 +167,7 @@ fun RouteSelectionScreen(
                 .collectAsStateWithLifecycle(emptyList())
         } ?: remember { mutableStateOf(emptyList()) }
 
+        // TODO: maybe there is a better solution than just AnimatedVisibility slop
         FullscreenLazyColumn(innerPadding) {
             items(diagnosticObjects) { routeWithSections ->
                 AnimatedVisibility(
@@ -199,7 +194,7 @@ fun RouteSelectionScreen(
                 AnimatedVisibility(selectedRoute != null) {
                     SectionItem(
                         section.name,
-                        modifier = Modifier.padding(start = 64.dp),
+                        modifier = Modifier.padding(start = 32.dp),
                         onClick = { sectionActionTarget = section },
                         onLongClick = if (AppState.adminSession) { ->
                             editSectionRequest = section
@@ -211,7 +206,7 @@ fun RouteSelectionScreen(
                 item {
                     AddItemButton(
                         label = stringResource(R.string.add_section),
-                        modifier = Modifier.padding(start = 64.dp),
+                        modifier = Modifier.padding(start = 32.dp),
                         onClick = { addSectionRequest = selectedRoute }
                     )
                 }
@@ -239,7 +234,7 @@ private fun AddItemButton(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(16.dp)
+            .padding(vertical = 16.dp, horizontal = 24.dp)
             .then(modifier)
     ) {
         Icon(
@@ -273,7 +268,7 @@ private fun SectionItem(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-            .padding(16.dp)
+            .padding(horizontal = 24.dp, vertical = 16.dp)
             .defaultMinSize(minHeight = 24.dp)
             .height(IntrinsicSize.Min)
             .then(modifier)
@@ -308,11 +303,11 @@ private fun RouteItem(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
-                enabled = onClick != null,
-                onClick = onClick ?: {},
+                enabled = onBack != null || onClick != null,
+                onClick = onBack ?: onClick ?: {},
                 onLongClick = onLongClick
             )
-            .padding(24.dp)
+            .padding(horizontal = 24.dp, vertical = 20.dp)
             .defaultMinSize(minHeight = 36.dp)
             .height(IntrinsicSize.Min)
             .then(modifier)
@@ -322,7 +317,6 @@ private fun RouteItem(
                 Icons.AutoMirrored.Outlined.ArrowBack,
                 contentDescription = null,
                 modifier = Modifier
-                    .clickable(onClick = onBack ?: {})
                     .fillMaxHeight()
                     .aspectRatio(1f)
                     .padding(end = 12.dp)
@@ -341,6 +335,7 @@ private fun RouteItem(
             )
         }
         AnimatedVisibility(onHistory != null) {
+            // TODO: better clickable area and indication
             Icon(
                 painterResource(R.drawable.ic_history),
                 contentDescription = stringResource(R.string.report_list),
@@ -360,17 +355,15 @@ private fun RouteDialog(
     onDelete: () -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
-    val context = LocalContext.current
+    LocalContext.current
+    val routeDao = ReportDatabase.getInstance().routeDao()
 
     EditFieldsDialog(
         fields = listOf(
             R.string.registration_number to DialogField(
                 stringResource(R.string.registration_number),
-                checker = { Route.checkId(it) },
-                supportingText = stringResource(R.string.only_letters_or_numbers),
-                mutable = route == null,
-                initValue = route?.id,
-                keyboardType = KeyboardType.Ascii
+                mutable = false,
+                initValue = route?.id ?: UUID.randomUUID().toString()
             ),
             R.string.name to DialogField(
                 stringResource(R.string.name),
@@ -381,18 +374,16 @@ private fun RouteDialog(
         ),
         onAction = { v ->
             if (route == null) {
-                ReportDatabase.getInstance(context).routeDao()
-                    .insertRoute(
-                        Route(
-                            id = v[R.string.registration_number]!!,
-                            name = v[R.string.name]!!
-                        )
+                routeDao.insertRoute(
+                    Route(
+                        id = v[R.string.registration_number]!!,
+                        name = v[R.string.name]!!
                     )
+                )
             } else {
-                ReportDatabase.getInstance(context).routeDao()
-                    .updateRoute(
-                        route.copy(name = v[R.string.name]!!)
-                    )
+                routeDao.updateRoute(
+                    route.copy(name = v[R.string.name]!!)
+                )
             }
             onDismissRequest()
         },
@@ -434,11 +425,8 @@ private fun SectionDialog(
         fields = listOf(
             R.string.registration_number to DialogField(
                 stringResource(R.string.registration_number),
-                checker = { Section.checkId(it) },
-                supportingText = stringResource(R.string.only_letters_or_numbers),
-                mutable = section == null,
-                initValue = section?.id,
-                keyboardType = KeyboardType.Ascii
+                mutable = false,
+                initValue = section?.id ?: UUID.randomUUID().toString()
             ),
             R.string.name to DialogField(
                 stringResource(R.string.name),
@@ -539,7 +527,7 @@ private fun AddRouteDialogPreview() = PtmTheme {
 @Preview
 @Composable
 private fun EditRouteDialogPreview() = PtmTheme {
-    RouteDialog(Route("testes", "Test"), {}, {})
+    RouteDialog(Route(UUID.randomUUID().toString(), "Test"), {}, {})
 }
 
 @Preview
@@ -551,5 +539,5 @@ private fun AddSectionDialogPreview() = PtmTheme {
 @Preview
 @Composable
 private fun DeleteRouteDialogPreview() = PtmTheme {
-    DeleteRouteDialog(Route("tsetsetset", "Test"), {})
+    DeleteRouteDialog(Route(UUID.randomUUID().toString(), "Test"), {})
 }

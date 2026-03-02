@@ -82,6 +82,7 @@ fun ActionCancelDialog(
                             modifier = Modifier.padding(start = 4.dp)
                         )
                     }
+                    // TODO: somehow padding after cancel button
                     PtmFilledIconButton(
                         onClick = onCancel,
                         modifier = Modifier.padding(start = 4.dp),
@@ -133,6 +134,7 @@ data class DialogField(
     val keyboardType: KeyboardType = KeyboardType.Text
 )
 
+// TODO: auto focus on first field
 @Composable
 fun EditFieldsDialog(
     fields: List<Pair<Int, DialogField>>,

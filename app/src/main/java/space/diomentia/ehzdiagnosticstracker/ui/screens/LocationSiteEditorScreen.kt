@@ -92,7 +92,10 @@ fun LocationSiteEditorScreen(
         reportId?.let { reportDao.getSitesForReportOnce(it) }.orEmpty()
             .filter { it.id != siteId }
     }
-    val isZeroKm = remember(reportSites) { reportSites.isEmpty() }
+    val isZeroKm = remember(reportSites) {
+        reportSites.isEmpty() ||
+                (existingSite?.timestamp?.let { it < reportSites.first().timestamp } ?: false)
+    }
 
     var isSyncingLocation by remember { mutableStateOf(siteId == null) }
     val locationPermissionsLauncher = rememberLauncherForActivityResult(
@@ -201,6 +204,8 @@ fun LocationSiteEditorScreen(
                     .fillMaxWidth()
                     .padding(start = 16.dp)
             ) {
+                // TODO: show on map button instead of text
+                // TODO: should not be able to edit coordinates in saved location site
                 Column(modifier = Modifier.weight(1f)) {
                     if (editState.latitude != null && editState.longitude != null) {
                         Text(
