@@ -18,6 +18,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +27,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -136,7 +139,6 @@ data class DialogField(
     val nullable: Boolean = false
 )
 
-// TODO: auto focus on first field
 @Composable
 fun EditFieldsDialog(
     fields: List<Pair<Int, DialogField>>,
@@ -153,6 +155,9 @@ fun EditFieldsDialog(
             k to (mutableStateOf(field.initValue ?: "") to mutableStateOf(false))
         }
     }
+
+    val focusRequester = remember { FocusRequester() }
+    var focusAttached = false
 
     ActionCancelDialog(
         onAction = { onAction(valuesErrors.mapValues { (_, v) -> v.first.value }) },
@@ -184,8 +189,13 @@ fun EditFieldsDialog(
                         ),
                         isError = e,
                         supportingText = { field.supportingText?.let { s -> if (e) Text(s) } },
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = if (!focusAttached && field.mutable) {
+                            focusAttached = true
+                            Modifier.focusRequester(focusRequester)
+                        } else Modifier
                     )
+                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
                 } else {
                     val v by ve.first
                     Text(

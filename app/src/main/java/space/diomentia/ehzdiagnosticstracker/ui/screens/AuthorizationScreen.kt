@@ -49,6 +49,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.EditFieldsDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
+import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButtonColors
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
@@ -144,7 +145,15 @@ fun AuthorizationScreen(
                         }
                         addUserRequest = true
                     },
-                    modifier = Modifier.padding(8.dp)
+                    enabled = true,
+                    colors = PtmFilledButtonColors.let {
+                        if (AppState.adminSession) it
+                        else it.copy(
+                            containerColor = it.disabledContainerColor,
+                            contentColor = it.disabledContentColor
+                        )
+                    },
+                    modifier = Modifier.padding(16.dp)
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
