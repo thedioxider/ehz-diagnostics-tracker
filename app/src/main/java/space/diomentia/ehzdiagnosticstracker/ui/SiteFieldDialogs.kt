@@ -52,7 +52,7 @@ fun FieldSpecChooserDialog(
     }
 
     val sortedSpecs = remember(allSpecs, addedSpecIds) {
-        allSpecs.sortedBy { if (it.id in addedSpecIds) 1 else 0 }
+        allSpecs.sortedWith(compareBy({ it.id in addedSpecIds }, { it.name }))
     }
     val filteredSpecs = remember(searchQuery, sortedSpecs) {
         if (searchQuery.isBlank()) sortedSpecs
@@ -139,11 +139,13 @@ fun TemplateChooserDialog(
     onTemplateChosen: (ReportTemplate) -> Unit,
     onCancel: () -> Unit
 ) {
+    val sortedTemplates = templates.sortedBy { it.name }
+
     var selectedIndex by remember { mutableStateOf(-1) }
 
     ActionCancelDialog(
         onAction = {
-            templates.getOrNull(selectedIndex)?.let {
+            sortedTemplates.getOrNull(selectedIndex)?.let {
                 onTemplateChosen(it)
             }
             onCancel()
@@ -158,7 +160,7 @@ fun TemplateChooserDialog(
                 .fillMaxWidth()
                 .heightIn(max = 400.dp)
         ) {
-            items(templates.size) { i ->
+            items(sortedTemplates.size) { i ->
                 val selected = selectedIndex == i
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -178,7 +180,7 @@ fun TemplateChooserDialog(
                             .padding(end = 12.dp)
                     )
                     Text(
-                        templates[i].name,
+                        sortedTemplates[i].name,
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }

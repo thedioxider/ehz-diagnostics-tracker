@@ -55,6 +55,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
+// TODO: admin access even when forgot password
 @Composable
 fun AuthorizationScreen(
     onEditProfile: () -> Unit,

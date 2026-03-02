@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import java.util.UUID
 
+// TODO: remove drafts on save
 class SessionManager(private val dao: ReportDao, private val config: ReportConfig?) {
     var activeReportId: String? = null
         private set
