@@ -35,9 +35,31 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.util.UUID
+
+@Composable
+fun PtmDialog(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Dialog(
+        onDismissRequest,
+        DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(Modifier.padding(horizontal = 32.dp)) {
+            BorderedDialogContainer(
+                modifier = modifier,
+                content = content
+            )
+        }
+    }
+}
 
 @Composable
 fun ActionCancelDialog(
@@ -51,56 +73,54 @@ fun ActionCancelDialog(
     secondaryActionEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    Dialog(onCancel) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 180.dp)
-                    .padding(16.dp)
+    PtmDialog(onCancel) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 180.dp)
+                .padding(16.dp)
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                label()
+            }
+            Box(Modifier.padding(8.dp)) {
+                ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
+                    content()
+                }
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                    label()
-                }
-                Box(Modifier.padding(8.dp)) {
-                    ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
-                        content()
-                    }
-                }
-                FlowRow(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                PtmFilledButton(
+                    enabled = actionEnabled,
+                    onClick = {
+                        onCancel()
+                        onAction()
+                    },
+                    content = actionLabel,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
+                secondaryActionLabel?.let {
                     PtmFilledButton(
-                        enabled = actionEnabled,
+                        enabled = secondaryActionEnabled,
                         onClick = {
                             onCancel()
-                            onAction()
+                            onSecondaryAction()
                         },
-                        content = actionLabel,
+                        content = secondaryActionLabel,
                         modifier = Modifier.padding(horizontal = 4.dp)
                     )
-                    secondaryActionLabel?.let {
-                        PtmFilledButton(
-                            enabled = secondaryActionEnabled,
-                            onClick = {
-                                onCancel()
-                                onSecondaryAction()
-                            },
-                            content = secondaryActionLabel,
-                            modifier = Modifier.padding(horizontal = 4.dp)
-                        )
-                    }
-                    PtmFilledIconButton(
-                        onClick = onCancel,
-                    ) {
-                        Icon(
-                            Icons.Outlined.Close,
-                            contentDescription = stringResource(R.string.cancel)
-                        )
-                    }
+                }
+                PtmFilledIconButton(
+                    onClick = onCancel,
+                ) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.cancel)
+                    )
                 }
             }
         }

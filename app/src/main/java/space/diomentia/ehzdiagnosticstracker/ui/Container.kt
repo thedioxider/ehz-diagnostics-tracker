@@ -123,7 +123,6 @@ fun DownArrowContainer(
     }
 }
 
-// TODO: wider dialogs
 @Composable
 fun BorderedDialogContainer(
     modifier: Modifier = Modifier,
