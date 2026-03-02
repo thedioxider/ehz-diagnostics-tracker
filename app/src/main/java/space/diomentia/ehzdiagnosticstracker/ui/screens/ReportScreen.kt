@@ -283,7 +283,7 @@ private val previewReport = FullReport(
         inspectorName = "Иванов И.И.",
         startTime = 1700000000
     ),
-    route = Route("route1", "Газопровод Тест"),
+    route = Route("route1", "Газопровод Тест", 42),
     section = Section("section1", 0, 10, "route1"),
     sites = previewSites
 )

@@ -132,7 +132,8 @@ data class DialogField(
     val mutable: Boolean = true,
     val initValue: String? = null,
     val keyboardType: KeyboardType = KeyboardType.Text,
-    val allowUnchecked: Boolean = true
+    val allowUnchecked: Boolean = true,
+    val nullable: Boolean = false
 )
 
 // TODO: auto focus on first field
@@ -146,6 +147,7 @@ fun EditFieldsDialog(
     secondaryActionLabel: (@Composable () -> Unit)? = null,
     onCancel: () -> Unit
 ) {
+    val fieldMap = fields.toMap()
     val valuesErrors: Map<Int, Pair<MutableState<String>, MutableState<Boolean>>> = remember {
         fields.associate { (k, field) ->
             k to (mutableStateOf(field.initValue ?: "") to mutableStateOf(false))
@@ -155,7 +157,7 @@ fun EditFieldsDialog(
     ActionCancelDialog(
         onAction = { onAction(valuesErrors.mapValues { (_, v) -> v.first.value }) },
         actionLabel = actionLabel,
-        actionEnabled = valuesErrors.all { (_, v) -> !v.first.value.isBlank() && !v.second.value },
+        actionEnabled = valuesErrors.all { (k, v) -> (fieldMap[k]!!.nullable || !v.first.value.isBlank()) && !v.second.value },
         onSecondaryAction = { onSecondaryAction(valuesErrors.mapValues { (_, v) -> v.first.value }) },
         secondaryActionLabel = secondaryActionLabel,
         label = label,

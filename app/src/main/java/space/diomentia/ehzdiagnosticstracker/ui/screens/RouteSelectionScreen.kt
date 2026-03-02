@@ -176,7 +176,7 @@ fun RouteSelectionScreen(
                     selectedRoute == null || selectedRoute?.id == routeWithSections.route.id
                 ) {
                     RouteItem(
-                        routeWithSections.route.name,
+                        routeWithSections.route,
                         onBack = if (selectedRoute?.id == routeWithSections.route.id) { ->
                             selectedRoute = null
                         } else null,
@@ -195,7 +195,7 @@ fun RouteSelectionScreen(
             items(selectedRouteSections) { section ->
                 AnimatedVisibility(selectedRoute != null) {
                     SectionItem(
-                        section.displayName(),
+                        section,
                         modifier = Modifier.padding(start = 32.dp),
                         onClick = { sectionActionTarget = section },
                         onLongClick = if (AppState.adminSession) { ->
@@ -257,7 +257,7 @@ private fun AddItemButton(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun SectionItem(
-    name: String,
+    section: Section,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null
@@ -283,7 +283,7 @@ private fun SectionItem(
                 .weight(1f)
         ) {
             Text(
-                "${stringResource(R.string.area)} $name",
+                "${stringResource(R.string.area)} ${section.displayName()}",
                 style = MaterialTheme.typography.titleMedium
             )
         }
@@ -293,7 +293,7 @@ private fun SectionItem(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun RouteItem(
-    name: String,
+    route: Route,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
     onHistory: (() -> Unit)? = null,
@@ -332,8 +332,13 @@ private fun RouteItem(
                 .weight(1f)
         ) {
             Text(
-                name,
+                route.name,
                 style = MaterialTheme.typography.titleLarge
+            )
+            Text(
+                "${route.length} ${stringResource(R.string.km)}",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.alpha(.5f)
             )
         }
         AnimatedVisibility(onHistory != null) {
@@ -372,6 +377,13 @@ private fun RouteDialog(
                 checker = { Route.checkName(it) },
                 supportingText = stringResource(R.string.only_letters_or_numbers),
                 initValue = route?.name
+            ),
+            R.string.route_length_km to DialogField(
+                stringResource(R.string.route_length_km),
+                checker = { it.isDigitsOnly() },
+                allowUnchecked = false,
+                nullable = false,
+                initValue = route?.length?.toString()
             )
         ),
         onAction = { v ->
@@ -379,12 +391,16 @@ private fun RouteDialog(
                 routeDao.insertRoute(
                     Route(
                         id = v[R.string.registration_number]!!,
-                        name = v[R.string.name]!!
+                        name = v[R.string.name]!!,
+                        length = v[R.string.route_length_km]!!.toInt()
                     )
                 )
             } else {
                 routeDao.updateRoute(
-                    route.copy(name = v[R.string.name]!!)
+                    route.copy(
+                        name = v[R.string.name]!!,
+                        length = v[R.string.route_length_km]!!.toInt()
+                    )
                 )
             }
             onDismissRequest()
@@ -542,7 +558,7 @@ private fun AddRouteDialogPreview() = PtmTheme {
 @Preview
 @Composable
 private fun EditRouteDialogPreview() = PtmTheme {
-    RouteDialog(Route(UUID.randomUUID().toString(), "Test"), {}, {})
+    RouteDialog(Route(UUID.randomUUID().toString(), "Test", 42), {}, {})
 }
 
 @Preview
@@ -554,5 +570,5 @@ private fun AddSectionDialogPreview() = PtmTheme {
 @Preview
 @Composable
 private fun DeleteRouteDialogPreview() = PtmTheme {
-    DeleteRouteDialog(Route(UUID.randomUUID().toString(), "Test"), {})
+    DeleteRouteDialog(Route(UUID.randomUUID().toString(), "Test", 42), {})
 }

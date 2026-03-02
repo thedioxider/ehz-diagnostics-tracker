@@ -25,7 +25,7 @@ import kotlinx.serialization.Serializable
 import space.diomentia.ehzdiagnosticstracker.R
 
 @Database(
-    version = 12,
+    version = 13,
     entities = [
         Route::class,
         Section::class,
@@ -64,7 +64,9 @@ data class Route(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
     @ColumnInfo(name = "name") @SerialName("name")
-    val name: String
+    val name: String,
+    @ColumnInfo(name = "length") @SerialName("length")
+    val length: Int
 ) {
     companion object {
         fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
@@ -310,6 +312,9 @@ interface ReportDao {
 
     @Delete
     fun deleteField(field: ReportField)
+
+    @Delete
+    fun deleteFields(fields: List<ReportField>)
 
     @Query("DELETE FROM report_fields WHERE site_id = :siteId AND spec_id = :specId")
     fun deleteFieldByKey(siteId: String, specId: String)

@@ -220,7 +220,7 @@ private val previewReports = listOf(
             startTime = 1700000000,
             isComplete = true
         ),
-        route = Route("route1", "Газопровод Тест"),
+        route = Route("route1", "Газопровод Тест", 42),
         section = Section("section1", 0, 10, "route1"),
         sites = listOf(
             SiteWithFields(
@@ -257,7 +257,7 @@ private val previewReports = listOf(
             startTime = 1700100000,
             isComplete = true
         ),
-        route = Route("route1", "Газопровод Тест"),
+        route = Route("route1", "Газопровод Тест", 42),
         section = Section("section1", 0, 10, "route1"),
         sites = emptyList()
     )
