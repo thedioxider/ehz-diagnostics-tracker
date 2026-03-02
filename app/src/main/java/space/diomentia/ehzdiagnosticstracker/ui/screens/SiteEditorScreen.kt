@@ -15,6 +15,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -102,6 +103,7 @@ import space.diomentia.ehzdiagnosticstracker.data.SessionManager
 import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
+import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FieldSpecChooserDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullScreenImageDialog
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
@@ -296,6 +298,7 @@ private fun formatFieldValue(field: ReportField): String {
             false -> stringResource(R.string.is_false)
             else -> stringResource(R.string.unknown)
         }
+
         FieldType.Photo -> stringResource(R.string.image)
         else -> field.value + (field.unit?.let { " $it" } ?: "")
     }
@@ -641,6 +644,7 @@ private fun EditableField(
                     onValueChange = onValueChange
                 )
             }
+
             FieldType.Integer -> {
                 FieldTextField(
                     value = value,
@@ -651,6 +655,7 @@ private fun EditableField(
                     }
                 )
             }
+
             FieldType.Decimal -> {
                 FieldTextField(
                     value = value,
@@ -667,9 +672,11 @@ private fun EditableField(
                     }
                 )
             }
+
             FieldType.Photo -> {
                 PhotoField(value, onValueChange)
             }
+
             FieldType.Bool -> Unit
         }
     }
@@ -685,7 +692,7 @@ private fun BoolToggle(
             onToggle(
                 when (ReportFieldValue.Bool.fromString(value)) {
                     true -> "false"
-                    false -> "true"
+                    false -> ""
                     else -> "true"
                 }
             )
@@ -807,6 +814,24 @@ private fun PhotoField(
     var fullView by remember { mutableStateOf(false) }
     if (fullView) pic?.asImageBitmap()?.let { FullScreenImageDialog(it) { fullView = false } }
 
+    var deletePhotoDialog by remember(pic) { mutableStateOf(false) }
+    if (deletePhotoDialog && pic != null) {
+        ActionCancelDialog(
+            onAction = { onValueChange("") },
+            actionLabel = { Text(stringResource(R.string.delete)) },
+            onCancel = { deletePhotoDialog = false },
+            label = { Text(stringResource(R.string.delete_photo)) }
+        ) {
+            Image(
+                pic.asImageBitmap(),
+                contentDescription = "",
+                modifier = Modifier
+                    .height(150.dp)
+                    .clickable { fullView = true }
+            )
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.Start,
         modifier = Modifier.fillMaxWidth()
@@ -864,7 +889,10 @@ private fun PhotoField(
                     contentDescription = "",
                     modifier = Modifier
                         .height(150.dp)
-                        .clickable { fullView = true }
+                        .combinedClickable(
+                            onClick = { fullView = true },
+                            onLongClick = { deletePhotoDialog = true }
+                        )
                 )
             }
         }

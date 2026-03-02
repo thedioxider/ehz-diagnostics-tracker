@@ -181,4 +181,5 @@
     <string name="km">км</string>
     <string name="route_deleted">Объект удалён</string>
     <string name="section_deleted">Участок удалён</string>
+    <string name="delete_photo">Удалить фото?</string>
 </resources>
