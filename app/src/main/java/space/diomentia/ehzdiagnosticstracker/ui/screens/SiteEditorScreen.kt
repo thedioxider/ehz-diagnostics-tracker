@@ -423,6 +423,7 @@ private fun SiteEditContent(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    // TODO: add always required report fields to config
                     EditableField(
                         field = field,
                         fieldType = fieldType,

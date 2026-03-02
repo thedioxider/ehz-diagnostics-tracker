@@ -278,6 +278,7 @@ private fun SectionItem(
             .height(IntrinsicSize.Min)
             .then(modifier)
     ) {
+        // TODO: indicate when there's an incomplete report present
         Column(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center,

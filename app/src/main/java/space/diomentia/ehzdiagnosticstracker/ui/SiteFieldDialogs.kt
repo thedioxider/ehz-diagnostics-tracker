@@ -56,7 +56,6 @@ fun FieldSpecChooserDialog(
 
     val hasSelection = selectedIds.any { it.value }
 
-    // TODO: Fix first height, so it won't wobble when searching
     ActionCancelDialog(
         onAction = {
             val chosen = allSpecs.filter { selectedIds[it.id] == true }
@@ -66,7 +65,7 @@ fun FieldSpecChooserDialog(
         actionLabel = { Text(stringResource(R.string.add)) },
         actionEnabled = hasSelection,
         onCancel = onCancel,
-        label = { Text(stringResource(R.string.add_field)) }
+        label = { Text(stringResource(R.string.add_field)) },
     ) {
         Column {
             // TODO: default look of this text field doesn't match searching
@@ -88,7 +87,7 @@ fun FieldSpecChooserDialog(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = 400.dp)
+                    .heightIn(300.dp)
             ) {
                 items(filteredSpecs) { spec ->
                     val alreadyAdded = spec.id in addedSpecIds
@@ -112,7 +111,7 @@ fun FieldSpecChooserDialog(
                         )
                         Text(
                             spec.name + (spec.unit?.let { " ($it)" } ?: ""),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MaterialTheme.typography.bodyMedium,
                             modifier = Modifier.weight(1f)
                         )
                     }
