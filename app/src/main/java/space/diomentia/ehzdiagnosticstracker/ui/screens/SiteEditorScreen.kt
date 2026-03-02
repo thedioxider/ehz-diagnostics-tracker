@@ -1,9 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.provider.MediaStore
@@ -27,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -35,7 +34,6 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +43,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -70,13 +67,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.gms.location.CurrentLocationRequest
-import com.google.android.gms.location.Granularity
-import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -93,7 +85,6 @@ import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FieldSpec
 import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
-import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
@@ -103,10 +94,13 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportTemplate
 import space.diomentia.ehzdiagnosticstracker.data.SessionManager
 import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
+import space.diomentia.ehzdiagnosticstracker.data.distanceKmTo
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FieldSpecChooserDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullScreenImageDialog
+import space.diomentia.ehzdiagnosticstracker.ui.LocationField
+import space.diomentia.ehzdiagnosticstracker.ui.LocationIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
@@ -119,6 +113,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.text.DecimalFormat
 
 @Composable
 fun SiteEditorScreen(
@@ -127,16 +122,23 @@ fun SiteEditorScreen(
     onBack: () -> Unit
 ) {
     val snackbarHostState = LocalSnackbarHostState.current
+    val reportDao = ReportDatabase.getInstance().reportDao()
     val sessionManager = LocalSessionManager.current
 
     var editMode by remember { mutableStateOf(initialEditMode) }
     val currentSite = remember(siteId, editMode) { sessionManager.getSite(siteId) }
     if (currentSite == null) return
 
+    val reportSites = remember(currentSite) {
+        currentSite.reportId.let { reportDao.getSitesForReportOnce(it) }
+            .filter { it.id != siteId }
+    }
+    val previousSite = reportSites.lastOrNull()
+
     val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
     val siteWithFields = remember(fullReport, siteId) {
         fullReport?.sites?.find { it.site.id == siteId }
-    } ?: return
+    }
 
     val editState = rememberSiteEditState(currentSite)
 
@@ -164,10 +166,10 @@ fun SiteEditorScreen(
             horizontalAlignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
 
             if (editMode) {
-                SiteEditContent(editState) { editMode = false }
+                SiteEditContent(editState, previousSite) { editMode = false }
             } else if (siteWithFields != null) {
                 SitePreviewContent(siteWithFields) { editMode = true }
             }
@@ -187,48 +189,50 @@ private fun SitePreviewContent(
     val site = siteWithFields.site
 
     // Position
-    site.positionKm?.let { km ->
-        Text(
-            "${stringResource(R.string.position_km)}: ${"%.2f".format(km)}",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-    }
-
-    // Coordinates
-    // TODO: button to show on map instead of numbers
-    if (site.location != null) {
-        Text(
-            "${stringResource(R.string.latitude)}: ${"%.6f".format(site.location.lat)}",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Text(
-            "${stringResource(R.string.longitude)}: ${"%.6f".format(site.location.lng)}",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-    }
-
-    // Validation
     Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(bottom = 16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
     ) {
-        Text(
-            "${stringResource(R.string.validation_status)}: ",
-            style = MaterialTheme.typography.bodyMedium
-        )
-        Text(
-            stringResource(
-                if (site.validationId != null) R.string.verified
-                else R.string.not_verified
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = if (site.validationId != null) MaterialTheme.colorScheme.primary
-            else Color.Gray
+        Column {
+            Text(
+                "${stringResource(R.string.position)}: ${
+                    site.positionKm?.let { km -> "%.2f".format(km) } ?: "??"
+                } ${
+                    stringResource(
+                        R.string.km
+                    )
+                }",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+
+            // Validation
+            Text(
+                "${stringResource(R.string.validation_status)}: ",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                stringResource(
+                    if (site.validationId != null) R.string.verified
+                    else R.string.not_verified
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = if (site.validationId != null)
+                    MaterialTheme.colorScheme.primary
+                else Color.Gray,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+        LocationIconButton(
+            site.location,
+            modifier = Modifier.size(52.dp)
         )
     }
+
+    Spacer(Modifier.height(24.dp))
 
     // Fields
     if (siteWithFields.fields.isNotEmpty()) {
@@ -245,7 +249,7 @@ private fun SitePreviewContent(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(end = 4.dp)
+                        .padding(end = 6.dp)
                 )
                 Text(
                     displayValue,
@@ -269,21 +273,6 @@ private fun SitePreviewContent(
             modifier = Modifier.padding(end = 4.dp)
         )
         Text(stringResource(R.string.edit))
-    }
-
-    // TODO: implement export functionality
-    PtmFilledButton(
-        onClick = { /* TODO */ },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_file_export),
-            contentDescription = stringResource(R.string.export),
-            modifier = Modifier.padding(end = 4.dp)
-        )
-        Text(stringResource(R.string.export_report))
     }
 }
 
@@ -310,12 +299,13 @@ private fun formatFieldValue(field: ReportField): String {
 @Composable
 private fun SiteEditContent(
     editState: SiteEditState,
+    previousSite: Site?,
     onSave: () -> Unit
 ) {
     // Position (editable)
     // TODO: auto calculate position on coordinates
     Text(
-        stringResource(R.string.position_km),
+        stringResource(R.string.position),
         style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.padding(bottom = 4.dp)
     )
@@ -326,7 +316,24 @@ private fun SiteEditContent(
     ) { editState.positionKmText = it }
 
     // GPS
-    GpsSection(editState)
+    Text(
+        stringResource(R.string.coordinates),
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+    LocationField(location = editState.location) {
+        val loc = Coordinates(lat = it.latitude, lng = it.longitude)
+        editState.location = loc
+        if (editState.positionKmText.isBlank()) {
+            editState.positionKmText = DecimalFormat("#.##").format(
+                previousSite?.run {
+                    if (location != null && positionKm != null) {
+                        positionKm + location.distanceKmTo(loc)
+                    } else null
+                } ?: previousSite?.positionKm ?: 0.0
+            )
+        }
+    }
 
     Spacer(Modifier.height(16.dp))
 
@@ -448,6 +455,7 @@ private fun SiteEditContent(
             editState.saveAndConfirm()
             onSave()
         },
+        enabled = editState.canSave,
         modifier = Modifier.fillMaxWidth()
     ) {
         Icon(
@@ -456,101 +464,6 @@ private fun SiteEditContent(
             modifier = Modifier.padding(end = 4.dp)
         )
         Text(stringResource(R.string.save))
-    }
-
-    // TODO: implement export functionality
-    PtmFilledButton(
-        onClick = { /* TODO */ },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp)
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_file_export),
-            contentDescription = stringResource(R.string.export),
-            modifier = Modifier.padding(end = 4.dp)
-        )
-        Text(stringResource(R.string.export_report))
-    }
-}
-
-@Composable
-private fun GpsSection(editState: SiteEditState) {
-    val context = LocalContext.current
-    val coroutineScope = LocalCoroutineScope.current
-    val snackbarHostState = LocalSnackbarHostState.current
-    val locationProvider = LocalLocationProvider.current
-        ?: LocationServices.getFusedLocationProviderClient(context)
-
-    // TODO: sync location automatically on start
-    // TODO: don't allow to change location in finished sites
-    var isSyncingLocation by remember { mutableStateOf(false) }
-    val locationPermissionsLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        isSyncingLocation = true
-    }
-
-    LaunchedEffect(isSyncingLocation) {
-        if (!isSyncingLocation) return@LaunchedEffect
-        if (ActivityCompat.checkSelfPermission(
-                context, Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                context, Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            locationPermissionsLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                )
-            )
-            isSyncingLocation = false
-            return@LaunchedEffect
-        }
-        val request = CurrentLocationRequest.Builder()
-            .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
-            .setGranularity(Granularity.GRANULARITY_FINE)
-            .setMaxUpdateAgeMillis(15000L)
-            .build()
-        locationProvider.getCurrentLocation(request, null)
-            .addOnSuccessListener {
-                editState.location = Coordinates(lat = it.latitude, lng = it.longitude)
-            }
-            .addOnFailureListener {
-                coroutineScope?.launch {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(
-                        "${context.getString(R.string.location)}: ${
-                            context.getString(R.string.something_wrong)
-                        }..."
-                    )
-                }
-            }
-            .addOnCompleteListener { isSyncingLocation = false }
-    }
-
-    Text(
-        stringResource(R.string.coordinates),
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier.padding(bottom = 4.dp)
-    )
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        // TODO: show on map button, enabled if location exists
-        PtmFilledButton(
-            onClick = { isSyncingLocation = true },
-            modifier = Modifier.weight(1f)
-        ) {
-            Icon(
-                Icons.Outlined.Refresh,
-                contentDescription = null,
-                modifier = Modifier.padding(end = 4.dp)
-            )
-            Text(stringResource(R.string.refresh_location))
-        }
     }
 }
 
@@ -930,6 +843,9 @@ private class SiteEditState(
     var fieldSpecs by mutableStateOf(fields)
         private set
 
+    val canSave: Boolean
+        get() = positionKm?.let { km -> km != null && km >= 0.0 } ?: false
+
     init {
         scope.launch(Dispatchers.IO) {
             snapshotFlow { Triple(positionKm, location, validationId) }
@@ -1047,7 +963,7 @@ private fun SiteEditModePreview() {
     CompositionLocalProvider(LocalSessionManager provides sessionManager) {
         PtmTheme {
             Column(Modifier.padding(16.dp)) {
-                SiteEditContent(editState) {}
+                SiteEditContent(editState, null) {}
             }
         }
     }
