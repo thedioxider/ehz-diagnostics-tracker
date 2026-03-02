@@ -125,7 +125,6 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     }
 
     fun removeSite(siteId: String) {
-        // TODO: no removing fields of site?
         val site = dao.getSiteByIdOnce(siteId) ?: return
         dao.deleteSite(site)
     }

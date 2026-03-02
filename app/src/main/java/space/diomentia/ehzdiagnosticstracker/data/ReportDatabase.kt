@@ -10,6 +10,7 @@ import androidx.room.Database
 import androidx.room.Delete
 import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.ForeignKey
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -24,8 +25,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import space.diomentia.ehzdiagnosticstracker.R
 
+// WARNING: fallbackToDestructiveMigration wipes all data on version bump.
+// Proper migrations MUST be written for production releases.
 @Database(
-    version = 13,
+    version = 14,
     entities = [
         Route::class,
         Section::class,
@@ -166,7 +169,15 @@ data class Report(
     val isComplete: Boolean = false
 )
 
-@Entity(tableName = "sites")
+@Entity(
+    tableName = "sites",
+    foreignKeys = [ForeignKey(
+        entity = Report::class,
+        parentColumns = ["id"],
+        childColumns = ["report_id"],
+        onDelete = ForeignKey.CASCADE
+    )]
+)
 data class Site(
     @PrimaryKey @ColumnInfo(name = "id")
     val id: String,
@@ -190,7 +201,13 @@ data class Site(
 
 @Entity(
     tableName = "report_fields",
-    primaryKeys = ["site_id", "spec_id"]
+    primaryKeys = ["site_id", "spec_id"],
+    foreignKeys = [ForeignKey(
+        entity = Site::class,
+        parentColumns = ["id"],
+        childColumns = ["site_id"],
+        onDelete = ForeignKey.CASCADE
+    )]
 )
 data class ReportField(
     @ColumnInfo(name = "site_id")
