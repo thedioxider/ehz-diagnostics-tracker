@@ -146,6 +146,7 @@ private fun ReportScreenContent(
         val isZeroKm = firstSite?.site?.locationOnly == true
 
         FullscreenLazyColumn(innerPadding) {
+            // TODO: doesn't update when site deleted
             items(confirmedSites) { siteWithFields ->
                 val isDeletable = !(isZeroKm && siteWithFields.site.id == firstSite.site.id)
                 SiteItem(

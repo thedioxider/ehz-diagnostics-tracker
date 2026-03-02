@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.util.UUID
 
 @Composable
 fun ActionCancelDialog(
@@ -227,7 +228,7 @@ private fun EditFieldsDialogPreview() = PtmTheme {
                 "Id",
                 { true },
                 mutable = false,
-                initValue = "ahg9hfg93bg49wergohvbu"
+                initValue = UUID.randomUUID().toString()
             )
         ),
         actionLabel = { Text(stringResource(R.string.save)) },

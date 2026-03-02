@@ -508,7 +508,7 @@ private fun DeleteRouteDialog(
             ReportDatabase.getInstance(context)
                 .routeDao()
                 .deleteRoute(route)
-            snacker.showMessage(context.getString(R.string.profile_deleted))
+            snacker.showMessage(context.getString(R.string.route_deleted))
             onDismissRequest()
         },
         label = { Text("${stringResource(R.string.delete_object)}?") },
@@ -531,7 +531,7 @@ private fun DeleteSectionDialog(
             ReportDatabase.getInstance(context)
                 .routeDao()
                 .deleteSection(section)
-            snacker.showMessage(context.getString(R.string.profile_deleted))
+            snacker.showMessage(context.getString(R.string.section_deleted))
             onDismissRequest()
         },
         label = { Text("${stringResource(R.string.delete_area)}?") },

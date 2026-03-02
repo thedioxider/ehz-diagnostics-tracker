@@ -178,4 +178,6 @@
     <string name="section_end_km">Конец участка, км</string>
     <string name="route_length_km">Протяжённость, км</string>
     <string name="km">км</string>
+    <string name="route_deleted">Объект удалён</string>
+    <string name="section_deleted">Участок удалён</string>
 </resources>
