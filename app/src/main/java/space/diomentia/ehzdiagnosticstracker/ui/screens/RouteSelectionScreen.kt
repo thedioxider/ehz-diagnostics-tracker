@@ -89,7 +89,10 @@ fun RouteSelectionScreen(
         ) { editRouteRequest = null }
     }
     deleteRouteRequest?.let { route ->
-        DeleteRouteDialog(route) { deleteRouteRequest = null }
+        DeleteRouteDialog(
+            route,
+            onSuccess = { selectedRoute = null }
+        ) { deleteRouteRequest = null }
     }
     addSectionRequest?.let { route ->
         SectionDialog(route.id, null) { addSectionRequest = null }
@@ -498,6 +501,7 @@ private fun SectionDialog(
 @Composable
 private fun DeleteRouteDialog(
     route: Route,
+    onSuccess: () -> Unit = {},
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
@@ -509,6 +513,7 @@ private fun DeleteRouteDialog(
                 .routeDao()
                 .deleteRoute(route)
             snacker.showMessage(context.getString(R.string.route_deleted))
+            onSuccess()
             onDismissRequest()
         },
         label = { Text("${stringResource(R.string.delete_object)}?") },
@@ -570,5 +575,5 @@ private fun AddSectionDialogPreview() = PtmTheme {
 @Preview
 @Composable
 private fun DeleteRouteDialogPreview() = PtmTheme {
-    DeleteRouteDialog(Route(UUID.randomUUID().toString(), "Test", 42), {})
+    DeleteRouteDialog(Route(UUID.randomUUID().toString(), "Test", 42)) {}
 }
