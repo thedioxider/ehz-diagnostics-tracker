@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -126,6 +127,7 @@ fun SiteEditorScreen(
     val sessionManager = LocalSessionManager.current
     rememberSnacker()
 
+    // TODO: maybe just set draft mark when a site is edited?
     var editMode by remember { mutableStateOf(initialEditMode) }
     val currentSite = remember(siteId, editMode) { sessionManager.getSite(siteId) }
     if (currentSite == null) return
@@ -173,7 +175,9 @@ fun SiteEditorScreen(
             },
             onSecondaryAction = {
                 onBack()
-                sessionManager.removeSite(siteId)
+                if (currentSite.isDraft) {
+                    sessionManager.removeSite(siteId)
+                }
             },
             onCancel = { showExitDialog = false }
         ) {
@@ -315,6 +319,7 @@ private fun SitePreviewContent(
             val value = field.value
             Row(
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
@@ -323,7 +328,7 @@ private fun SitePreviewContent(
                     field.name,
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1f, fill = true)
                         .padding(end = 6.dp)
                 )
                 when (fieldType) {
@@ -333,7 +338,9 @@ private fun SitePreviewContent(
                             displayValue,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.End
+                            textAlign = TextAlign.End,
+                            modifier = Modifier
+                                .widthIn(max = 200.dp)
                         )
                     }
 
