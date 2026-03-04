@@ -120,14 +120,14 @@ private fun SessionHubContent(
     var showDeleteDraftConfirm by remember { mutableStateOf(false) }
     var showDeleteReportDialog by remember { mutableStateOf(false) }
 
-    val report = fullReport?.report
+    val report = fullReport?.info
     val route = fullReport?.route
     val section = fullReport?.section
     val confirmedSites = fullReport?.sites
-        ?.filter { !it.site.isDraft }
+        ?.filter { !it.info.isDraft }
         ?: emptyList()
-    val draftSite = fullReport?.sites?.find { it.site.isDraft }
-    val lastSite = confirmedSites.maxByOrNull { it.site.timestamp }
+    val draftSite = fullReport?.sites?.find { it.info.isDraft }
+    val lastSite = confirmedSites.maxByOrNull { it.info.timestamp }
 
     if (showCompleteDialog) {
         if (draftSite != null) {
@@ -145,12 +145,12 @@ private fun SessionHubContent(
     if (showSaveDraftDialog && draftSite != null) {
         ActionCancelDialog(
             onAction = {
-                onSaveDraft(draftSite.site.id)
+                onSaveDraft(draftSite.info.id)
                 onCompleteSession()
             },
             actionLabel = { Text(stringResource(R.string.save)) },
             onSecondaryAction = {
-                onDeleteDraft(draftSite.site.id)
+                onDeleteDraft(draftSite.info.id)
                 onCompleteSession()
             },
             secondaryActionLabel = { Text(stringResource(R.string.delete)) },
@@ -161,7 +161,7 @@ private fun SessionHubContent(
 
     if (showOpenDraftDialog && draftSite != null) {
         ActionCancelDialog(
-            onAction = { onEditDraftSite(draftSite.site.id) },
+            onAction = { onEditDraftSite(draftSite.info.id) },
             actionLabel = { Text(stringResource(R.string.continue_draft)) },
             onCancel = { showOpenDraftDialog = false },
             onSecondaryAction = { showDeleteDraftConfirm = true },
@@ -173,7 +173,7 @@ private fun SessionHubContent(
     if (showDeleteDraftConfirm && draftSite != null) {
         ActionCancelDialog(
             onAction = {
-                onDeleteDraft(draftSite.site.id)
+                onDeleteDraft(draftSite.info.id)
                 onNewMeasurementSite()
             },
             actionLabel = { Text(stringResource(R.string.delete)) },
@@ -336,10 +336,10 @@ private fun SessionHubContent(
                     description = stringResource(R.string.open_last_site_on_map),
                     shortDescription = stringResource(R.string.open_last_site_on_map_short),
                     icon = painterResource(R.drawable.ic_explore),
-                    enabled = lastSite?.site?.location != null,
+                    enabled = lastSite?.info?.location != null,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        lastSite?.site?.let { site ->
+                        lastSite?.info?.let { site ->
                             if (site.location != null) {
                                 context.startActivity(
                                     Intent(
@@ -407,7 +407,7 @@ private fun HubActionButton(
 // --- Previews ---
 
 private val previewReport = FullReport(
-    report = Report(
+    info = Report(
         id = "r1",
         routeId = "route1",
         sectionId = "section1",
@@ -418,7 +418,7 @@ private val previewReport = FullReport(
     section = Section("section1", 0, 10, "route1"),
     sites = listOf(
         SiteWithFields(
-            site = Site(
+            info = Site(
                 id = "1",
                 reportId = "r1",
                 positionKm = 0.0,
@@ -430,7 +430,7 @@ private val previewReport = FullReport(
             fields = emptyList()
         ),
         SiteWithFields(
-            site = Site(
+            info = Site(
                 id = "2",
                 reportId = "r1",
                 positionKm = 1.5,

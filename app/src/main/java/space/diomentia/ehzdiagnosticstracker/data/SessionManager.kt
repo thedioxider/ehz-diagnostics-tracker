@@ -26,7 +26,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     fun startOrResumeSession(routeId: String, sectionId: String): Boolean {
         val active = dao.getActiveReportForSectionOnce(sectionId)
         if (active != null) {
-            activeReportId = active.report.id
+            activeReportId = active.info.id
             return false
         }
         val id = UUID.randomUUID().toString()

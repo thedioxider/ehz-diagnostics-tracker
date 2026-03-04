@@ -189,21 +189,21 @@ fun RouteSelectionScreen(
         FullscreenLazyColumn(innerPadding) {
             items(diagnosticObjects) { routeWithSections ->
                 AnimatedVisibility(
-                    selectedRouteId == null || selectedRouteId == routeWithSections.route.id
+                    selectedRouteId == null || selectedRouteId == routeWithSections.info.id
                 ) {
                     RouteItem(
-                        routeWithSections.route,
-                        onBack = if (selectedRouteId == routeWithSections.route.id) { ->
+                        routeWithSections.info,
+                        onBack = if (selectedRouteId == routeWithSections.info.id) { ->
                             selectedRouteId = null
                         } else null,
                         onClick = if (selectedRouteId == null) { ->
-                            selectedRouteId = routeWithSections.route.id
+                            selectedRouteId = routeWithSections.info.id
                         } else null,
                         onLongClick = if (AppState.adminSession) { ->
-                            editRouteRequest = routeWithSections.route
+                            editRouteRequest = routeWithSections.info
                         } else null,
-                        onHistory = if (selectedRouteId == routeWithSections.route.id) { ->
-                            onHistory(routeWithSections.route.id, null)
+                        onHistory = if (selectedRouteId == routeWithSections.info.id) { ->
+                            onHistory(routeWithSections.info.id, null)
                         } else null
                     )
                 }

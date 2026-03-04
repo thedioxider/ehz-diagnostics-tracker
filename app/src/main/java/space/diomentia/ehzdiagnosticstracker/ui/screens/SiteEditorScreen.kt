@@ -138,7 +138,7 @@ fun SiteEditorScreen(
 
     val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
     val siteWithFields = remember(fullReport, siteId) {
-        fullReport?.sites?.find { it.site.id == siteId }
+        fullReport?.sites?.find { it.info.id == siteId }
     }
 
     val editState = rememberSiteEditState(currentSite)
@@ -260,7 +260,7 @@ private fun SitePreviewContent(
     siteWithFields: SiteWithFields,
     onEdit: () -> Unit
 ) {
-    val site = siteWithFields.site
+    val site = siteWithFields.info
 
     // Position
     Row(

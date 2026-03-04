@@ -87,16 +87,16 @@ private fun ReportScreenContent(
     var siteToDelete by remember { mutableStateOf<SiteWithFields?>(null) }
 
     siteToDelete?.let { swf ->
-        val position = swf.site.positionKm?.let { "%.2f км".format(it) } ?: "—"
+        val position = swf.info.positionKm?.let { "%.2f км".format(it) } ?: "—"
         DeleteDialog(
             onDelete = {
-                onDeleteSite(swf.site.id)
+                onDeleteSite(swf.info.id)
                 siteToDelete = null
             },
             label = { Text(stringResource(R.string.question_delete_site)) },
             onCancel = { siteToDelete = null },
             name = position,
-            details = if (swf.site.locationOnly) stringResource(R.string.location_only)
+            details = if (swf.info.locationOnly) stringResource(R.string.location_only)
                 else stringResource(R.string.field_count, swf.fields.size)
         )
     }
@@ -124,8 +124,8 @@ private fun ReportScreenContent(
         }
     ) { innerPadding ->
         val confirmedSites = fullReport?.sites
-            ?.filter { !it.site.isDraft }
-            ?.sortedBy { it.site.timestamp }
+            ?.filter { !it.info.isDraft }
+            ?.sortedBy { it.info.timestamp }
             ?: emptyList()
 
         if (confirmedSites.isEmpty()) {
@@ -143,18 +143,18 @@ private fun ReportScreenContent(
         }
 
         val firstSite = confirmedSites.firstOrNull()
-        val isZeroKm = firstSite?.site?.locationOnly == true
+        val isZeroKm = firstSite?.info?.locationOnly == true
 
         FullscreenLazyColumn(innerPadding) {
             items(confirmedSites) { siteWithFields ->
-                val isDeletable = !(isZeroKm && siteWithFields.site.id == firstSite.site.id)
+                val isDeletable = !(isZeroKm && siteWithFields.info.id == firstSite.info.id)
                 SiteItem(
                     siteWithFields = siteWithFields,
                     dateFormatter = dateFormatter,
                     onClick = {
                         onSiteClicked(
-                            siteWithFields.site.id,
-                            siteWithFields.site.locationOnly
+                            siteWithFields.info.id,
+                            siteWithFields.info.locationOnly
                         )
                     },
                     onLongClick = if (isDeletable) {{ siteToDelete = siteWithFields }}
@@ -174,7 +174,7 @@ private fun SiteItem(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null
 ) {
-    val site = siteWithFields.site
+    val site = siteWithFields.info
     val dateTime = Instant.ofEpochSecond(site.timestamp)
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
@@ -231,7 +231,7 @@ private fun SiteItem(
 
 private val previewSites = listOf(
     SiteWithFields(
-        site = Site(
+        info = Site(
             id = "1",
             reportId = "r1",
             positionKm = 0.0,
@@ -243,7 +243,7 @@ private val previewSites = listOf(
         fields = emptyList()
     ),
     SiteWithFields(
-        site = Site(
+        info = Site(
             id = "2",
             reportId = "r1",
             positionKm = 1.234,
@@ -258,7 +258,7 @@ private val previewSites = listOf(
         )
     ),
     SiteWithFields(
-        site = Site(
+        info = Site(
             id = "3",
             reportId = "r1",
             positionKm = 2.567,
@@ -273,7 +273,7 @@ private val previewSites = listOf(
 )
 
 private val previewReport = FullReport(
-    report = Report(
+    info = Report(
         id = "r1",
         routeId = "route1",
         sectionId = "section1",
@@ -304,7 +304,7 @@ private fun ReportScreenEmptyPreview() {
     PtmTheme {
         ReportScreenContent(
             fullReport = FullReport(
-                report = previewReport.report,
+                info = previewReport.info,
                 sites = emptyList(),
                 route = previewReport.route,
                 section = previewReport.section

@@ -85,18 +85,18 @@ private fun ReportListContent(
     var reportToDelete by remember { mutableStateOf<FullReport?>(null) }
 
     reportToDelete?.let { fr ->
-        val startDateTime = Instant.ofEpochSecond(fr.report.startTime)
+        val startDateTime = Instant.ofEpochSecond(fr.info.startTime)
             .atZone(ZoneId.systemDefault())
             .toLocalDateTime()
         DeleteDialog(
             onDelete = {
-                onDeleteReport(fr.report)
+                onDeleteReport(fr.info)
                 reportToDelete = null
             },
             label = { Text(stringResource(R.string.question_delete_report)) },
             onCancel = { reportToDelete = null },
             name = startDateTime.format(dateFormatter),
-            details = fr.report.inspectorName
+            details = fr.info.inspectorName
         )
     }
 
@@ -139,7 +139,7 @@ private fun ReportListContent(
                 ReportListItem(
                     fullReport = fullReport,
                     dateFormatter = dateFormatter,
-                    onClick = { onOpenReport(fullReport.report.id) },
+                    onClick = { onOpenReport(fullReport.info.id) },
                     onLongClick = { reportToDelete = fullReport }
                 )
                 HorizontalDivider(modifier = Modifier.alpha(.3f))
@@ -156,7 +156,7 @@ private fun ReportListItem(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
-    val report = fullReport.report
+    val report = fullReport.info
     val siteCount = fullReport.sites.size
     val startDateTime = Instant.ofEpochSecond(report.startTime)
         .atZone(ZoneId.systemDefault())
@@ -213,7 +213,7 @@ private fun ReportListItem(
 
 private val previewReports = listOf(
     FullReport(
-        report = Report(
+        info = Report(
             id = "r1",
             routeId = "route1",
             sectionId = "section1",
@@ -225,7 +225,7 @@ private val previewReports = listOf(
         section = Section("section1", 0, 10, "route1"),
         sites = listOf(
             SiteWithFields(
-                site = Site(
+                info = Site(
                     id = "1",
                     reportId = "r1",
                     positionKm = 0.0,
@@ -237,7 +237,7 @@ private val previewReports = listOf(
                 fields = emptyList()
             ),
             SiteWithFields(
-                site = Site(
+                info = Site(
                     id = "2",
                     reportId = "r1",
                     positionKm = 1.5,
@@ -249,7 +249,7 @@ private val previewReports = listOf(
         )
     ),
     FullReport(
-        report = Report(
+        info = Report(
             id = "r2",
             routeId = "route1",
             sectionId = "section1",

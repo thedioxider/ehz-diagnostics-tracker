@@ -101,7 +101,7 @@ data class Section(
 }
 
 data class RouteWithSections(
-    @Embedded val route: Route,
+    @Embedded val info: Route,
     @Relation(
         parentColumn = "id",
         entityColumn = "route_id"
@@ -230,13 +230,13 @@ data class ReportField(
 )
 
 data class SiteWithFields(
-    @Embedded val site: Site,
+    @Embedded val info: Site,
     @Relation(parentColumn = "id", entityColumn = "site_id")
     val fields: List<ReportField>
 )
 
 data class FullReport(
-    @Embedded val report: Report,
+    @Embedded val info: Report,
     @Relation(
         entity = Site::class,
         parentColumn = "id",
