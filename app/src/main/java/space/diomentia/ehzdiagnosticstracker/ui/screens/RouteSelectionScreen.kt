@@ -471,7 +471,7 @@ private fun RouteItem(
                 style = MaterialTheme.typography.titleLarge
             )
             Text(
-                "${route.length} ${stringResource(R.string.km)}",
+                "${route.lengthKm} ${stringResource(R.string.km)}",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.alpha(.5f)
             )
@@ -520,7 +520,7 @@ private fun RouteDialog(
                 checker = { it.isDigitsOnly() },
                 allowUnchecked = false,
                 nullable = false,
-                initValue = route?.length?.toString()
+                initValue = route?.lengthKm?.toString()
             )
         ),
         onAction = { v ->
@@ -529,14 +529,14 @@ private fun RouteDialog(
                     Route(
                         id = v[R.string.registration_number]!!,
                         name = v[R.string.name]!!,
-                        length = v[R.string.route_length_km]!!.toInt()
+                        lengthKm = v[R.string.route_length_km]!!.toInt()
                     )
                 )
             } else {
                 routeDao.updateRoute(
                     route.copy(
                         name = v[R.string.name]!!,
-                        length = v[R.string.route_length_km]!!.toInt()
+                        lengthKm = v[R.string.route_length_km]!!.toInt()
                     )
                 )
             }

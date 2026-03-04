@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 15,
-    "identityHash": "a43e234b1ae12567e5eede3341f88eb5",
+    "identityHash": "5c253d956b8dd9b1e69f64ec65e76bba",
     "entities": [
       {
         "tableName": "routes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `length` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `length_km` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -21,8 +21,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "length",
-            "columnName": "length",
+            "fieldPath": "lengthKm",
+            "columnName": "length_km",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -286,7 +286,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a43e234b1ae12567e5eede3341f88eb5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5c253d956b8dd9b1e69f64ec65e76bba')"
     ]
   }
 }

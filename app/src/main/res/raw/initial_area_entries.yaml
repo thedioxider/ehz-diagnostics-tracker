@@ -1,7 +1,7 @@
 diagnostic_objects:
   - id: 5484b855400576141edceb9a9d22ee1bd77483fa
     name: САЦ-III
-    length: 3600
+    length_km: 3600
 diagnostic_areas:
   - id: 0f2j03j02022909hg029hg020239t02h09g0249g
     begin_km: 0

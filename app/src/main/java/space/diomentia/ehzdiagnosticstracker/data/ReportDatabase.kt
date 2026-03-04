@@ -68,8 +68,8 @@ data class Route(
     val id: String,
     @ColumnInfo(name = "name") @SerialName("name")
     val name: String,
-    @ColumnInfo(name = "length") @SerialName("length")
-    val length: Int
+    @ColumnInfo(name = "length_km") @SerialName("length_km")
+    val lengthKm: Int
 ) {
     companion object {
         fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
@@ -157,13 +157,13 @@ interface RouteDao {
         ForeignKey(
             entity = Route::class,
             parentColumns = ["id"],
-            childColumns = ["routeId"],
+            childColumns = ["route_id"],
             onDelete = ForeignKey.RESTRICT
         ),
         ForeignKey(
             entity = Section::class,
             parentColumns = ["id"],
-            childColumns = ["sectionId"],
+            childColumns = ["section_id"],
             onDelete = ForeignKey.RESTRICT
         )
     ]
@@ -185,10 +185,11 @@ data class Report(
     val isComplete: Boolean = false
 )
 
+@Serializable
 data class Coordinates(
-    @ColumnInfo(name = "latitude")
+    @ColumnInfo(name = "latitude") @SerialName("lat")
     val lat: Double,
-    @ColumnInfo(name = "longitude")
+    @ColumnInfo(name = "longitude") @SerialName("lng")
     val lng: Double
 )
 
@@ -276,6 +277,10 @@ interface ReportDao {
     @Transaction
     @Query("SELECT * FROM reports WHERE id = :id")
     fun getFullReport(id: String): Flow<FullReport?>
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE id IN (:reportIds)")
+    fun getFullReportsByIdsOnce(reportIds: List<String>): List<FullReport>
 
     @Transaction
     @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 0 LIMIT 1")
