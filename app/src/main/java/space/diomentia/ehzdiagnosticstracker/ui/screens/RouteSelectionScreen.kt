@@ -73,12 +73,9 @@ fun RouteSelectionScreen(
     onHistory: (routeId: String?, sectionId: String?) -> Unit
 ) {
     val reportDao = ReportDatabase.getInstance().reportDao()
-    val routeDao = ReportDatabase.getInstance().routeDao()
+    ReportDatabase.getInstance().routeDao()
 
     var selectedRouteId: String? by rememberSaveable { mutableStateOf(null) }
-    remember(selectedRouteId) {
-        selectedRouteId?.let { routeDao.getRouteByIdOnce(it) }
-    }
 
     // Admin CRUD state
     var createRouteRequest by remember { mutableStateOf(false) }
@@ -89,7 +86,7 @@ fun RouteSelectionScreen(
     var deleteSectionRequest by remember { mutableStateOf<Section?>(null) }
 
     // Section action dialog state
-    var sectionActionTarget by remember { mutableStateOf<Section?>(null) }
+    var sectionActionTarget by remember { mutableStateOf<Pair<Section, Boolean>?>(null) }
 
     // Dialogs
     if (createRouteRequest) {
@@ -122,7 +119,7 @@ fun RouteSelectionScreen(
         DeleteSectionDialog(section) { deleteSectionRequest = null }
     }
 
-    sectionActionTarget?.let { section ->
+    sectionActionTarget?.let { (section, activeReportExists) ->
         SectionActionDialog(
             onDiagnostics = {
                 selectedRouteId?.let { routeId ->
@@ -137,7 +134,7 @@ fun RouteSelectionScreen(
                 onHistory(null, section.id)
             },
             sectionName = section.displayName(),
-            activeReportExists = reportDao.getActiveReportForSectionOnce(section.id) != null,
+            activeReportExists = activeReportExists,
             onCancel = { sectionActionTarget = null }
         )
     }
@@ -212,14 +209,18 @@ fun RouteSelectionScreen(
                 }
             }
             items(selectedRouteSections) { section ->
+                val activeReportExists = remember(section.id) {
+                    reportDao.getActiveReportForSectionOnce(section.id) != null
+                }
                 AnimatedVisibility(selectedRouteId != null) {
                     SectionItem(
                         section,
                         modifier = Modifier.padding(start = 32.dp),
-                        onClick = { sectionActionTarget = section },
+                        onClick = { sectionActionTarget = section to activeReportExists },
                         onLongClick = if (AppState.adminSession) { ->
                             editSectionRequest = section
-                        } else null
+                        } else null,
+                        activeReportExists = activeReportExists
                     )
                 }
             }
@@ -378,12 +379,14 @@ private fun AddItemButton(
 @Composable
 private fun SectionItem(
     section: Section,
+    activeReportExists: Boolean = false,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    onClick: () -> Unit
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+    Column(
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Center,
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
@@ -395,18 +398,28 @@ private fun SectionItem(
             .height(IntrinsicSize.Min)
             .then(modifier)
     ) {
-        // TODO: indicate when there's an incomplete report present
-        Column(
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f)
-        ) {
-            Text(
-                "${stringResource(R.string.area)} ${section.displayName()}",
-                style = MaterialTheme.typography.titleMedium
-            )
+        Text(
+            "${stringResource(R.string.area)} ${section.displayName()}",
+            style = MaterialTheme.typography.titleMedium
+        )
+        if (activeReportExists) {
+            Row(
+                Modifier
+                    .padding(start = 8.dp)
+                    .alpha(.5f)
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_edit_square),
+                    contentDescription = stringResource(R.string.unsaved_draft_exists),
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .size(16.dp)
+                )
+                Text(
+                    stringResource(R.string.unfinished_session),
+                    maxLines = 1
+                )
+            }
         }
     }
 }
@@ -567,7 +580,6 @@ private fun SectionDialog(
                 mutable = false,
                 initValue = section?.id ?: UUID.randomUUID().toString()
             ),
-            // TODO: edit fields accordingly
             R.string.section_begin_km to DialogField(
                 stringResource(R.string.section_begin_km),
                 checker = { it.isDigitsOnly() },

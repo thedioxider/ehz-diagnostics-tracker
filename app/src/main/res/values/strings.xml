@@ -202,4 +202,5 @@
     <string name="delete_report">Удалить отчёт</string>
     <string name="delete_current_session">Удалить текущую сессию?</string>
     <string name="delete_session_all_data_will_be_removed">Все данные из текущего отчёта будут безвозвратно удалены. Вы точно хотите продолжить?</string>
+    <string name="unfinished_session">Незавершённая сессия\n</string>
 </resources>
