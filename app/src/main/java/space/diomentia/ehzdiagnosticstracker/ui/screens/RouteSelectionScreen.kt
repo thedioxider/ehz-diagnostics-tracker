@@ -454,8 +454,9 @@ private fun RouteItem(
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .aspectRatio(1f)
                     .padding(end = 12.dp)
+                    .padding(vertical = 8.dp)
+                    .aspectRatio(1f)
             )
         }
         Column(
@@ -476,15 +477,17 @@ private fun RouteItem(
             )
         }
         AnimatedVisibility(onHistory != null) {
-            // TODO: better clickable area and indication
             Icon(
                 painterResource(R.drawable.ic_history),
                 contentDescription = stringResource(R.string.report_list),
                 modifier = Modifier
-                    .clickable(onClick = onHistory ?: {})
-                    .fillMaxHeight()
+                    .clickable(
+                        onClick = onHistory ?: {},
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = ripple(bounded = false)
+                    )
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
                     .aspectRatio(1f)
-                    .padding(end = 12.dp)
             )
         }
     }
