@@ -28,7 +28,7 @@ import space.diomentia.ehzdiagnosticstracker.R
 // WARNING: fallbackToDestructiveMigration wipes all data on version bump.
 // Proper migrations MUST be written for production releases.
 @Database(
-    version = 14,
+    version = 15,
     entities = [
         Route::class,
         Section::class,
@@ -143,15 +143,31 @@ interface RouteDao {
     fun updateSection(area: Section)
 
     @Delete
-    fun deleteRoute(route: Route)
+    fun deleteRoute(route: Route): Int
 
     @Delete
-    fun deleteSection(area: Section)
+    fun deleteSection(area: Section): Int
 }
 
 // --- Session-based entities ---
 
-@Entity(tableName = "reports")
+@Entity(
+    tableName = "reports",
+    foreignKeys = [
+        ForeignKey(
+            entity = Route::class,
+            parentColumns = ["id"],
+            childColumns = ["routeId"],
+            onDelete = ForeignKey.RESTRICT
+        ),
+        ForeignKey(
+            entity = Section::class,
+            parentColumns = ["id"],
+            childColumns = ["sectionId"],
+            onDelete = ForeignKey.RESTRICT
+        )
+    ]
+)
 data class Report(
     @PrimaryKey @ColumnInfo(name = "id")
     val id: String,
@@ -247,12 +263,12 @@ data class FullReport(
         parentColumn = "route_id",
         entityColumn = "id"
     )
-    val route: Route?,
+    val route: Route,
     @Relation(
         parentColumn = "section_id",
         entityColumn = "id"
     )
-    val section: Section?
+    val section: Section
 )
 
 @Dao

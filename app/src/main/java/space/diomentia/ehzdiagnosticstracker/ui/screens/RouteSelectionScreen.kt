@@ -642,12 +642,17 @@ private fun DeleteRouteDialog(
 
     DeleteDialog(
         onDelete = {
-            ReportDatabase.getInstance(context)
-                .routeDao()
-                .deleteRoute(route)
-            snacker.showMessage(context.getString(R.string.route_deleted))
-            onSuccess()
-            onDismissRequest()
+            when (
+                ReportDatabase.getInstance(context)
+                    .routeDao()
+                    .deleteRoute(route)
+            ) {
+                0 -> snacker.showMessage(context.getString(R.string.route_delete_reports_exist))
+                else -> {
+                    snacker.showMessage(context.getString(R.string.route_deleted))
+                    onSuccess()
+                }
+            }
         },
         label = { Text("${stringResource(R.string.delete_object)}?") },
         onCancel = onDismissRequest,
@@ -666,11 +671,14 @@ private fun DeleteSectionDialog(
 
     DeleteDialog(
         onDelete = {
-            ReportDatabase.getInstance(context)
+            when (
+                ReportDatabase.getInstance(context)
                 .routeDao()
                 .deleteSection(section)
-            snacker.showMessage(context.getString(R.string.section_deleted))
-            onDismissRequest()
+            ) {
+                0 -> snacker.showMessage(context.getString(R.string.section_delete_reports_exist))
+                else -> snacker.showMessage(context.getString(R.string.section_deleted))
+            }
         },
         label = { Text("${stringResource(R.string.delete_area)}?") },
         onCancel = onDismissRequest,

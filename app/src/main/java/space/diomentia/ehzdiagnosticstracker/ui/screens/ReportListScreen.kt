@@ -183,13 +183,11 @@ private fun ReportListItem(
                     startDateTime.format(dateFormatter),
                     style = MaterialTheme.typography.titleMedium
                 )
-                fullReport.section?.let {
-                    Text(
-                        it.displayName(),
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.alpha(.5f)
-                    )
-                }
+                Text(
+                    fullReport.section.displayName(),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.alpha(.5f)
+                )
             }
             Text(
                 "${stringResource(R.string.inspector)}: ${report.inspectorName}",
