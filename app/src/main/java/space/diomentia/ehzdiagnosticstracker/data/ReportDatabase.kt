@@ -332,6 +332,20 @@ interface ReportDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertField(field: ReportField)
 
+    fun insertFieldFromConfig(siteId: String, specId: String, config: ReportConfig): Boolean {
+        val spec = config.getSpec(specId) ?: return false
+        insertField(
+            ReportField(
+                siteId = siteId,
+                specId = specId,
+                name = spec.name,
+                type = spec.type.name,
+                unit = spec.unit
+            )
+        )
+        return true
+    }
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertFields(fields: List<ReportField>)
 

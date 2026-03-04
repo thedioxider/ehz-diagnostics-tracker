@@ -315,6 +315,11 @@ field_specs:
   - id: 1976534b-b1ad-4b42-97e4-04d463d82628
     name: Восстановление ЗП после проведения обследования
     type: bool
+
+default_specs:
+  - site_photo
+  - comment
+
 templates:
   - id: 75163c84-2605-432c-a1fe-4fae696b408e
     name: Состояние СКЗ (Станция Катодной Защиты)
@@ -337,8 +342,6 @@ templates:
       - 38592437-484c-42c3-87ac-f5e25aca3998
       - 832f036d-128a-4a93-87e2-2953846935bc
       - 13d3adef-6d18-402d-a2fc-20f7ab36f3a7
-      - site_photo
-      - comment
   - id: 508d0b89-9803-4231-aa80-f832446164ca
     name: Состояние УДЗ (Установка Дренажной Защиты)
     spec_ids:
@@ -352,8 +355,6 @@ templates:
       - 0e9deaa0-11c2-4dc7-a14e-a25fb08dba5c
       - 7b33f911-cecc-4fa3-af1e-32f246e127b5
       - 3eeb90ca-2764-4d9d-9b6d-c938aed0c7d7
-      - site_photo
-      - comment
   - id: c0c1d807-a6c4-417a-9db7-380a6a859c8d
     name: Состояние УПЗ (Установка Протекторной Защиты)
     spec_ids:
@@ -365,8 +366,6 @@ templates:
       - bfcfb7b3-f819-4106-a1d0-aa9b3a0bf02e
       - f2ff87e9-4cf8-4b10-95db-08fbda7a5c4e
       - 71666610-9e96-4056-8dd0-d60adbd5e87f
-      - site_photo
-      - comment
   - id: 25fe900b-496e-4ebc-a97e-2d0493765ee0
     name: Состояние ВЭИ (Вставка Электроизолирующая)
     spec_ids:
@@ -374,8 +373,6 @@ templates:
       - 71e0f151-334d-4b09-83cc-3d1e6786ad14
       - 1b874b19-edc2-4735-b8a1-5fa093b31bf6
       - 973f6c71-d1b4-48c5-8d28-716a7377c28b
-      - site_photo
-      - comment
   - id: b3520d23-6f64-4191-9687-05613e2af33d
     name: Состояние КИП (Контрольно-Измерительный Пункт)
     spec_ids:
@@ -384,8 +381,6 @@ templates:
       - 4ede1d17-85e2-42ba-ad0c-1aff614aa984
       - 30d70f04-d8ba-408b-bb9a-318fb94ffceb
       - 6dc25376-6b56-449b-9041-f4d99013c6d8
-      - site_photo
-      - comment
   - id: a5bf0912-a46d-479f-a4ab-9120009041ad
     name: Состояние переходов, оборудованных защитными кожухами
     spec_ids:
@@ -396,8 +391,6 @@ templates:
       - 5dc753bd-6dc7-4541-acdd-ab37a74a45cb
       - 77a35e5e-bbe2-4e0d-acd8-56162b1236e8
       - f7554e11-56a8-4f4d-9de8-ee370057b6c1
-      - site_photo
-      - comment
   - id: 68021be9-43e5-42cd-b113-ec49af97fc8e
     name: Состояние БДР (БСЗ)
     spec_ids:
@@ -405,8 +398,6 @@ templates:
       - 19639af7-7466-4f23-b974-2a843f7204eb
       - 5562eb6f-7e7c-4360-b785-7b8efce1e9e1
       - 36868314-7ea1-457c-96e6-788d25246d3b
-      - site_photo
-      - comment
   - id: d305f5a7-0ab3-4c1b-a13b-40b88b7147ef
     name: Контроль защищенности трубопровода
     spec_ids:
@@ -417,8 +408,6 @@ templates:
       - a14199cb-47ce-41f7-ae7c-7a47234a5c59
       - e5a4e6b2-6e6f-4866-8d43-0cdc2297997e
       - ede5732e-a5c1-406e-b2d4-09698d4ee1ff
-      - site_photo
-      - comment
   - id: 596c04f4-36f0-49f0-844f-34394f679cbc
     name: Оценка состояния Защитного Покрытия (ЗП)
     spec_ids:
@@ -426,15 +415,11 @@ templates:
       - 00c5ba2b-b5b2-43ae-9960-45bc5a35787b
       - 282a3a74-e817-460a-882f-e9e6bc544962
       - dd0c5442-ca90-4c74-a8d6-4465a14f65eb
-      - site_photo
-      - comment
   - id: 75ec037a-fe7b-4b7b-a70e-e0268338e5af
     name: Контроль негативного влияния на сторонние сооружения
     spec_ids:
       - 498030fb-ca63-4401-9748-a87393253b91
       - 3c00f3ec-2d4d-4420-bb1e-89f3ac23b89e
-      - site_photo
-      - comment
   - id: ac5401d2-88b6-4d4e-96b5-7a4af18c9973
     name: Обследование коррозионного состояния сооружения в шурфах
     spec_ids:
@@ -463,5 +448,3 @@ templates:
       - 684da0bd-2e8d-47ff-9b66-f81d5f478425
       - 53246b54-7c25-45f5-8c8d-a3f89738c14c
       - 1976534b-b1ad-4b42-97e4-04d463d82628
-      - site_photo
-      - comment

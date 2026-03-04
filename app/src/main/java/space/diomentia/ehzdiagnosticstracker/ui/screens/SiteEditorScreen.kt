@@ -474,7 +474,6 @@ private fun SiteEditContent(
         )
     }
 
-    // TODO: add always required report fields to config
     editState.fieldSpecs.forEach { field ->
         val fieldType = FieldType.parse(field.type)
         if (fieldType != null) {

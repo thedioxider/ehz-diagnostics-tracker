@@ -53,8 +53,11 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         locationOnly: Boolean = false
     ): Site {
         val reportId = activeReportId ?: error("No active report")
+        // TODO: configuration handling throughout the app
+        if (config == null) error("No configuration")
+        val siteId = UUID.randomUUID().toString()
         val site = Site(
-            id = UUID.randomUUID().toString(),
+            id = siteId,
             reportId = reportId,
             positionKm = positionKm,
             location = location,
@@ -62,6 +65,13 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
             locationOnly = locationOnly
         )
         dao.insertSite(site)
+        config.defaultSpecs.forEach { specId ->
+            dao.insertFieldFromConfig(
+                siteId = siteId,
+                specId = specId,
+                config = config
+            )
+        }
         return site
     }
 

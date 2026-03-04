@@ -207,9 +207,9 @@ private fun FieldSpecChooserDialogPreview() = PtmTheme {
 private fun TemplateChooserDialogPreview() = PtmTheme {
     TemplateChooserDialog(
         templates = listOf(
-            ReportTemplate("1", "СКЗ"),
-            ReportTemplate("2", "УДЗ"),
-            ReportTemplate("3", "КИП")
+            ReportTemplate("1", "СКЗ", emptyList()),
+            ReportTemplate("2", "УДЗ", emptyList()),
+            ReportTemplate("3", "КИП", emptyList())
         ),
         onTemplateChosen = {},
         onCancel = {}

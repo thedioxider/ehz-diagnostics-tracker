@@ -57,12 +57,13 @@ data class FieldSpec(
 data class ReportTemplate(
     @SerialName("id") val id: String,
     @SerialName("name") val name: String,
-    @SerialName("spec_ids") val specIds: List<String>? = null
+    @SerialName("spec_ids") val specIds: List<String>
 )
 
 @Serializable
 data class ReportConfig(
-    @SerialName("field_specs") val fieldSpecs: List<FieldSpec> = emptyList(),
+    @SerialName("field_specs") val fieldSpecs: List<FieldSpec>,
+    @SerialName("default_specs") val defaultSpecs: List<String> = emptyList(),
     @SerialName("templates") val templates: List<ReportTemplate> = emptyList()
 ) {
     /** Lookup a field spec by its ID */
@@ -73,6 +74,7 @@ data class ReportConfig(
         template.specIds?.mapNotNull { getSpec(it) } ?: emptyList()
 }
 
+// TODO: only for demo
 @Serializable
 data class InitialAreaEntries(
     @SerialName("diagnostic_objects") val routes: List<Route>,
