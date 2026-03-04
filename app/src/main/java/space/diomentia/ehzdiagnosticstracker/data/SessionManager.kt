@@ -23,8 +23,8 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     val fullReport: Flow<FullReport?>
         get() = activeReportId?.let { dao.getFullReport(it) } ?: flowOf(null)
 
-    fun startOrResumeSession(route: Route, section: Section): Boolean {
-        val active = dao.getActiveReportForSectionOnce(section.id)
+    fun startOrResumeSession(routeId: String, sectionId: String): Boolean {
+        val active = dao.getActiveReportForSectionOnce(sectionId)
         if (active != null) {
             activeReportId = active.report.id
             return false
@@ -33,8 +33,8 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         dao.insertReport(
             Report(
                 id = id,
-                routeId = route.id,
-                sectionId = section.id,
+                routeId = routeId,
+                sectionId = sectionId,
                 inspectorName = profile?.fullName ?: "",
                 startTime = System.currentTimeMillis() / 1000
             )

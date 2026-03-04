@@ -159,7 +159,7 @@ fun AppNavigation() {
                             launchSingleTop = true
                         }
                     },
-                    onSectionChosen = { route, section ->
+                    onSectionChosen = { routeId, sectionId ->
                         if (sessionManager.profile == null) {
                             snackbarHostState.currentSnackbarData?.dismiss()
                             navController.navigate(Screen.Authorization.route) {
@@ -167,7 +167,7 @@ fun AppNavigation() {
                             }
                             return@RouteSelectionScreen
                         }
-                        val isNew = sessionManager.startOrResumeSession(route, section)
+                        val isNew = sessionManager.startOrResumeSession(routeId, sectionId)
                         val needsZeroKm = isNew || sessionManager.hasNoSites()
                         navController.navigate(
                             if (needsZeroKm) Screen.LocationSiteEditor.create()

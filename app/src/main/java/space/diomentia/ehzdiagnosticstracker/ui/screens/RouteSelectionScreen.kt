@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -68,18 +69,22 @@ import java.util.UUID
 @Composable
 fun RouteSelectionScreen(
     onAuthorize: () -> Unit,
-    onSectionChosen: (Route, Section) -> Unit,
+    onSectionChosen: (String, String) -> Unit,  // (RouteId, SectionId) -> Unit
     onHistory: (routeId: String?, sectionId: String?) -> Unit
 ) {
     val reportDao = ReportDatabase.getInstance().reportDao()
+    val routeDao = ReportDatabase.getInstance().routeDao()
 
-    var selectedRoute: Route? by remember { mutableStateOf(null) }
+    var selectedRouteId: String? by rememberSaveable { mutableStateOf(null) }
+    remember(selectedRouteId) {
+        selectedRouteId?.let { routeDao.getRouteByIdOnce(it) }
+    }
 
     // Admin CRUD state
     var createRouteRequest by remember { mutableStateOf(false) }
     var editRouteRequest by remember { mutableStateOf<Route?>(null) }
     var deleteRouteRequest by remember { mutableStateOf<Route?>(null) }
-    var addSectionRequest by remember { mutableStateOf<Route?>(null) }
+    var addSectionRequest by remember { mutableStateOf<String?>(null) }
     var editSectionRequest by remember { mutableStateOf<Section?>(null) }
     var deleteSectionRequest by remember { mutableStateOf<Section?>(null) }
 
@@ -90,20 +95,20 @@ fun RouteSelectionScreen(
     if (createRouteRequest) {
         RouteDialog(null) { createRouteRequest = false }
     }
-    editRouteRequest?.let {
+    editRouteRequest?.let { route ->
         RouteDialog(
-            it,
-            onDelete = { deleteRouteRequest = it }
+            route,
+            onDelete = { deleteRouteRequest = route }
         ) { editRouteRequest = null }
     }
     deleteRouteRequest?.let { route ->
         DeleteRouteDialog(
             route,
-            onSuccess = { selectedRoute = null }
+            onSuccess = { selectedRouteId = null }
         ) { deleteRouteRequest = null }
     }
-    addSectionRequest?.let { route ->
-        SectionDialog(route.id, null) { addSectionRequest = null }
+    addSectionRequest?.let { routeId ->
+        SectionDialog(routeId, null) { addSectionRequest = null }
     }
     editSectionRequest?.let { section ->
         SectionDialog(
@@ -119,7 +124,14 @@ fun RouteSelectionScreen(
 
     sectionActionTarget?.let { section ->
         SectionActionDialog(
-            onDiagnostics = { selectedRoute?.let { route -> onSectionChosen(route, section) } },
+            onDiagnostics = {
+                selectedRouteId?.let { routeId ->
+                    onSectionChosen(
+                        routeId,
+                        section.id
+                    )
+                }
+            },
             onHistory = {
                 sectionActionTarget = null
                 onHistory(null, section.id)
@@ -169,10 +181,10 @@ fun RouteSelectionScreen(
             return@Scaffold
         }
 
-        val selectedRouteSections by selectedRoute?.let {
+        val selectedRouteSections by selectedRouteId?.let {
             ReportDatabase.getInstance()
                 .routeDao()
-                .getRouteSections(it.id)
+                .getRouteSections(it)
                 .collectAsStateWithLifecycle(emptyList())
         } ?: remember { mutableStateOf(emptyList()) }
 
@@ -180,27 +192,27 @@ fun RouteSelectionScreen(
         FullscreenLazyColumn(innerPadding) {
             items(diagnosticObjects) { routeWithSections ->
                 AnimatedVisibility(
-                    selectedRoute == null || selectedRoute?.id == routeWithSections.route.id
+                    selectedRouteId == null || selectedRouteId == routeWithSections.route.id
                 ) {
                     RouteItem(
                         routeWithSections.route,
-                        onBack = if (selectedRoute?.id == routeWithSections.route.id) { ->
-                            selectedRoute = null
+                        onBack = if (selectedRouteId == routeWithSections.route.id) { ->
+                            selectedRouteId = null
                         } else null,
-                        onClick = if (selectedRoute == null) { ->
-                            selectedRoute = routeWithSections.route
+                        onClick = if (selectedRouteId == null) { ->
+                            selectedRouteId = routeWithSections.route.id
                         } else null,
                         onLongClick = if (AppState.adminSession) { ->
                             editRouteRequest = routeWithSections.route
                         } else null,
-                        onHistory = if (selectedRoute?.id == routeWithSections.route.id) { ->
+                        onHistory = if (selectedRouteId == routeWithSections.route.id) { ->
                             onHistory(routeWithSections.route.id, null)
                         } else null
                     )
                 }
             }
             items(selectedRouteSections) { section ->
-                AnimatedVisibility(selectedRoute != null) {
+                AnimatedVisibility(selectedRouteId != null) {
                     SectionItem(
                         section,
                         modifier = Modifier.padding(start = 32.dp),
@@ -211,16 +223,16 @@ fun RouteSelectionScreen(
                     )
                 }
             }
-            if (selectedRoute != null && AppState.adminSession) {
+            if (selectedRouteId != null && AppState.adminSession) {
                 item {
                     AddItemButton(
                         label = stringResource(R.string.add_section),
                         modifier = Modifier.padding(start = 32.dp),
-                        onClick = { addSectionRequest = selectedRoute }
+                        onClick = { addSectionRequest = selectedRouteId }
                     )
                 }
             }
-            if (selectedRoute == null && AppState.adminSession) {
+            if (selectedRouteId == null && AppState.adminSession) {
                 item {
                     AddItemButton(
                         label = stringResource(R.string.add_object),
