@@ -311,7 +311,7 @@ private fun SitePreviewContent(
 }
 
 // --- Edit Mode ---
-
+// TODO: editing already saved site autosaves it
 @Composable
 private fun SiteEditContent(
     editState: SiteEditState,

@@ -78,7 +78,7 @@ fun LocationSiteEditorScreen(
         remember(existingSite) { existingSite?.reportId ?: sessionManager.activeReportId }
     val reportSites = remember(reportId) {
         reportId?.let { reportDao.getSitesForReportOnce(it) }.orEmpty()
-            .filter { it.id != siteId }
+            .filter { it.id != siteId && !it.isDraft }
     }
     val isZeroKm = remember(reportSites) {
         reportSites.isEmpty() ||
@@ -130,13 +130,12 @@ fun LocationSiteEditorScreen(
                 editState.location = loc
                 if (editState.positionKmText.isBlank()) {
                     val previousSite = reportSites.lastOrNull()
-                    editState.positionKmText = (
-                        previousSite?.run {
-                            if (location != null && positionKm != null) {
-                                positionKm + location.distanceKmTo(loc)
-                            } else null
-                        } ?: if (isZeroKm) 0.0 else null
-                            )?.let { DecimalFormat("#.##").format(it) } ?: ""
+                    editState.positionKmText = (previousSite?.run {
+                        if (location != null && positionKm != null) {
+                            positionKm + location.distanceKmTo(loc)
+                        } else null
+                    } ?: if (isZeroKm) 0.0 else null)
+                        ?.let { DecimalFormat("#.##").format(it) } ?: ""
                 }
             }
 

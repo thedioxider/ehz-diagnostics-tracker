@@ -110,6 +110,7 @@ fun RouteSelectionScreen(
     }
 
     sectionActionTarget?.let { section ->
+        // TODO: edit diagnostics instead of begin where draft exists
         ActionCancelDialog(
             onAction = { selectedRoute?.let { route -> onSectionChosen(route, section) } },
             actionLabel = { Text(stringResource(R.string.start_diagnostics)) },

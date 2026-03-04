@@ -39,7 +39,6 @@ import space.diomentia.ehzdiagnosticstracker.data.FullReport
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.Report
-import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportField
 import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.Section
@@ -63,9 +62,9 @@ fun ReportScreen(
     onSiteClicked: (siteId: String, locationOnly: Boolean) -> Unit,
     onBack: () -> Unit
 ) {
-    val dao = ReportDatabase.getInstance().reportDao()
-    val fullReport by dao.getFullReport(reportId).collectAsStateWithLifecycle(null)
     val sessionManager = LocalSessionManager.current
+
+    val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
 
     ReportScreenContent(
         fullReport = fullReport,
@@ -147,7 +146,6 @@ private fun ReportScreenContent(
         val isZeroKm = firstSite?.site?.locationOnly == true
 
         FullscreenLazyColumn(innerPadding) {
-            // TODO: doesn't update when site deleted
             items(confirmedSites) { siteWithFields ->
                 val isDeletable = !(isZeroKm && siteWithFields.site.id == firstSite.site.id)
                 SiteItem(
