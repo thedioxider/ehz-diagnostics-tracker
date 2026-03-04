@@ -1,4 +1,3 @@
-import com.android.build.api.dsl.ApplicationExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -21,7 +20,7 @@ val localProps = Properties().apply {
     rootProject.file("local.properties").inputStream().use { load(it) }
 }
 
-configure<ApplicationExtension> {
+android {
     signingConfigs {
         create("release") {
             storeFile = file(localProps["RELEASE_STORE_FILE"] as String)
@@ -37,8 +36,8 @@ configure<ApplicationExtension> {
         applicationId = "space.diomentia.ehzdiagnosticstracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "1.0.1"
+        versionCode = 14
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -3,6 +3,7 @@ package space.diomentia.ehzdiagnosticstracker.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -97,9 +98,9 @@ fun ActionCancelDialog(
 
             Spacer(Modifier.height(16.dp))
 
+            @OptIn(ExperimentalLayoutApi::class)
             FlowRow(
                 horizontalArrangement = Arrangement.End,
-                itemVerticalAlignment = Alignment.Bottom,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 actionLabel?.let {

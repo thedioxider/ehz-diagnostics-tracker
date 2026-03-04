@@ -3,6 +3,7 @@ package space.diomentia.ehzdiagnosticstracker.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -170,6 +171,7 @@ fun ImageWithFullscreenView(
     var fullView by remember { mutableStateOf(false) }
     if (fullView) FullScreenImageDialog(bitmap) { fullView = false }
 
+    @OptIn(ExperimentalFoundationApi::class)
     Image(
         bitmap,
         contentDescription = "",

@@ -26,7 +26,7 @@ import java.time.LocalDate
 
 @Stable
 object AppState {
-    val DUE_DATE: LocalDate = LocalDate.of(2026, 3, 15)
+    val DUE_DATE: LocalDate = LocalDate.of(2026, 4, 15)
 
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
 
