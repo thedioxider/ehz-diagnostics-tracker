@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.navigation.AnimBuilder
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -214,7 +213,7 @@ fun AppNavigation() {
                         }
                         sessionManager.leaveSession()
                     },
-                    onChooseArea = {
+                    onChooseRoute = {
                         navController.popBackStack()
                         navController.navigate(Screen.RouteSelection.route) {
                             launchSingleTop = true

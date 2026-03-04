@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,7 +70,7 @@ fun SessionHubScreen(
     onViewReport: (reportId: String) -> Unit,
     onSessionCompleted: () -> Unit,
     onAuthorize: () -> Unit,
-    onChooseArea: () -> Unit
+    onChooseRoute: () -> Unit
 ) {
     val sessionManager = LocalSessionManager.current
     val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
@@ -88,8 +88,12 @@ fun SessionHubScreen(
             sessionManager.completeReport()
             onSessionCompleted()
         },
+        onSessionDeleted = {
+            sessionManager.deleteSession()
+            onChooseRoute()
+        },
         onAuthorize = onAuthorize,
-        onChooseArea = onChooseArea
+        onChooseArea = onChooseRoute
     )
 }
 
@@ -103,15 +107,18 @@ private fun SessionHubContent(
     onDeleteDraft: (siteId: String) -> Unit,
     onViewReport: () -> Unit,
     onCompleteSession: () -> Unit,
+    onSessionDeleted: () -> Unit,
     onAuthorize: () -> Unit,
     onChooseArea: () -> Unit
 ) {
     val context = LocalContext.current
+    LocalSessionManager.current
     val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
     var showCompleteDialog by remember { mutableStateOf(false) }
     var showSaveDraftDialog by remember { mutableStateOf(false) }
     var showOpenDraftDialog by remember { mutableStateOf(false) }
     var showDeleteDraftConfirm by remember { mutableStateOf(false) }
+    var showDeleteReportDialog by remember { mutableStateOf(false) }
 
     val report = fullReport?.report
     val route = fullReport?.route
@@ -176,6 +183,17 @@ private fun SessionHubContent(
         ) { }
     }
 
+    if (showDeleteReportDialog) {
+        ActionCancelDialog(
+            onAction = onSessionDeleted,
+            actionLabel = { Text(stringResource(R.string.delete)) },
+            label = { Text(stringResource(R.string.delete_current_session)) },
+            onCancel = { showDeleteReportDialog = false }
+        ) {
+            Text(stringResource(R.string.delete_session_all_data_will_be_removed))
+        }
+    }
+
     Scaffold(
         snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) },
         topBar = {
@@ -199,9 +217,14 @@ private fun SessionHubContent(
                     }
                 },
                 actions = {
-                    // TODO: better save button
                     ActionButton(
-                        icon = rememberVectorPainter(Icons.Outlined.Check),
+                        icon = rememberVectorPainter(Icons.Outlined.Delete),
+                        label = stringResource(R.string.delete_report)
+                    ) {
+                        showDeleteReportDialog = true
+                    }
+                    ActionButton(
+                        icon = painterResource(R.drawable.ic_save),
                         label = stringResource(R.string.complete_session)
                     ) {
                         showCompleteDialog = true
@@ -435,6 +458,7 @@ private fun SessionHubPreview() {
             onCompleteSession = {},
             onAuthorize = {},
             onChooseArea = {},
+            onSessionDeleted = {},
             onSaveDraft = {}
         )
     }

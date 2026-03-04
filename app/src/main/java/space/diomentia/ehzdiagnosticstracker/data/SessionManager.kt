@@ -47,6 +47,13 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         activeReportId = null
     }
 
+    fun deleteSession() {
+        activeReportId?.let {
+            dao.deleteReportById(it)
+        }
+        activeReportId = null
+    }
+
     fun addSite(
         location: Coordinates? = null,
         positionKm: Double? = null,

@@ -320,6 +320,9 @@ interface ReportDao {
     @Delete
     fun deleteReport(report: Report)
 
+    @Query("DELETE FROM reports WHERE id = :reportId")
+    fun deleteReportById(reportId: String)
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertSite(site: Site)
 
