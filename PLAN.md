@@ -177,7 +177,7 @@ Drop `DiagnosticPoint`, `DiagnosticReport`, `ReportDataEntry`, `DiagnosticPointW
 
 ---
 
-## Phase 3: Navigation & Screen Rework
+## Phase 3: Navigation & Screen Rework ✅
 
 ### 3a. New navigation flow
 

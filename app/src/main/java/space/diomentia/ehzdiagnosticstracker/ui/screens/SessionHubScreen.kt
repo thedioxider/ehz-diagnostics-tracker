@@ -160,7 +160,6 @@ private fun SessionHubContent(
     }
 
     if (showOpenDraftDialog && draftSite != null) {
-        // TODO: instead of long text buttons, add outlined buttons with icons and descriptions under them
         ActionCancelDialog(
             onAction = { onEditDraftSite(draftSite.site.id) },
             actionLabel = { Text(stringResource(R.string.continue_draft)) },
