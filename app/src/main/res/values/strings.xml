@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">ЭХЗ Журнал Диагностики</string>
     <string name="scan_id">Просканировать идентификатор</string>
+    <string name="QR">QR</string>
+    <string name="NFC">NFC</string>
+    <string name="verification">Верификация</string>
     <string name="back">Назад</string>
     <string name="list_areas">Перечень участков технического диагностирования</string>
     <string name="list_areas_short">Перечень участков</string>

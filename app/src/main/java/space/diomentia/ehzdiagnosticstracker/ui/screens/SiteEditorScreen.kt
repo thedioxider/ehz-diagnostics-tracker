@@ -330,6 +330,8 @@ private fun SiteEditContent(
         keyboardType = KeyboardType.Decimal
     ) { editState.positionKmText = it }
 
+    Spacer(Modifier.height(16.dp))
+
     // GPS
     Text(
         stringResource(R.string.coordinates),
@@ -353,9 +355,9 @@ private fun SiteEditContent(
     Spacer(Modifier.height(16.dp))
 
     // QR Scan
-    QrScanSection(editState)
+    VerificationSection(editState)
 
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(24.dp))
 
     // TODO: better add fields/templates and manage fields buttons — turn some to FABs
     // Insert template / Add field buttons
@@ -483,7 +485,7 @@ private fun SiteEditContent(
 }
 
 @Composable
-private fun QrScanSection(editState: SiteEditState) {
+private fun VerificationSection(editState: SiteEditState) {
     val context = LocalContext.current
 
     val qrLauncher = rememberLauncherForActivityResult(
@@ -496,38 +498,66 @@ private fun QrScanSection(editState: SiteEditState) {
 
     val validated = editState.validationId?.isNotBlank() == true
 
+    Text(
+        stringResource(R.string.validation_status),
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier.padding(bottom = 4.dp)
+    )
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min)
     ) {
-        // TODO: QR and NFC buttons
         PtmFilledButton(
             onClick = {
                 qrLauncher.launch(Intent(context, ScanIdQrActivity::class.java))
             },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f, fill = true)
+                .fillMaxHeight()
         ) {
             Icon(
                 painterResource(R.drawable.ic_qr_code),
                 contentDescription = stringResource(R.string.scan_id),
-                modifier = Modifier.padding(end = 4.dp)
+                modifier = Modifier
+                    .padding(4.dp)
+                    .aspectRatio(1f)
             )
-            Text(stringResource(R.string.scan_id))
+            Text(stringResource(R.string.QR))
+        }
+        PtmFilledButton(
+            onClick = {
+                // TODO: NFC functionality
+            },
+            enabled = false,
+            modifier = Modifier
+                .weight(1f, fill = true)
+                .fillMaxHeight()
+                .padding(start = 8.dp)
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_nfc),
+                contentDescription = stringResource(R.string.scan_id),
+                modifier = Modifier
+                    .padding(4.dp)
+                    .aspectRatio(1f)
+            )
+            Text(stringResource(R.string.NFC))
         }
         Surface(
             color = if (validated) MaterialTheme.colorScheme.primary else Color.Gray,
             modifier = Modifier
-                .fillMaxHeight()
-                .padding(start = 16.dp)
+                .padding(start = 8.dp)
+                .size(48.dp)
         ) {
             Icon(
                 if (validated) Icons.Outlined.Check else Icons.Outlined.Close,
                 tint = MaterialTheme.colorScheme.background,
                 contentDescription = null,
                 modifier = Modifier
-                    .aspectRatio(1f)
+                    .fillMaxSize()
                     .padding(8.dp)
             )
         }

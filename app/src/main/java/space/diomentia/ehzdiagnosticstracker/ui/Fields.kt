@@ -12,9 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
@@ -178,10 +181,7 @@ fun LocationField(
             },
             modifier = Modifier
                 .weight(1f, fill = true)
-                // .fillMaxHeight()
-                // .padding(vertical = 8.dp)
-                // .padding(start = 8.dp)
-                .height(IntrinsicSize.Min)
+                .fillMaxHeight()
         ) {
             Row(
                 horizontalArrangement = Arrangement.Center,
@@ -191,8 +191,8 @@ fun LocationField(
                     Icons.Outlined.LocationOn,
                     contentDescription = stringResource(R.string.location),
                     modifier = Modifier
+                        .padding(4.dp)
                         .aspectRatio(1f)
-                        .padding(vertical = 0.dp, horizontal = 4.dp)
                 )
                 Text(stringResource(R.string.show_area_on_map_short))
             }
@@ -203,13 +203,13 @@ fun LocationField(
                 modifier = Modifier
                     .padding(start = 8.dp)
                     .aspectRatio(1f)
-                    .height(IntrinsicSize.Min)
+                    .width(48.dp)
             ) {
                 Icon(
                     Icons.Outlined.Refresh,
                     contentDescription = null,
                     modifier = Modifier
-                        .aspectRatio(1f)
+                        .fillMaxSize()
                         .padding(8.dp)
                 )
             }
