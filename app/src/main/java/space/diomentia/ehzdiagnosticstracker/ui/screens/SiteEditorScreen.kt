@@ -342,13 +342,13 @@ private fun SiteEditContent(
         val loc = Coordinates(lat = it.latitude, lng = it.longitude)
         editState.location = loc
         if (editState.positionKmText.isBlank()) {
-            editState.positionKmText = DecimalFormat("#.##").format(
+            editState.positionKmText = (
                 previousSite?.run {
                     if (location != null && positionKm != null) {
                         positionKm + location.distanceKmTo(loc)
                     } else null
-                } ?: previousSite?.positionKm ?: 0.0
-            )
+                }
+                    )?.let { DecimalFormat("#.##").format(it) } ?: ""
         }
     }
 

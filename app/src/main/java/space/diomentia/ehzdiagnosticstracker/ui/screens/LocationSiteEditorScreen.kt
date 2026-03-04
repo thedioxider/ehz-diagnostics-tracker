@@ -130,13 +130,13 @@ fun LocationSiteEditorScreen(
                 editState.location = loc
                 if (editState.positionKmText.isBlank()) {
                     val previousSite = reportSites.lastOrNull()
-                    editState.positionKmText = DecimalFormat("#.##").format(
+                    editState.positionKmText = (
                         previousSite?.run {
                             if (location != null && positionKm != null) {
                                 positionKm + location.distanceKmTo(loc)
                             } else null
-                        } ?: previousSite?.positionKm ?: 0.0
-                    )
+                        } ?: if (isZeroKm) 0.0 else null
+                            )?.let { DecimalFormat("#.##").format(it) } ?: ""
                 }
             }
 
