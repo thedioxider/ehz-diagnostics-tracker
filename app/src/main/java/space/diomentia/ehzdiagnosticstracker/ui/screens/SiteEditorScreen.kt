@@ -8,7 +8,6 @@ import android.provider.MediaStore
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -24,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -95,6 +95,7 @@ import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
 import space.diomentia.ehzdiagnosticstracker.data.distanceKmTo
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
+import space.diomentia.ehzdiagnosticstracker.ui.DeleteDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FieldSpecChooserDialog
 import space.diomentia.ehzdiagnosticstracker.ui.ImageWithFullscreenView
 import space.diomentia.ehzdiagnosticstracker.ui.LocationField
@@ -141,6 +142,7 @@ fun SiteEditorScreen(
     }
 
     val editState = rememberSiteEditState(currentSite)
+    var manageFields by remember { mutableStateOf(true) }
 
     var showExitDialog by remember { mutableStateOf(false) }
     if (showExitDialog) {
@@ -212,6 +214,16 @@ fun SiteEditorScreen(
                         icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                         label = stringResource(R.string.back)
                     ) { if (editMode) showExitDialog = true else onBack() }
+                },
+                actions = {
+                    if (editMode) {
+                        ActionButton(
+                            icon = if (manageFields)
+                                painterResource(R.drawable.ic_edit_square)
+                            else painterResource(R.drawable.ic_contract_edit),
+                            label = stringResource(R.string.manage_report_fields)
+                        ) { manageFields = !manageFields }
+                    }
                 }
             )
         },
@@ -223,15 +235,20 @@ fun SiteEditorScreen(
             horizontalAlignment = Alignment.Start,
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(32.dp))
 
             if (editMode) {
-                SiteEditContent(editState, previousSite) { editMode = false }
+                SiteEditContent(
+                    editState,
+                    previousSite,
+                    manageFields,
+                    onToggleManageFields = { manageFields = it }
+                ) { editMode = false }
             } else if (siteWithFields != null) {
                 SitePreviewContent(siteWithFields) { editMode = true }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(32.dp))
         }
     }
 }
@@ -374,6 +391,8 @@ private fun SitePreviewContent(
 private fun SiteEditContent(
     editState: SiteEditState,
     previousSite: Site?,
+    manageFields: Boolean,
+    onToggleManageFields: (Boolean) -> Unit,
     onSave: () -> Unit
 ) {
     // Position (editable)
@@ -417,37 +436,19 @@ private fun SiteEditContent(
 
     Spacer(Modifier.height(24.dp))
 
-    // TODO: better add fields/templates and manage fields buttons — turn some to FABs
     // Insert template / Add field buttons
     var showTemplateDialog by remember { mutableStateOf(false) }
     var showFieldSpecDialog by remember { mutableStateOf(false) }
+    var deleteFieldRequest by remember { mutableStateOf<ReportField?>(null) }
 
     val config = AppState.reportConfig.value
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        PtmFilledButton(
-            onClick = { showTemplateDialog = true },
-            enabled = config != null && config.templates.isNotEmpty(),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(stringResource(R.string.insert_template))
-        }
-        PtmFilledButton(
-            onClick = { showFieldSpecDialog = true },
-            enabled = config != null && config.fieldSpecs.isNotEmpty(),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text(stringResource(R.string.add_field))
-        }
-    }
 
     if (showTemplateDialog && config != null) {
         TemplateChooserDialog(
             templates = config.templates,
             onTemplateChosen = { template ->
                 editState.applyTemplate(template)
+                onToggleManageFields(false)
             },
             onCancel = { showTemplateDialog = false }
         )
@@ -458,59 +459,70 @@ private fun SiteEditContent(
             addedSpecIds = editState.fieldSpecs.map { it.specId }.toSet(),
             onSpecsChosen = { specs ->
                 specs.forEach { editState.addField(it) }
+                onToggleManageFields(false)
             },
             onCancel = { showFieldSpecDialog = false }
         )
     }
-
-    Spacer(Modifier.height(16.dp))
-
-    // Fields editor
-    var manageFields by remember { mutableStateOf(false) }
-    if (editState.fieldSpecs.isNotEmpty()) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { manageFields = !manageFields }
-                .padding(vertical = 8.dp)
-        ) {
-            Text(
-                stringResource(R.string.manage_fields),
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                if (manageFields) Icons.Outlined.Close else Icons.Outlined.Edit,
-                contentDescription = null
-            )
-        }
+    deleteFieldRequest?.let { field ->
+        DeleteDialog(
+            onDelete = { editState.removeField(field.specId) },
+            label = { Text(stringResource(R.string.field_value_will_be_deleted)) },
+            name = field.name,
+            details = editState.fieldValues[field.specId]!!,
+            onCancel = { deleteFieldRequest = null }
+        )
     }
 
+    // TODO: add always required report fields to config
     editState.fieldSpecs.forEach { field ->
         val fieldType = FieldType.parse(field.type)
         if (fieldType != null) {
             Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.fillMaxWidth()
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    // TODO: add always required report fields to config
-                    EditableField(
-                        field = field,
-                        fieldType = fieldType,
-                        value = editState.fieldValues[field.specId] ?: "",
-                        onValueChange = { editState.fieldValues[field.specId] = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                    )
+                    if (!manageFields) {
+                        EditableField(
+                            field = field,
+                            fieldType = fieldType,
+                            value = editState.fieldValues[field.specId] ?: "",
+                            onValueChange = { editState.fieldValues[field.specId] = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        )
+                    } else {
+                        Text(
+                            field.name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (editState.fieldValues[field.specId]!!.isNotBlank()) {
+                            Text(
+                                stringResource(R.string.value_will_be_deleted),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontStyle = FontStyle.Italic,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier
+                                    .alpha(.6f)
+                                    .padding(start = 8.dp)
+                            )
+                        }
+                    }
                 }
-                AnimatedVisibility(manageFields) {
+                if (manageFields) {
                     PtmFilledIconButton(
                         onClick = {
-                            editState.removeField(field.specId)
-                        }
+                            if (editState.fieldValues[field.specId]!!.isNotBlank())
+                                deleteFieldRequest = field
+                            else editState.removeField(field.specId)
+                        },
+                        modifier = Modifier
+                            .width(48.dp)
+                            .aspectRatio(1f)
                     ) {
                         Icon(
                             Icons.Outlined.Delete,
@@ -522,29 +534,55 @@ private fun SiteEditContent(
         }
     }
 
-    Spacer(Modifier.height(16.dp))
+    Spacer(Modifier.height(24.dp))
 
     // Save button
-    PtmFilledButton(
-        onClick = {
-            editState.saveAndConfirm()
-            onSave()
-        },
-        enabled = editState.canSave,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Icon(
-            painterResource(R.drawable.ic_save),
-            contentDescription = stringResource(R.string.save),
-            modifier = Modifier.padding(end = 4.dp)
-        )
-        Text(stringResource(R.string.save))
+    if (!manageFields) {
+        PtmFilledButton(
+            onClick = {
+                editState.saveAndConfirm()
+                onSave()
+            },
+            enabled = editState.canSave,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_save),
+                contentDescription = stringResource(R.string.save),
+                modifier = Modifier.padding(end = 4.dp)
+            )
+            Text(stringResource(R.string.save))
+        }
+    } else {
+        PtmFilledButton(
+            onClick = { showFieldSpecDialog = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_variable_add),
+                contentDescription = stringResource(R.string.add_field),
+                modifier = Modifier.padding(end = 4.dp)
+            )
+            Text(stringResource(R.string.add_field))
+        }
+        PtmFilledButton(
+            onClick = { showTemplateDialog = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_list_alt),
+                contentDescription = stringResource(R.string.insert_template),
+                modifier = Modifier.padding(end = 4.dp)
+            )
+            Text(stringResource(R.string.insert_template))
+        }
     }
 }
 
 @Composable
 private fun VerificationSection(editState: SiteEditState) {
     val context = LocalContext.current
+    val snacker = rememberSnacker()
 
     val qrLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -609,6 +647,15 @@ private fun VerificationSection(editState: SiteEditState) {
             modifier = Modifier
                 .padding(start = 8.dp)
                 .size(48.dp)
+                .clickable {
+                    snacker.showMessage(
+                        context.getString(
+                            if (validated)
+                                R.string.report_verified
+                            else R.string.report_not_verified
+                        )
+                    )
+                }
         ) {
             Icon(
                 if (validated) Icons.Outlined.Check else Icons.Outlined.Close,
@@ -1058,7 +1105,7 @@ private fun SiteEditModePreview() {
     CompositionLocalProvider(LocalSessionManager provides sessionManager) {
         PtmTheme {
             Column(Modifier.padding(16.dp)) {
-                SiteEditContent(editState, null) {}
+                SiteEditContent(editState, null, false, {}) {}
             }
         }
     }

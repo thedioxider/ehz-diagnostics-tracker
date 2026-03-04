@@ -92,7 +92,7 @@ fun PtmFilledButton(
 ) {
     FilledTonalButton(
         onClick,
-        modifier = modifier,
+        modifier = Modifier.then(modifier),
         enabled = enabled,
         shape = RectangleShape,
         colors = colors
@@ -120,7 +120,7 @@ fun PtmFilledIconButton(
 ) {
     FilledTonalIconButton(
         onClick,
-        modifier = modifier,
+        modifier = Modifier.then(modifier),
         enabled = enabled,
         shape = RectangleShape,
         colors = colors

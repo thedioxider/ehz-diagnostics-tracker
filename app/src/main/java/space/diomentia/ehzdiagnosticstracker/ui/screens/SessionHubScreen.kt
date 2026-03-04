@@ -199,6 +199,7 @@ private fun SessionHubContent(
                     }
                 },
                 actions = {
+                    // TODO: better save button
                     ActionButton(
                         icon = rememberVectorPainter(Icons.Outlined.Check),
                         label = stringResource(R.string.complete_session)

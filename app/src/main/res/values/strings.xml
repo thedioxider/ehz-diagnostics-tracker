@@ -193,4 +193,9 @@
     <string name="site_edits_not_saved_dialog">Для продолжения сохраните или откатите изменения</string>
     <string name="site_edits_cannot_be_saved">Изменения не могут быть сохранены: укажите позицию на объекте</string>
     <string name="rollback">Откатить</string>
+    <string name="manage_report_fields">Редактировать поля отчёта</string>
+    <string name="value_will_be_deleted">Значение будет удалено</string>
+    <string name="field_value_will_be_deleted">Значение поля будет удалено</string>
+    <string name="report_verified">Отчёт верифицирован</string>
+    <string name="report_not_verified">Отёт не верифицирован</string>
 </resources>
