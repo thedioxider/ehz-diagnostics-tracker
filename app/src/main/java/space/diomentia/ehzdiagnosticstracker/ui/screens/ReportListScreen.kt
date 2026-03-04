@@ -12,6 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -19,12 +22,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,16 +41,19 @@ import space.diomentia.ehzdiagnosticstracker.data.FullReport
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.Report
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
+import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
 import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.Section
 import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
+import space.diomentia.ehzdiagnosticstracker.data.rememberReportExporter
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
-import space.diomentia.ehzdiagnosticstracker.ui.DeleteDialog
+import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
+import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.time.Instant
 import java.time.ZoneId
@@ -81,23 +90,42 @@ private fun ReportListContent(
     onDeleteReport: (Report) -> Unit,
     onBack: () -> Unit
 ) {
-    val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
-    var reportToDelete by remember { mutableStateOf<FullReport?>(null) }
+    val context = LocalContext.current
+    val reportDao = ReportDatabase.getInstance().reportDao()
+    val snacker = rememberSnacker()
 
-    reportToDelete?.let { fr ->
-        val startDateTime = Instant.ofEpochSecond(fr.info.startTime)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDateTime()
-        DeleteDialog(
-            onDelete = {
-                onDeleteReport(fr.info)
-                reportToDelete = null
+    val dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
+    var checkedReports = remember { mutableStateSetOf<String>() }
+
+    var showDeleteReportsDialog by remember { mutableStateOf(false) }
+    if (showDeleteReportsDialog) {
+        ActionCancelDialog(
+            onCancel = { showDeleteReportsDialog = false },
+            onAction = {
+                reportDao.deleteReportsByIds(checkedReports.toList())
+                checkedReports.clear()
             },
-            label = { Text(stringResource(R.string.question_delete_report)) },
-            onCancel = { reportToDelete = null },
-            name = startDateTime.format(dateFormatter),
-            details = fr.info.inspectorName
-        )
+            actionLabel = { Text(stringResource(R.string.delete)) },
+            label = { Text(stringResource(R.string.delete_reports_confirmation)) }
+        ) { }
+    }
+
+    var exportReportsRequest by remember { mutableStateOf(false) }
+    if (exportReportsRequest) {
+        rememberReportExporter(checkedReports.toList()).run {
+            exportToFileAction(
+                content = toJson(),
+                mime = ReportExporter.Mime.Json,
+                onCancel = { exportReportsRequest = false },
+                onSuccess = {
+                    checkedReports.clear()
+                    snacker.showMessage(context.getString(R.string.reports_exported_successfully))
+                },
+                onFailure = {
+                    snacker.showMessage(context.getString(R.string.something_wrong) + "...")
+                }
+            )
+        }
     }
 
     Scaffold(
@@ -110,12 +138,29 @@ private fun ReportListContent(
         bottomBar = {
             PtmBottomBar(
                 navigation = {
-                    ActionButton(
-                        icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
-                        label = stringResource(R.string.back)
-                    ) {
-                        onBack()
+                    if (checkedReports.isEmpty()) {
+                        ActionButton(
+                            icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                            label = stringResource(R.string.back)
+                        ) { onBack() }
+                    } else {
+                        ActionButton(
+                            icon = rememberVectorPainter(Icons.Outlined.Close),
+                            label = stringResource(R.string.cancel)
+                        ) { checkedReports.clear() }
                     }
+                },
+                actions = if (checkedReports.isEmpty())
+                    null
+                else { ->
+                    ActionButton(
+                        icon = rememberVectorPainter(Icons.Outlined.Delete),
+                        label = stringResource(R.string.delete_reports)
+                    ) { if (checkedReports.isNotEmpty()) showDeleteReportsDialog = true }
+                    ActionButton(
+                        icon = painterResource(R.drawable.ic_file_export),
+                        label = stringResource(R.string.export_reports)
+                    ) { if (checkedReports.isNotEmpty()) exportReportsRequest = true }
                 }
             )
         }
@@ -136,11 +181,23 @@ private fun ReportListContent(
 
         FullscreenLazyColumn(innerPadding) {
             items(reports) { fullReport ->
+                val checked = fullReport.info.id in checkedReports
                 ReportListItem(
                     fullReport = fullReport,
                     dateFormatter = dateFormatter,
-                    onClick = { onOpenReport(fullReport.info.id) },
-                    onLongClick = { reportToDelete = fullReport }
+                    onClick = if (checkedReports.isEmpty()) { ->
+                        onOpenReport(fullReport.info.id)
+                    } else { ->
+                        if (checked)
+                            checkedReports.remove(fullReport.info.id)
+                        else checkedReports.add(fullReport.info.id)
+                    },
+                    onLongClick = {
+                        if (checked)
+                            checkedReports.remove(fullReport.info.id)
+                        else checkedReports.add(fullReport.info.id)
+                    },
+                    isChecked = if (checkedReports.isEmpty()) null else checked
                 )
                 HorizontalDivider(modifier = Modifier.alpha(.3f))
             }
@@ -154,7 +211,8 @@ private fun ReportListItem(
     fullReport: FullReport,
     dateFormatter: DateTimeFormatter,
     onClick: () -> Unit,
-    onLongClick: () -> Unit
+    onLongClick: () -> Unit,
+    isChecked: Boolean?
 ) {
     val report = fullReport.info
     val siteCount = fullReport.sites.size
@@ -172,6 +230,14 @@ private fun ReportListItem(
             )
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
+        isChecked?.let {
+            Checkbox(
+                checked = isChecked,
+                onCheckedChange = null,
+                modifier = Modifier.padding(end = 24.dp)
+            )
+        }
+
         Column(
             modifier = Modifier.weight(1f)
         ) {

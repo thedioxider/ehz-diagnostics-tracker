@@ -342,7 +342,10 @@ interface ReportDao {
     fun deleteReport(report: Report)
 
     @Query("DELETE FROM reports WHERE id = :reportId")
-    fun deleteReportById(reportId: String)
+    fun deleteReportById(reportId: String): Int
+
+    @Query("DELETE FROM reports WHERE id IN (:reportIds)")
+    fun deleteReportsByIds(reportIds: List<String>): Int
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     fun insertSite(site: Site)

@@ -123,7 +123,9 @@
     <string name="last_report_not_saved">Последний отчёт не сохранён!</string>
     <string name="new_report_there">Новый отчёт с той же точки</string>
     <string name="export_report">Экспортировать отчёт</string>
+    <string name="export_reports">Экспортировать отчёты</string>
     <string name="report_exported">Отчёт экспортирован</string>
+    <string name="reports_exported_successfully">Отчёты экспортированы успешно</string>
     <string name="export">Экспортировать</string>
     <string name="make_photo">Сделать снимок</string>
     <string name="change_photo">Заменить снимок</string>
@@ -200,9 +202,11 @@
     <string name="report_verified">Отчёт верифицирован</string>
     <string name="report_not_verified">Отчёт не верифицирован</string>
     <string name="delete_report">Удалить отчёт</string>
+    <string name="delete_reports">Удалить отчёты</string>
     <string name="delete_current_session">Удалить текущую сессию?</string>
     <string name="delete_session_all_data_will_be_removed">Все данные из текущего отчёта будут безвозвратно удалены. Вы точно хотите продолжить?</string>
     <string name="unfinished_session">Незавершённая сессия</string>
     <string name="route_delete_reports_exist">Невозможно удалить объект.\nСначала удалите привязанные к нему отчёты.</string>
     <string name="section_delete_reports_exist">Невозможно удалить участок.\nСначала удалите привязанные к нему отчёты.</string>
+    <string name="delete_reports_confirmation">Вы действительно хотите удалить все эти отчёты?</string>
 </resources>

@@ -165,7 +165,7 @@ fun TemplateChooserDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable { selectedIndex = i }
-                        .padding(vertical = 4.dp, horizontal = 8.dp)
+                        .padding(vertical = 8.dp, horizontal = 8.dp)
                 ) {
                     Icon(
                         painterResource(

@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
@@ -114,6 +115,11 @@ class ReportExporter(
 ) {
     private val dao = ReportDatabase.getInstance(context).reportDao()
 
+    enum class Mime(val type: String) {
+        Plain("text/plain"),
+        Json("application/json")
+    }
+
     companion object {
         private val dateFormatter = DateTimeFormatter.ofPattern("yy-MM-dd_HH-mm-ss")
 
@@ -137,9 +143,10 @@ class ReportExporter(
     )
 
     @Composable
-    fun exportToFileRequest(
+    fun exportToFileAction(
         content: String,
-        mimeType: String = "text/plain",
+        mime: Mime = Mime.Plain,
+        onCancel: () -> Unit,
         onSuccess: () -> Unit = {},
         onFailure: () -> Unit = {}
     ) {
@@ -147,7 +154,7 @@ class ReportExporter(
         val ioCoroutineScope = rememberCoroutineScope { Dispatchers.IO }
 
         val exportFileLauncher = rememberLauncherForActivityResult(
-            ActivityResultContracts.CreateDocument(mimeType)
+            ActivityResultContracts.CreateDocument(mime.type)
         ) { uri ->
             uri?.let {
                 ioCoroutineScope.launch {
@@ -164,6 +171,7 @@ class ReportExporter(
                     }
                 }
             }
+            onCancel()
         }
 
         val filename = defaultFilename()
@@ -174,7 +182,9 @@ class ReportExporter(
 }
 
 @Composable
-fun rememberReportExporter(reportIds: List<String>) = ReportExporter(
-    LocalContext.current,
-    reportIds
-)
+fun rememberReportExporter(reportIds: List<String>): ReportExporter {
+    val context = LocalContext.current
+    return remember(reportIds) {
+        ReportExporter(context, reportIds)
+    }
+}

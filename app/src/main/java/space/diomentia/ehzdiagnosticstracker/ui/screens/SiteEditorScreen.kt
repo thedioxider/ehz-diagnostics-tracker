@@ -215,16 +215,14 @@ fun SiteEditorScreen(
                         label = stringResource(R.string.back)
                     ) { if (editMode) showExitDialog = true else onBack() }
                 },
-                actions = {
-                    if (editMode) {
-                        ActionButton(
-                            icon = if (manageFields)
-                                painterResource(R.drawable.ic_edit_square)
-                            else painterResource(R.drawable.ic_contract_edit),
-                            label = stringResource(R.string.manage_report_fields)
-                        ) { manageFields = !manageFields }
-                    }
-                }
+                actions = if (editMode) { ->
+                    ActionButton(
+                        icon = if (manageFields)
+                            painterResource(R.drawable.ic_edit_square)
+                        else painterResource(R.drawable.ic_contract_edit),
+                        label = stringResource(R.string.manage_report_fields)
+                    ) { manageFields = !manageFields }
+                } else null
             )
         },
         snackbarHost = { PtmSnackbarHost(snackbarHostState) },
@@ -377,7 +375,7 @@ private fun displayValue(field: ReportField, fieldValue: String = field.value): 
     else when (FieldType.parse(field.type)) {
         null, FieldType.Raw, FieldType.Text -> fieldValue
         FieldType.Integer -> fieldValue
-        FieldType.Decimal -> DecimalFormat("#.##").format(fieldValue)
+        FieldType.Decimal -> DecimalFormat("#.##").format(fieldValue.toDouble())
         FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
             true -> stringResource(R.string.is_true)
             false -> stringResource(R.string.is_false)
