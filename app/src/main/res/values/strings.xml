@@ -189,4 +189,8 @@
     <string name="site_draft_not_saved">Черновик не сохранён</string>
     <string name="site_draft_not_saved_dialog">Для продолжения сохраните или удалите текущий черновик.</string>
     <string name="site_draft_cannot_be_saved">Черновик не может быть сохранён: укажите позицию на объекте</string>
+    <string name="site_edits_not_saved">Изменения не сохранены</string>
+    <string name="site_edits_not_saved_dialog">Для продолжения сохраните или откатите изменения</string>
+    <string name="site_edits_cannot_be_saved">Изменения не могут быть сохранены: укажите позицию на объекте</string>
+    <string name="rollback">Откатить</string>
 </resources>

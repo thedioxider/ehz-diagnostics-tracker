@@ -145,14 +145,30 @@ fun SiteEditorScreen(
     var showExitDialog by remember { mutableStateOf(false) }
     if (showExitDialog) {
         ActionCancelDialog(
-            label = { Text(stringResource(R.string.site_draft_not_saved)) },
+            label = {
+                Text(
+                    stringResource(
+                        if (currentSite.isDraft)
+                            R.string.site_draft_not_saved
+                        else R.string.site_edits_not_saved
+                    )
+                )
+            },
             actionLabel = { Text(stringResource(R.string.save)) },
             onAction = {
                 onBack()
                 editState.saveAndConfirm()
             },
             actionEnabled = editState.canSave,
-            secondaryActionLabel = { Text(stringResource(R.string.delete)) },
+            secondaryActionLabel = {
+                Text(
+                    stringResource(
+                        if (currentSite.isDraft)
+                            R.string.delete
+                        else R.string.rollback
+                    )
+                )
+            },
             onSecondaryAction = {
                 onBack()
                 sessionManager.removeSite(siteId)
@@ -160,11 +176,21 @@ fun SiteEditorScreen(
             onCancel = { showExitDialog = false }
         ) {
             Column {
-                Text(stringResource(R.string.site_draft_not_saved_dialog))
+                Text(
+                    stringResource(
+                        if (currentSite.isDraft)
+                            R.string.site_draft_not_saved_dialog
+                        else R.string.site_edits_not_saved_dialog
+                    )
+                )
 
                 if (!editState.canSave) {
                     Text(
-                        stringResource(R.string.site_draft_cannot_be_saved),
+                        stringResource(
+                            if (currentSite.isDraft)
+                                R.string.site_draft_cannot_be_saved
+                            else R.string.site_edits_cannot_be_saved
+                        ),
                         fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(top = 16.dp)
                     )
@@ -344,7 +370,6 @@ private fun SitePreviewContent(
 }
 
 // --- Edit Mode ---
-// TODO: editing already saved site autosaves it
 @Composable
 private fun SiteEditContent(
     editState: SiteEditState,
@@ -915,23 +940,25 @@ private class SiteEditState(
         get() = positionKm?.let { km -> km != null && km >= 0.0 } ?: false
 
     init {
-        scope.launch(Dispatchers.IO) {
-            snapshotFlow { Triple(positionKm, location, validationId) }
-                .debounce(500)
-                .collectLatest { (km, coords, valId) ->
-                    km?.let { sessionManager.updateSitePosition(siteId, it) }
-                    if (coords != null) sessionManager.updateSiteLocation(siteId, coords)
-                    sessionManager.setSiteValidation(siteId, valId)
-                }
-        }
-        scope.launch(Dispatchers.IO) {
-            snapshotFlow { fieldValues.toMap() }
-                .debounce(500)
-                .collectLatest { values ->
-                    values.forEach { (specId, value) ->
-                        sessionManager.updateFieldValue(siteId, specId, value)
+        if (site.isDraft) {
+            scope.launch(Dispatchers.IO) {
+                snapshotFlow { Triple(positionKm, location, validationId) }
+                    .debounce(500)
+                    .collectLatest { (km, coords, valId) ->
+                        km?.let { sessionManager.updateSitePosition(siteId, it) }
+                        if (coords != null) sessionManager.updateSiteLocation(siteId, coords)
+                        sessionManager.setSiteValidation(siteId, valId)
                     }
-                }
+            }
+            scope.launch(Dispatchers.IO) {
+                snapshotFlow { fieldValues.toMap() }
+                    .debounce(500)
+                    .collectLatest { values ->
+                        values.forEach { (specId, value) ->
+                            sessionManager.updateFieldValue(siteId, specId, value)
+                        }
+                    }
+            }
         }
     }
 
