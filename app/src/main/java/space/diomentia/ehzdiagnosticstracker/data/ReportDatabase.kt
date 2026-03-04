@@ -3,14 +3,14 @@ package space.diomentia.ehzdiagnosticstracker.data
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
-import androidx.room.AutoMigration
+import androidx.compose.ui.res.stringResource
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
 import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.Index
+import androidx.room.ForeignKey
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
@@ -23,24 +23,23 @@ import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import space.diomentia.ehzdiagnosticstracker.R
 
+// WARNING: fallbackToDestructiveMigration wipes all data on version bump.
+// Proper migrations MUST be written for production releases.
 @Database(
-    version = 6,
+    version = 15,
     entities = [
-        DiagnosticReport::class,
-        ReportDataEntry::class,
-        DiagnosticObject::class,
-        DiagnosticArea::class,
-        DiagnosticPoint::class
-    ],
-    autoMigrations = [
-        AutoMigration(from = 3, to = 5),
-        AutoMigration(from = 5, to = 6)
+        Route::class,
+        Section::class,
+        Report::class,
+        Site::class,
+        ReportField::class
     ]
 )
 abstract class ReportDatabase : RoomDatabase() {
-    abstract fun diagnosticReportDao(): DiagnosticReportDao
-    abstract fun diagnosticAreaDao(): DiagnosticAreaDao
+    abstract fun routeDao(): RouteDao
+    abstract fun reportDao(): ReportDao
 
     companion object {
         const val DB_NAME = "report-db"
@@ -63,248 +62,326 @@ abstract class ReportDatabase : RoomDatabase() {
 }
 
 @Serializable
+@Entity(tableName = "routes")
+data class Route(
+    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
+    val id: String,
+    @ColumnInfo(name = "name") @SerialName("name")
+    val name: String,
+    @ColumnInfo(name = "length_km") @SerialName("length_km")
+    val lengthKm: Int
+) {
+    companion object {
+        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
+        fun checkName(name: String): Boolean =
+            name.all { c -> c.isLetterOrDigit() || c in ",.;:()-" }
+    }
+}
+
+@Serializable
+@Entity(tableName = "sections")
+data class Section(
+    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
+    val id: String,
+    @ColumnInfo(name = "begin_km") @SerialName("begin_km")
+    val beginKm: Int,
+    @ColumnInfo(name = "end_km") @SerialName("end_km")
+    val endKm: Int,
+    @ColumnInfo(name = "route_id") @SerialName("route_id")
+    val routeId: String
+) {
+    @Composable
+    fun displayName(): String = stringResource(R.string.section_display_name, beginKm, endKm)
+
+    companion object {
+        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
+        fun checkName(name: String): Boolean =
+            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
+    }
+}
+
+data class RouteWithSections(
+    @Embedded val info: Route,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "route_id"
+    ) val sections: List<Section>
+)
+
+@Dao
+interface RouteDao {
+    @Transaction
+    @Query("SELECT * FROM routes ORDER BY name ASC")
+    fun getAllRoutes(): Flow<List<RouteWithSections>>
+
+    @Transaction
+    @Query("SELECT * FROM routes WHERE id = :id")
+    fun getRouteById(id: String): Flow<RouteWithSections>
+
+    @Query("SELECT * FROM routes WHERE id = :id")
+    fun getRouteByIdOnce(id: String): Route?
+
+    @Query("SELECT * FROM sections WHERE id = :id")
+    fun getSectionById(id: String): Flow<Section>
+
+    @Query("SELECT * FROM sections WHERE id = :id")
+    fun getSectionByIdOnce(id: String): Section?
+
+    @Query("SELECT * FROM sections WHERE route_id = :routeId ORDER BY id ASC")
+    fun getRouteSections(routeId: String): Flow<List<Section>>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertRoute(route: Route)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertSection(section: Section)
+
+    @Update
+    fun updateRoute(route: Route)
+
+    @Update
+    fun updateSection(area: Section)
+
+    @Delete
+    fun deleteRoute(route: Route): Int
+
+    @Delete
+    fun deleteSection(area: Section): Int
+}
+
+// --- Session-based entities ---
+
+@Entity(
+    tableName = "reports",
+    foreignKeys = [
+        ForeignKey(
+            entity = Route::class,
+            parentColumns = ["id"],
+            childColumns = ["route_id"],
+            onDelete = ForeignKey.RESTRICT
+        ),
+        ForeignKey(
+            entity = Section::class,
+            parentColumns = ["id"],
+            childColumns = ["section_id"],
+            onDelete = ForeignKey.RESTRICT
+        )
+    ]
+)
+data class Report(
+    @PrimaryKey @ColumnInfo(name = "id")
+    val id: String,
+    @ColumnInfo(name = "route_id")
+    val routeId: String,
+    @ColumnInfo(name = "section_id")
+    val sectionId: String,
+    @ColumnInfo(name = "inspector_name")
+    val inspectorName: String,
+    @ColumnInfo(name = "start_time")
+    val startTime: Long,
+    @ColumnInfo(name = "end_time")
+    val endTime: Long? = null,
+    @ColumnInfo(name = "is_complete")
+    val isComplete: Boolean = false
+)
+
+@Serializable
 data class Coordinates(
-    @ColumnInfo(name = "latitude") @SerialName("latitude")
-    val latitude: Double,
-    @ColumnInfo(name = "altitude") @SerialName("altitude")
-    val longitude: Double
+    @ColumnInfo(name = "latitude") @SerialName("lat")
+    val lat: Double,
+    @ColumnInfo(name = "longitude") @SerialName("lng")
+    val lng: Double
 )
 
 @Entity(
-    tableName = "diagnostic_reports",
-    indices = [
-        Index("diagnostic_point", "timestamp", unique = true, name = "report_id")
-    ]
+    tableName = "sites",
+    foreignKeys = [ForeignKey(
+        entity = Report::class,
+        parentColumns = ["id"],
+        childColumns = ["report_id"],
+        onDelete = ForeignKey.CASCADE
+    )]
 )
-data class DiagnosticReport(
-    @ColumnInfo(name = "diagnostic_point") @SerialName("diagnostic_point")
-    val diagnosticPoint: String,
-    @ColumnInfo(name = "timestamp") @SerialName("timestamp")
+data class Site(
+    @PrimaryKey @ColumnInfo(name = "id")
+    val id: String,
+    @ColumnInfo(name = "report_id")
+    val reportId: String,
+    @ColumnInfo(name = "position_km")
+    val positionKm: Double? = null,
+    @Embedded
+    val location: Coordinates? = null,
+    @ColumnInfo(name = "timestamp")
     val timestamp: Long,
-    @ColumnInfo(name = "diagnostics_type") @SerialName("diagnostics_type")
-    val diagnosticsType: String,
-    @ColumnInfo(name = "report_type") @SerialName("report_type")
-    val reportType: String,
-    @Embedded @SerialName("location")
-    val location: Coordinates,
-    @ColumnInfo(name = "inspector") @SerialName("inspector")
-    val inspector: String,
-    /**
-     * A validation ID is known when a report point is scanned (via QR or NFC). Can be used for
-     * verification of indeed reaching the point and for identification the same point on server side.
-     */
-    @ColumnInfo(name = "validation_id") @SerialName("validation_id")
+    @ColumnInfo(name = "validation_id")
     val validationId: String? = null,
-    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "id") @SerialName("id")
-    val id: Long = 0
+    @ColumnInfo(name = "location_only")
+    val locationOnly: Boolean = false,
+    @ColumnInfo(name = "is_draft")
+    val isDraft: Boolean = true
 )
 
-@Entity(tableName = "data_entries", primaryKeys = ["report", "characteristic"])
-data class ReportDataEntry(
-    @ColumnInfo(name = "report") @SerialName("report")
-    val report: Long,
-    @ColumnInfo(name = "characteristic") @SerialName("characteristic")
-    val characteristic: String,
-    @ColumnInfo(name = "value") @SerialName("value")
-    val value: String,
-    @ColumnInfo(name = "datatype") @SerialName("datatype")
-    val datatype: String? = null
+@Entity(
+    tableName = "report_fields",
+    primaryKeys = ["site_id", "spec_id"],
+    foreignKeys = [ForeignKey(
+        entity = Site::class,
+        parentColumns = ["id"],
+        childColumns = ["site_id"],
+        onDelete = ForeignKey.CASCADE
+    )]
+)
+data class ReportField(
+    @ColumnInfo(name = "site_id")
+    val siteId: String,
+    @ColumnInfo(name = "spec_id")
+    val specId: String,
+    @ColumnInfo(name = "name")
+    val name: String,
+    @ColumnInfo(name = "type")
+    val type: String,
+    @ColumnInfo(name = "unit")
+    val unit: String? = null,
+    @ColumnInfo(name = "value")
+    val value: String = ""
 )
 
-data class DiagnosticReportWithData(
-    @Embedded val report: DiagnosticReport,
-    @Relation(parentColumn = "id", entityColumn = "report") val data: List<ReportDataEntry>
+data class SiteWithFields(
+    @Embedded val info: Site,
+    @Relation(parentColumn = "id", entityColumn = "site_id")
+    val fields: List<ReportField>
+)
+
+data class FullReport(
+    @Embedded val info: Report,
+    @Relation(
+        entity = Site::class,
+        parentColumn = "id",
+        entityColumn = "report_id"
+    )
+    val sites: List<SiteWithFields>,
+    @Relation(
+        parentColumn = "route_id",
+        entityColumn = "id"
+    )
+    val route: Route,
+    @Relation(
+        parentColumn = "section_id",
+        entityColumn = "id"
+    )
+    val section: Section
 )
 
 @Dao
-interface DiagnosticReportDao {
+interface ReportDao {
     @Transaction
-    @Query("SELECT * FROM diagnostic_reports ORDER BY timestamp DESC")
-    fun getAllReports(): Flow<List<DiagnosticReportWithData>>
+    @Query("SELECT * FROM reports WHERE id = :id")
+    fun getFullReport(id: String): Flow<FullReport?>
 
     @Transaction
-    @Query("SELECT * FROM diagnostic_reports WHERE id = :id")
-    fun getReportById(id: Long): Flow<DiagnosticReportWithData>
+    @Query("SELECT * FROM reports WHERE id IN (:reportIds)")
+    fun getFullReportsByIdsOnce(reportIds: List<String>): List<FullReport>
 
     @Transaction
-    @Query("SELECT * FROM diagnostic_reports WHERE id = :id")
-    fun getReportByIdOnce(id: Long): DiagnosticReport?
+    @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 0 LIMIT 1")
+    fun getActiveReportForSection(sectionId: String): Flow<FullReport?>
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertReport(report: DiagnosticReport): Long
+    @Transaction
+    @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 0 LIMIT 1")
+    fun getActiveReportForSectionOnce(sectionId: String): FullReport?
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 1 ORDER BY start_time DESC")
+    fun getCompletedReportsForSection(sectionId: String): Flow<List<FullReport>>
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE route_id = :routeId AND is_complete = 1 ORDER BY start_time DESC")
+    fun getCompletedReportsForRoute(routeId: String): Flow<List<FullReport>>
+
+    @Transaction
+    @Query("SELECT * FROM reports WHERE is_complete = 1 ORDER BY start_time DESC")
+    fun getAllCompletedReports(): Flow<List<FullReport>>
+
+    @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
+    fun getSitesForReport(reportId: String): Flow<List<Site>>
+
+
+    @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
+    fun getSitesForReportOnce(reportId: String): List<Site>
+
+    @Transaction
+    @Query("SELECT * FROM sites WHERE report_id = :reportId ORDER BY timestamp ASC")
+    fun getSitesWithFieldsForReport(reportId: String): Flow<List<SiteWithFields>>
+
+    @Query("SELECT * FROM reports WHERE id = :id")
+    fun getReportByIdOnce(id: String): Report?
+
+    @Query("SELECT * FROM sites WHERE id = :id")
+    fun getSiteByIdOnce(id: String): Site?
+
+    @Transaction
+    @Query("SELECT * FROM sites WHERE report_id = :reportId AND is_draft = 1 LIMIT 1")
+    fun getDraftSiteForReport(reportId: String): SiteWithFields?
+
+    @Query("DELETE FROM sites WHERE report_id = :reportId AND is_draft = 1")
+    fun deleteDraftSiteForReport(reportId: String)
+
+    @Query("SELECT * FROM report_fields WHERE site_id = :siteId")
+    fun getFieldsForSite(siteId: String): Flow<List<ReportField>>
+
+    @Query("SELECT * FROM report_fields WHERE site_id = :siteId")
+    fun getFieldsForSiteOnce(siteId: String): List<ReportField>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertReport(report: Report)
 
     @Update
-    fun updateReport(report: DiagnosticReport)
+    fun updateReport(report: Report)
 
-    @Query("SELECT * FROM data_entries WHERE report = :report")
-    fun getReportData(report: Long): Flow<List<ReportDataEntry>>
+    @Delete
+    fun deleteReport(report: Report)
 
-    @Query("SELECT * FROM data_entries WHERE report = :report")
-    fun getReportDataOnce(report: Long): List<ReportDataEntry>
+    @Query("DELETE FROM reports WHERE id = :reportId")
+    fun deleteReportById(reportId: String): Int
+
+    @Query("DELETE FROM reports WHERE id IN (:reportIds)")
+    fun deleteReportsByIds(reportIds: List<String>): Int
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    fun insertSite(site: Site)
+
+    @Update
+    fun updateSite(site: Site)
+
+    @Delete
+    fun deleteSite(site: Site)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertData(vararg data: ReportDataEntry)
+    fun insertField(field: ReportField)
 
-    @Delete
-    fun deleteReport(report: DiagnosticReport)
-
-    @Delete
-    fun deleteData(vararg data: ReportDataEntry)
-}
-
-@Serializable
-@Entity(tableName = "diagnostic_objects")
-data class DiagnosticObject(
-    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
-    val id: String,
-    @ColumnInfo(name = "inventory_id") @SerialName("inventory_id")
-    val inventoryId: String,
-    @ColumnInfo(name = "name") @SerialName("name")
-    val name: String,
-    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
-    val additionalInfo: String? = null
-) {
-    companion object {
-        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
-        fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
+    fun insertFieldFromConfig(siteId: String, specId: String, config: ReportConfig): Boolean {
+        val spec = config.getSpec(specId) ?: return false
+        insertField(
+            ReportField(
+                siteId = siteId,
+                specId = specId,
+                name = spec.name,
+                type = spec.type.name,
+                unit = spec.unit
+            )
+        )
+        return true
     }
-}
 
-@Serializable
-@Entity(tableName = "diagnostic_areas")
-data class DiagnosticArea(
-    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
-    val id: String,
-    @ColumnInfo(name = "name") @SerialName("name")
-    val name: String,
-    @ColumnInfo(name = "diagnostic_object") @SerialName("diagnostic_object")
-    val diagnosticObject: String,
-    @ColumnInfo(name = "danger_class") @SerialName("danger_class")
-    val dangerClass: String,
-    @Embedded(prefix = "last_") @SerialName("last_location")
-    val lastLocation: Coordinates? = null,
-    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
-    val additionalInfo: String? = null
-) {
-    companion object {
-        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
-        fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
-    }
-}
-
-@Serializable
-@Entity(tableName = "diagnostic_points")
-data class DiagnosticPoint(
-    @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
-    val id: String,
-    @ColumnInfo(name = "diagnostic_area") @SerialName("diagnostic_area")
-    val diagnosticArea: String,
-    @ColumnInfo(name = "inventory_id") @SerialName("inventory_id")
-    val inventoryId: String,
-    @ColumnInfo(name = "registration_number") @SerialName("registration_number")
-    val registrationNumber: String,
-    @ColumnInfo(name = "diagnostics_type") @SerialName("diagnostics_type")
-    val diagnosticsType: String? = null,
-    @ColumnInfo(name = "additional_info") @SerialName("additional_info")
-    val additionalInfo: String? = null
-) {
-    companion object {
-        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
-        fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
-    }
-}
-
-data class DiagnosticObjectWithAreas(
-    @Embedded val diagnosticObject: DiagnosticObject,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "diagnostic_object"
-    ) val areas: List<DiagnosticArea>
-)
-
-data class DiagnosticAreaWithPoints(
-    @Embedded val diagnosticArea: DiagnosticArea,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "diagnostic_area"
-    ) val points: List<DiagnosticPoint>
-)
-
-
-data class DiagnosticPointWithHistory(
-    @Embedded val point: DiagnosticPoint,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "diagnostic_point"
-    ) val history: List<DiagnosticReport>
-)
-
-@Dao
-interface DiagnosticAreaDao {
-    @Transaction
-    @Query("SELECT * FROM diagnostic_objects ORDER BY name ASC")
-    fun getAllObjects(): Flow<List<DiagnosticObjectWithAreas>>
-
-    @Transaction
-    @Query("SELECT * FROM diagnostic_objects WHERE id = :id")
-    fun getObjectById(id: String): Flow<DiagnosticObjectWithAreas>
-
-    @Query("SELECT * FROM diagnostic_objects WHERE id = :id")
-    fun getObjectByIdOnce(id: String): DiagnosticObject?
-
-    @Transaction
-    @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
-    fun getAreaById(id: String): Flow<DiagnosticAreaWithPoints>
-
-    @Query("SELECT * FROM diagnostic_areas WHERE id = :id")
-    fun getAreaByIdOnce(id: String): DiagnosticArea?
-
-    @Transaction
-    @Query("SELECT * FROM diagnostic_points WHERE id = :id")
-    fun getPointById(id: String): Flow<DiagnosticPointWithHistory>
-
-    @Query("SELECT * FROM diagnostic_points WHERE id = :id")
-    fun getPointByIdOnce(id: String): DiagnosticPoint?
-
-    @Transaction
-    @Query("SELECT * FROM diagnostic_areas WHERE diagnostic_object = :diagnosticObject ORDER BY id ASC")
-    fun getObjectAreas(diagnosticObject: String): Flow<List<DiagnosticAreaWithPoints>>
-
-    @Transaction
-    @Query("SELECT * FROM diagnostic_points WHERE diagnostic_area = :diagnosticArea ORDER BY id ASC")
-    fun getAreaPoints(diagnosticArea: String): Flow<List<DiagnosticPointWithHistory>>
-
-    @Transaction
-    @Query("SELECT * FROM diagnostic_reports WHERE diagnostic_point = :diagnosticPoint ORDER BY id ASC")
-    fun getPointReports(diagnosticPoint: String): Flow<List<DiagnosticReportWithData>>
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertDiagnosticObject(diagnosticObject: DiagnosticObject)
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertDiagnosticArea(diagnosticArea: DiagnosticArea)
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertDiagnosticPoint(diagnosticPoint: DiagnosticPoint)
-
-    @Update
-    fun updateDiagnosticObject(diagnosticObject: DiagnosticObject)
-
-    @Update
-    fun updateDiagnosticArea(area: DiagnosticArea)
-
-    @Update
-    fun updateDiagnosticPoint(point: DiagnosticPoint)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertFields(fields: List<ReportField>)
 
     @Delete
-    fun deleteDiagnosticObject(diagnosticObject: DiagnosticObject)
+    fun deleteField(field: ReportField)
 
     @Delete
-    fun deleteDiagnosticArea(area: DiagnosticArea)
+    fun deleteFields(fields: List<ReportField>)
 
-    @Delete
-    fun deleteDiagnosticPoint(point: DiagnosticPoint)
+    @Query("DELETE FROM report_fields WHERE site_id = :siteId AND spec_id = :specId")
+    fun deleteFieldByKey(siteId: String, specId: String)
 }

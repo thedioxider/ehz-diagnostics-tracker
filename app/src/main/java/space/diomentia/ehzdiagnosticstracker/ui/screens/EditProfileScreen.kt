@@ -8,9 +8,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,202 +61,200 @@ fun EditProfileScreen(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
-    PtmTheme {
-        Scaffold(
-            snackbarHost = { PtmSnackbarHost(snackbarHostState) },
-            topBar = { PtmTopBar(title = { Text(stringResource(R.string.edit_profile)) }) },
-            bottomBar = {
-                PtmBottomBar(
-                    navigation = {
-                        ActionButton(
-                            rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
-                            label = stringResource(R.string.back)
-                        ) {
-                            onBack()
-                        }
+    Scaffold(
+        snackbarHost = { PtmSnackbarHost(snackbarHostState) },
+        topBar = { PtmTopBar(title = { Text(stringResource(R.string.edit_profile)) }) },
+        bottomBar = {
+            PtmBottomBar(
+                navigation = {
+                    ActionButton(
+                        rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                        label = stringResource(R.string.back)
+                    ) {
+                        onBack()
                     }
-                )
-            }
-        ) { innerPadding ->
-            var adminPasswordChangeRequest by remember { mutableStateOf(false) }
-            var adminHashword by AppPreferences.rememberAdminHashword()
-            if (adminPasswordChangeRequest) {
-                PasswordChangeDialog(
-                    profile = null,
-                    onApply = { password ->
-                        val success =
-                            PasswordHash.encrypt(password)
-                                ?.let { adminHashword = it } != null
-                        coroutineScope?.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(
-                                if (success)
-                                    "${context.getString(R.string.change_password_success)}!"
-                                else
-                                    "${context.getString(R.string.change_password_fail)}..."
-                            )
-                        }
-                    },
-                    onDismissRequest = { adminPasswordChangeRequest = false }
-                )
-            }
+                }
+            )
+        }
+    ) { innerPadding ->
+        var adminPasswordChangeRequest by remember { mutableStateOf(false) }
+        var adminHashword by AppPreferences.rememberAdminHashword()
+        if (adminPasswordChangeRequest) {
+            PasswordChangeDialog(
+                profile = null,
+                onApply = { password ->
+                    val success =
+                        PasswordHash.encrypt(password)
+                            ?.let { adminHashword = it } != null
+                    coroutineScope?.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(
+                            if (success)
+                                "${context.getString(R.string.change_password_success)}!"
+                            else
+                                "${context.getString(R.string.change_password_fail)}..."
+                        )
+                    }
+                },
+                onDismissRequest = { adminPasswordChangeRequest = false }
+            )
+        }
 
-            var profilePasswordChangeRequest by remember { mutableStateOf<Profile?>(null) }
-            profilePasswordChangeRequest?.let { profile ->
-                PasswordChangeDialog(
-                    profile,
-                    onApply = { password ->
-                        val hashword = PasswordHash.encrypt(password)
-                        if (hashword == null) return@PasswordChangeDialog
-                        ProfileDatabase.getInstance(context)
-                            .profileDao()
-                            .updateProfile(profile.copy(hashword = hashword.hash))
-                        coroutineScope?.launch {
-                            snackbarHostState.currentSnackbarData?.dismiss()
-                            snackbarHostState.showSnackbar(context.getString(R.string.profile_saved))
-                        }
-                    },
-                    onDismissRequest = { profilePasswordChangeRequest = null }
+        var profilePasswordChangeRequest by remember { mutableStateOf<Profile?>(null) }
+        profilePasswordChangeRequest?.let { profile ->
+            PasswordChangeDialog(
+                profile,
+                onApply = { password ->
+                    val hashword = PasswordHash.encrypt(password)
+                    if (hashword == null) return@PasswordChangeDialog
+                    ProfileDatabase.getInstance(context)
+                        .profileDao()
+                        .updateProfile(profile.copy(hashword = hashword.hash))
+                    coroutineScope?.launch {
+                        snackbarHostState.currentSnackbarData?.dismiss()
+                        snackbarHostState.showSnackbar(context.getString(R.string.profile_saved))
+                    }
+                },
+                onDismissRequest = { profilePasswordChangeRequest = null }
+            )
+        }
+
+        var profileDeleteRequest by remember { mutableStateOf<Profile?>(null) }
+        profileDeleteRequest?.let { profile ->
+            DeleteProfileDialog(profile, onDelete = onBack) { profileDeleteRequest = null }
+        }
+
+        ScrollableColumn(
+            innerPadding,
+            horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            val profile = AppState.profileSession
+                ?: if (inspectionMode)
+                    Profile("Name", "Secondname", "")
+                else null
+            profile?.let { profile ->
+                Text(
+                    "${profile.surname} ${profile.name}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
-            }
 
-            var profileDeleteRequest by remember { mutableStateOf<Profile?>(null) }
-            profileDeleteRequest?.let { profile ->
-                DeleteProfileDialog(profile, onDelete = onBack) { profileDeleteRequest = null }
-            }
-
-            ScrollableColumn(
-                innerPadding,
-                horizontalAlignment = Alignment.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                val profile = AppState.profileSession
-                    ?: if (inspectionMode)
-                        Profile("Name", "Secondname", "")
-                    else null
-                profile?.let { profile ->
+                var nameInput by remember { mutableStateOf(profile.name) }
+                var nameError by remember { mutableStateOf(false) }
+                var surnameInput by remember { mutableStateOf(profile.surname) }
+                var surnameError by remember { mutableStateOf(false) }
+                Column(
+                    horizontalAlignment = Alignment.Start,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp)
+                ) {
                     Text(
-                        "${profile.surname} ${profile.name}",
-                        style = MaterialTheme.typography.headlineMedium,
-                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                        stringResource(R.string.name),
+                        style = MaterialTheme.typography.titleSmall
                     )
-
-                    var nameInput by remember { mutableStateOf(profile.name) }
-                    var nameError by remember { mutableStateOf(false) }
-                    var surnameInput by remember { mutableStateOf(profile.surname) }
-                    var surnameError by remember { mutableStateOf(false) }
-                    Column(
-                        horizontalAlignment = Alignment.Start,
+                    OutlinedTextField(
+                        nameInput,
+                        onValueChange = {
+                            nameError = false
+                            nameInput = it.filter { c -> c.isLetter() }
+                        },
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.name),
+                                fontStyle = FontStyle.Italic,
+                                maxLines = 1,
+                                modifier = Modifier.alpha(.5f)
+                            )
+                        },
+                        isError = nameError,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 8.dp)
-                    ) {
-                        Text(
-                            stringResource(R.string.name),
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                        TextField(
-                            nameInput,
-                            onValueChange = {
-                                nameError = false
-                                nameInput = it.filter { c -> c.isLetter() }
-                            },
-                            placeholder = {
-                                Text(
-                                    stringResource(R.string.name),
-                                    fontStyle = FontStyle.Italic,
-                                    maxLines = 1,
-                                    modifier = Modifier.alpha(.5f)
-                                )
-                            },
-                            isError = nameError,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .padding(start = 16.dp)
-                        )
-                        Text(
-                            stringResource(R.string.surname),
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                        TextField(
-                            surnameInput,
-                            onValueChange = {
-                                surnameError = false
-                                surnameInput = it.filter { c -> c.isLetter() }
-                            },
-                            placeholder = {
-                                Text(
-                                    stringResource(R.string.surname),
-                                    fontStyle = FontStyle.Italic,
-                                    maxLines = 1,
-                                    modifier = Modifier.alpha(.5f)
-                                )
-                            },
-                            isError = surnameError,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
-                                .padding(start = 16.dp)
-                        )
-                        SettingsOption(
-                            label = stringResource(R.string.change_password),
-                            secondaryLabel = stringResource(R.string.change_password_description)
-                        ) { profilePasswordChangeRequest = profile }
-                    }
-                    Box(
-                        contentAlignment = Alignment.Center,
+                            .padding(vertical = 8.dp)
+                            .padding(start = 16.dp)
+                    )
+                    Text(
+                        stringResource(R.string.surname),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    OutlinedTextField(
+                        surnameInput,
+                        onValueChange = {
+                            surnameError = false
+                            surnameInput = it.filter { c -> c.isLetter() }
+                        },
+                        placeholder = {
+                            Text(
+                                stringResource(R.string.surname),
+                                fontStyle = FontStyle.Italic,
+                                maxLines = 1,
+                                modifier = Modifier.alpha(.5f)
+                            )
+                        },
+                        isError = surnameError,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp, bottom = 4.dp)
-                    ) {
-                        PtmFilledButton(
-                            onClick = {
-                                val name = nameInput
-                                if (Profile.checkName(name).also { nameError = it })
-                                    return@PtmFilledButton
-                                ProfileDatabase.getInstance(context)
-                                    .profileDao()
-                                    .updateProfile(profile.copy(name = name))
-                                coroutineScope?.launch {
-                                    snackbarHostState.currentSnackbarData?.dismiss()
-                                    snackbarHostState.showSnackbar(context.getString(R.string.profile_saved))
-                                }
-                            }
-                        ) {
-                            Text(stringResource(R.string.save))
-                        }
-                    }
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp)
-                    ) {
-                        PtmFilledButton(
-                            onClick = {
-                                profileDeleteRequest = profile
-                            }
-                        ) {
-                            Text(stringResource(R.string.delete_profile))
-                        }
-                    }
-                }
-
-                if (AppState.profileSession != null && AppState.adminSession) {
-                    SettingsOptionsDivider()
-                }
-
-                if (AppState.adminSession) {
+                            .padding(vertical = 8.dp)
+                            .padding(start = 16.dp)
+                    )
                     SettingsOption(
-                        label = stringResource(R.string.change_admin_password),
-                        icon = painterResource(R.drawable.ic_manage_accounts)
-                    ) { adminPasswordChangeRequest = true }
+                        label = stringResource(R.string.change_password),
+                        secondaryLabel = stringResource(R.string.change_password_description)
+                    ) { profilePasswordChangeRequest = profile }
                 }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp, bottom = 4.dp)
+                ) {
+                    PtmFilledButton(
+                        onClick = {
+                            val name = nameInput
+                            if (Profile.checkName(name).also { nameError = it })
+                                return@PtmFilledButton
+                            ProfileDatabase.getInstance(context)
+                                .profileDao()
+                                .updateProfile(profile.copy(name = name))
+                            coroutineScope?.launch {
+                                snackbarHostState.currentSnackbarData?.dismiss()
+                                snackbarHostState.showSnackbar(context.getString(R.string.profile_saved))
+                            }
+                        }
+                    ) {
+                        Text(stringResource(R.string.save))
+                    }
+                }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                ) {
+                    PtmFilledButton(
+                        onClick = {
+                            profileDeleteRequest = profile
+                        }
+                    ) {
+                        Text(stringResource(R.string.delete_profile))
+                    }
+                }
+            }
+
+            if (AppState.profileSession != null && AppState.adminSession) {
+                SettingsOptionsDivider()
+            }
+
+            if (AppState.adminSession) {
+                SettingsOption(
+                    label = stringResource(R.string.change_admin_password),
+                    icon = painterResource(R.drawable.ic_manage_accounts)
+                ) { adminPasswordChangeRequest = true }
             }
         }
     }
@@ -323,7 +321,7 @@ private fun DeleteProfileDialog(
 
 @Preview
 @Composable
-private fun EditProfileScreenPreview() = EditProfileScreen {}
+private fun EditProfileScreenPreview() = PtmTheme { EditProfileScreen {} }
 
 @Preview
 @Composable

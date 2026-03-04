@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,10 +16,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,20 +29,46 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
+import java.util.UUID
+
+@Composable
+fun PtmDialog(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Dialog(
+        onDismissRequest,
+        DialogProperties(
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Box(Modifier.padding(horizontal = 32.dp)) {
+            BorderedDialogContainer(
+                modifier = modifier,
+                content = content
+            )
+        }
+    }
+}
 
 @Composable
 fun ActionCancelDialog(
-    onAction: () -> Unit,
-    actionLabel: @Composable () -> Unit,
     onCancel: () -> Unit,
+    onAction: () -> Unit = {},
+    actionLabel: (@Composable () -> Unit)? = null,
     actionEnabled: Boolean = true,
     label: @Composable () -> Unit = {},
     onSecondaryAction: () -> Unit = {},
@@ -47,49 +76,61 @@ fun ActionCancelDialog(
     secondaryActionEnabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    Dialog(onCancel) {
-        BorderedDialogContainer {
-            Column(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 180.dp)
-                    .padding(16.dp)
+    PtmDialog(onCancel) {
+        Column(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 180.dp)
+                .padding(16.dp)
+        ) {
+            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                label()
+            }
+
+            Box(Modifier.padding(8.dp)) {
+                ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
+                    content()
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            FlowRow(
+                horizontalArrangement = Arrangement.End,
+                itemVerticalAlignment = Alignment.Bottom,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                    label()
-                }
-                Box(Modifier.padding(8.dp)) {
-                    ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
-                        content()
-                    }
-                }
-                FlowRow(
-                    horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+                actionLabel?.let {
                     PtmFilledButton(
                         enabled = actionEnabled,
-                        onClick = onAction,
-                        content = actionLabel
+                        onClick = {
+                            onCancel()
+                            onAction()
+                        },
+                        content = actionLabel,
+                        modifier = Modifier.padding(horizontal = 4.dp)
                     )
-                    secondaryActionLabel?.let {
-                        PtmFilledButton(
-                            enabled = secondaryActionEnabled,
-                            onClick = onSecondaryAction,
-                            content = secondaryActionLabel
-                        )
-                    }
-                    PtmFilledIconButton(
-                        onClick = onCancel,
-                        modifier = Modifier.padding(start = 8.dp),
-                    ) {
-                        Icon(
-                            Icons.Outlined.Close,
-                            contentDescription = stringResource(R.string.cancel)
-                        )
-                    }
+                }
+                secondaryActionLabel?.let {
+                    PtmFilledButton(
+                        enabled = secondaryActionEnabled,
+                        onClick = {
+                            onCancel()
+                            onSecondaryAction()
+                        },
+                        content = secondaryActionLabel,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
+                PtmFilledIconButton(
+                    onClick = onCancel,
+                ) {
+                    Icon(
+                        Icons.Outlined.Close,
+                        contentDescription = stringResource(R.string.cancel)
+                    )
                 }
             }
         }
@@ -102,7 +143,7 @@ fun DeleteDialog(
     onCancel: () -> Unit,
     label: @Composable () -> Unit,
     name: String,
-    details: String
+    details: String? = null
 ) = ActionCancelDialog(
     onAction = onDelete,
     onCancel = onCancel,
@@ -112,14 +153,20 @@ fun DeleteDialog(
     Column {
         Text(
             name,
-            style = MaterialTheme.typography.displaySmall
+            style = MaterialTheme.typography.displaySmall,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
         )
-        Text(
-            details,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .alpha(.5f)
-        )
+        details?.let {
+            Text(
+                details,
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 4.dp)
+                    .alpha(.5f),
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -129,7 +176,9 @@ data class DialogField(
     val supportingText: String? = null,
     val mutable: Boolean = true,
     val initValue: String? = null,
-    val keyboardType: KeyboardType = KeyboardType.Text
+    val keyboardType: KeyboardType = KeyboardType.Text,
+    val allowUnchecked: Boolean = true,
+    val nullable: Boolean = false
 )
 
 @Composable
@@ -142,17 +191,21 @@ fun EditFieldsDialog(
     secondaryActionLabel: (@Composable () -> Unit)? = null,
     onCancel: () -> Unit
 ) {
+    val fieldMap = fields.toMap()
     val valuesErrors: Map<Int, Pair<MutableState<String>, MutableState<Boolean>>> = remember {
         fields.associate { (k, field) ->
             k to (mutableStateOf(field.initValue ?: "") to mutableStateOf(false))
         }
     }
 
+    val focusRequester = remember { FocusRequester() }
+    var focusAttached = false
+
     ActionCancelDialog(
-        onAction = { onAction(valuesErrors.mapValues { (k, v) -> v.first.value }) },
+        onAction = { onAction(valuesErrors.mapValues { (_, v) -> v.first.value }) },
         actionLabel = actionLabel,
-        actionEnabled = valuesErrors.all { (k, v) -> !v.first.value.isBlank() && !v.second.value },
-        onSecondaryAction = { onSecondaryAction(valuesErrors.mapValues { (k, v) -> v.first.value }) },
+        actionEnabled = valuesErrors.all { (k, v) -> (fieldMap[k]!!.nullable || !v.first.value.isBlank()) && !v.second.value },
+        onSecondaryAction = { onSecondaryAction(valuesErrors.mapValues { (_, v) -> v.first.value }) },
         secondaryActionLabel = secondaryActionLabel,
         label = label,
         onCancel = onCancel
@@ -163,11 +216,13 @@ fun EditFieldsDialog(
                 if (field.mutable) {
                     var v by ve.first
                     var e by ve.second
-                    TextField(
+                    OutlinedTextField(
                         v,
                         onValueChange = { input: String ->
-                            v = input
-                            e = !field.checker(input)
+                            if (field.allowUnchecked || field.checker(input)) {
+                                v = input
+                                e = !field.checker(input)
+                            }
                         },
                         label = { Text(field.name) },
                         keyboardOptions = KeyboardOptions(
@@ -176,8 +231,13 @@ fun EditFieldsDialog(
                         ),
                         isError = e,
                         supportingText = { field.supportingText?.let { s -> if (e) Text(s) } },
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = if (!focusAttached && field.mutable) {
+                            focusAttached = true
+                            Modifier.focusRequester(focusRequester)
+                        } else Modifier
                     )
+                    LaunchedEffect(Unit) { focusRequester.requestFocus() }
                 } else {
                     val v by ve.first
                     Text(
@@ -200,8 +260,10 @@ fun EditFieldsDialog(
 private fun ActionCancelDialogPreview() = PtmTheme {
     ActionCancelDialog(
         {},
-        { Text("Принять") },
         {},
+        { Text("Принять") },
+        onSecondaryAction = {},
+        secondaryActionLabel = { Text("Удалить") },
         label = { Text("Label") }
     ) {
         Text(stringResource(R.string.lipsum), maxLines = 10)
@@ -217,7 +279,7 @@ private fun EditFieldsDialogPreview() = PtmTheme {
                 "Id",
                 { true },
                 mutable = false,
-                initValue = "ahg9hfg93bg49wergohvbu"
+                initValue = UUID.randomUUID().toString()
             )
         ),
         actionLabel = { Text(stringResource(R.string.save)) },
@@ -225,4 +287,10 @@ private fun EditFieldsDialogPreview() = PtmTheme {
         onAction = {},
         onCancel = {}
     )
+}
+
+@Preview
+@Composable
+private fun DeleteDialogPreview() = PtmTheme {
+    DeleteDialog({}, {}, { Text(stringResource(R.string.delete_object)) }, "САЦ-III", "Трубопровод")
 }

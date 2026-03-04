@@ -35,70 +35,68 @@ fun InitialScreen(
 ) {
     LocalContext.current
 
-    PtmTheme {
-        Scaffold(
-            topBar = { PtmTopBar(title = { Text(stringResource(R.string.app_name)) }) }
-        ) { innerPadding ->
+    Scaffold(
+        topBar = { PtmTopBar(title = { Text(stringResource(R.string.app_name)) }) }
+    ) { innerPadding ->
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             Column(
-                horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                modifier = Modifier.Companion
-                    .fillMaxSize()
-                    .padding(innerPadding)
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)
             ) {
-                Column(
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                    modifier = Modifier.Companion.weight(1f)
-                ) {
-                    SideArrowContainer(toRight = false) {
-                        Column(
-                            horizontalAlignment = Alignment.Companion.CenterHorizontally,
-                            modifier = Modifier.Companion.padding(24.dp)
-                        ) {
-                            Text(
-                                stringResource(R.string.developer_name),
-                                style = MaterialTheme.typography.headlineSmall,
-                                textAlign = TextAlign.Companion.Center,
-                                modifier = Modifier.Companion
-                                    .fillMaxWidth(.8f)
-                            )
-                            Image(
-                                painterResource(R.drawable.logo_ptm),
-                                contentDescription = stringResource(R.string.developer_name),
-                                modifier = Modifier.Companion
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 16.dp)
-                                    .height(200.dp)
-                            )
-                        }
-                    }
-                    PtmFilledButton(
-                        onClick = onAuthorize
+                SideArrowContainer(toRight = false) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(24.dp)
                     ) {
                         Text(
-                            stringResource(R.string.authorize),
-                            fontSize = 18.sp,
-                            modifier = Modifier.Companion.padding(6.dp)
+                            stringResource(R.string.developer_name),
+                            style = MaterialTheme.typography.headlineSmall,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth(.8f)
+                        )
+                        Image(
+                            painterResource(R.drawable.logo_ptm),
+                            contentDescription = stringResource(R.string.developer_name),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 16.dp)
+                                .height(200.dp)
                         )
                     }
                 }
-                Text(
-                    "${stringResource(R.string.version)}: ${
-                        AppState.packageInfo?.versionName ?: stringResource(
-                            R.string.unknown
-                        )
-                    }",
-                    fontWeight = FontWeight.Companion.SemiBold,
-                    modifier = Modifier.Companion
-                        .padding(8.dp)
-                        .alpha(.5f)
-                )
+                PtmFilledButton(
+                    onClick = onAuthorize
+                ) {
+                    Text(
+                        stringResource(R.string.authorize),
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(6.dp)
+                    )
+                }
             }
+            Text(
+                "${stringResource(R.string.version)}: ${
+                    AppState.packageInfo?.versionName ?: stringResource(
+                        R.string.unknown
+                    )
+                }",
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .alpha(.5f)
+            )
         }
     }
 }
 
 @Preview
 @Composable
-private fun InitScreenPreview() = InitialScreen {}
+private fun InitScreenPreview() = PtmTheme { InitialScreen {} }
