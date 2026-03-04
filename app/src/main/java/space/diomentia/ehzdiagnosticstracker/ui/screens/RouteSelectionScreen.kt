@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -24,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +40,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.text.isDigitsOnly
@@ -53,6 +58,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.DialogField
 import space.diomentia.ehzdiagnosticstracker.ui.EditFieldsDialog
 import space.diomentia.ehzdiagnosticstracker.ui.FullscreenLazyColumn
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
+import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
@@ -65,6 +71,8 @@ fun RouteSelectionScreen(
     onSectionChosen: (Route, Section) -> Unit,
     onHistory: (routeId: String?, sectionId: String?) -> Unit
 ) {
+    val reportDao = ReportDatabase.getInstance().reportDao()
+
     var selectedRoute: Route? by remember { mutableStateOf(null) }
 
     // Admin CRUD state
@@ -110,18 +118,16 @@ fun RouteSelectionScreen(
     }
 
     sectionActionTarget?.let { section ->
-        // TODO: edit diagnostics instead of begin where draft exists
-        ActionCancelDialog(
-            onAction = { selectedRoute?.let { route -> onSectionChosen(route, section) } },
-            actionLabel = { Text(stringResource(R.string.start_diagnostics)) },
-            onCancel = { sectionActionTarget = null },
-            onSecondaryAction = {
+        SectionActionDialog(
+            onDiagnostics = { selectedRoute?.let { route -> onSectionChosen(route, section) } },
+            onHistory = {
                 sectionActionTarget = null
                 onHistory(null, section.id)
             },
-            secondaryActionLabel = { Text(stringResource(R.string.report_list)) },
-            label = { Text("${stringResource(R.string.area)} ${section.displayName()}") }
-        ) { }
+            sectionName = section.displayName(),
+            activeReportExists = reportDao.getActiveReportForSectionOnce(section.id) != null,
+            onCancel = { sectionActionTarget = null }
+        )
     }
 
     Scaffold(
@@ -221,6 +227,107 @@ fun RouteSelectionScreen(
                         onClick = { createRouteRequest = true }
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionActionDialog(
+    onDiagnostics: () -> Unit,
+    onHistory: () -> Unit,
+    sectionName: String,
+    activeReportExists: Boolean,
+    onCancel: () -> Unit
+) {
+    ActionCancelDialog(
+        onCancel = onCancel,
+        label = { Text("${stringResource(R.string.area)} ${sectionName}") }
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min)
+        ) {
+            val historyInteractionSource = remember { MutableInteractionSource() }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clickable(
+                        onClick = {
+                            onHistory()
+                            onCancel()
+                        },
+                        interactionSource = historyInteractionSource,
+                        indication = null
+                    )
+                    .weight(1f)
+            ) {
+                PtmOutlinedButton(
+                    modifier = Modifier
+                        .indication(historyInteractionSource, ripple())
+                        .padding(8.dp)
+                        .size(72.dp)
+                ) {
+                    Icon(
+                        painterResource(R.drawable.ic_history),
+                        contentDescription = stringResource(R.string.report_list),
+                        modifier = Modifier
+                            .fillMaxSize()
+                    )
+                }
+                Text(
+                    stringResource(R.string.report_list),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            val diagnosticsInteractionSource = remember { MutableInteractionSource() }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clickable(
+                        onClick = {
+                            onDiagnostics()
+                            onCancel()
+                        },
+                        interactionSource = diagnosticsInteractionSource,
+                        indication = null
+                    )
+                    .weight(1f)
+            ) {
+                PtmOutlinedButton(
+                    modifier = Modifier
+                        .indication(diagnosticsInteractionSource, ripple())
+                        .padding(8.dp)
+                        .size(72.dp)
+                ) {
+                    Icon(
+                        painterResource(
+                            if (activeReportExists)
+                                R.drawable.ic_edit_square
+                            else R.drawable.ic_add_box
+                        ),
+                        contentDescription = stringResource(
+                            if (activeReportExists)
+                                R.string.continue_diagnostics
+                            else R.string.start_diagnostics
+                        ),
+                        modifier = Modifier
+                            .fillMaxSize()
+                    )
+                }
+                Text(
+                    stringResource(
+                        if (activeReportExists)
+                            R.string.continue_diagnostics
+                        else R.string.start_diagnostics
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -555,24 +662,6 @@ private fun RouteSelectionScreenPreview() = PtmTheme {
 
 @Preview
 @Composable
-private fun AddRouteDialogPreview() = PtmTheme {
-    RouteDialog(null) {}
-}
-
-@Preview
-@Composable
-private fun EditRouteDialogPreview() = PtmTheme {
-    RouteDialog(Route(UUID.randomUUID().toString(), "Test", 42), {}, {})
-}
-
-@Preview
-@Composable
-private fun AddSectionDialogPreview() = PtmTheme {
-    SectionDialog("", null) {}
-}
-
-@Preview
-@Composable
-private fun DeleteRouteDialogPreview() = PtmTheme {
-    DeleteRouteDialog(Route(UUID.randomUUID().toString(), "Test", 42)) {}
+private fun SectionActionDialogPreview() = PtmTheme {
+    SectionActionDialog({}, {}, "10-40 км", false, {})
 }

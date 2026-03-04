@@ -66,9 +66,9 @@ fun PtmDialog(
 
 @Composable
 fun ActionCancelDialog(
-    onAction: () -> Unit,
-    actionLabel: @Composable () -> Unit,
     onCancel: () -> Unit,
+    onAction: () -> Unit = {},
+    actionLabel: (@Composable () -> Unit)? = null,
     actionEnabled: Boolean = true,
     label: @Composable () -> Unit = {},
     onSecondaryAction: () -> Unit = {},
@@ -102,15 +102,17 @@ fun ActionCancelDialog(
                 itemVerticalAlignment = Alignment.Bottom,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                PtmFilledButton(
-                    enabled = actionEnabled,
-                    onClick = {
-                        onCancel()
-                        onAction()
-                    },
-                    content = actionLabel,
-                    modifier = Modifier.padding(horizontal = 4.dp)
-                )
+                actionLabel?.let {
+                    PtmFilledButton(
+                        enabled = actionEnabled,
+                        onClick = {
+                            onCancel()
+                            onAction()
+                        },
+                        content = actionLabel,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                }
                 secondaryActionLabel?.let {
                     PtmFilledButton(
                         enabled = secondaryActionEnabled,
@@ -258,8 +260,8 @@ fun EditFieldsDialog(
 private fun ActionCancelDialogPreview() = PtmTheme {
     ActionCancelDialog(
         {},
-        { Text("Принять") },
         {},
+        { Text("Принять") },
         onSecondaryAction = {},
         secondaryActionLabel = { Text("Удалить") },
         label = { Text("Label") }
