@@ -330,23 +330,7 @@ private fun SitePreviewContent(
                 )
                 when (fieldType) {
                     FieldType.Text, FieldType.Bool, FieldType.Integer, FieldType.Decimal, FieldType.Raw -> {
-                        var displayValue = when (fieldType) {
-                            FieldType.Raw, FieldType.Text -> value
-                            FieldType.Integer -> value
-                            FieldType.Decimal -> DecimalFormat("#.##").format(value)
-                            FieldType.Bool -> when (ReportFieldValue.Bool.fromString(value)) {
-                                true -> stringResource(R.string.is_true)
-                                false -> stringResource(R.string.is_false)
-                                else -> stringResource(R.string.unknown)
-                            }
-
-                            FieldType.Photo -> ""
-                        }
-                        if (displayValue.isBlank()) {
-                            displayValue = "\u2014"
-                        } else {
-                            displayValue += (field.unit?.let { " $it" } ?: "")
-                        }
+                        var displayValue = displayValue(field)
                         Text(
                             displayValue,
                             style = MaterialTheme.typography.bodyMedium,
@@ -385,6 +369,23 @@ private fun SitePreviewContent(
         Text(stringResource(R.string.edit))
     }
 }
+
+@Composable
+private fun displayValue(field: ReportField, fieldValue: String = field.value): String =
+    if (fieldValue.isBlank())
+        "\u2014"
+    else when (FieldType.parse(field.type)) {
+        null, FieldType.Raw, FieldType.Text -> fieldValue
+        FieldType.Integer -> fieldValue
+        FieldType.Decimal -> DecimalFormat("#.##").format(fieldValue)
+        FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
+            true -> stringResource(R.string.is_true)
+            false -> stringResource(R.string.is_false)
+            else -> stringResource(R.string.unknown)
+        }
+
+        FieldType.Photo -> stringResource(R.string.image)
+    } + (field.unit?.let { " $it" } ?: "")
 
 // --- Edit Mode ---
 @Composable
@@ -481,7 +482,7 @@ private fun SiteEditContent(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(bottom = 8.dp)
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     if (!manageFields) {
@@ -490,9 +491,7 @@ private fun SiteEditContent(
                             fieldType = fieldType,
                             value = editState.fieldValues[field.specId] ?: "",
                             onValueChange = { editState.fieldValues[field.specId] = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
+                            modifier = Modifier.fillMaxWidth()
                         )
                     } else {
                         Text(
@@ -533,7 +532,7 @@ private fun SiteEditContent(
         }
     }
 
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(16.dp))
 
     // Save button
     if (!manageFields) {
@@ -761,7 +760,7 @@ private fun BoolToggle(
         },
         shape = RectangleShape,
         modifier = Modifier
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
             .border(BorderStroke(6.dp, MaterialTheme.colorScheme.primary))
     ) {
         Icon(
@@ -903,7 +902,9 @@ private fun PhotoField(
                     { -> photoLauncher.launch(picUri) }
                 else
                     { -> cameraPermission = context.checkCameraPermissions() },
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .weight(1f, fill = true)
+                    .fillMaxHeight()
             ) {
                 val label = stringResource(
                     if (pic == null) R.string.make_photo else R.string.change_photo
@@ -920,7 +921,7 @@ private fun PhotoField(
                 else Color.Gray,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(start = 16.dp)
+                    .padding(start = 8.dp)
             ) {
                 Icon(
                     if (value.isNotBlank()) Icons.Outlined.Check

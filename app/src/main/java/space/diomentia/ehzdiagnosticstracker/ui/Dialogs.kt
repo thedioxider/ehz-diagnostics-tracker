@@ -34,6 +34,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -140,7 +141,7 @@ fun DeleteDialog(
     onCancel: () -> Unit,
     label: @Composable () -> Unit,
     name: String,
-    details: String
+    details: String? = null
 ) = ActionCancelDialog(
     onAction = onDelete,
     onCancel = onCancel,
@@ -150,14 +151,20 @@ fun DeleteDialog(
     Column {
         Text(
             name,
-            style = MaterialTheme.typography.displaySmall
+            style = MaterialTheme.typography.displaySmall,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis
         )
-        Text(
-            details,
-            modifier = Modifier
-                .padding(start = 16.dp)
-                .alpha(.5f)
-        )
+        details?.let {
+            Text(
+                details,
+                modifier = Modifier
+                    .padding(start = 16.dp, top = 4.dp)
+                    .alpha(.5f),
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -278,4 +285,10 @@ private fun EditFieldsDialogPreview() = PtmTheme {
         onAction = {},
         onCancel = {}
     )
+}
+
+@Preview
+@Composable
+private fun DeleteDialogPreview() = PtmTheme {
+    DeleteDialog({}, {}, { Text(stringResource(R.string.delete_object)) }, "САЦ-III", "Трубопровод")
 }
