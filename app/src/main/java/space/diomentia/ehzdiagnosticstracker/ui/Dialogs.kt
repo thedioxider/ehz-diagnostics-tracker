@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -85,13 +87,18 @@ fun ActionCancelDialog(
             ProvideTextStyle(MaterialTheme.typography.titleMedium) {
                 label()
             }
+
             Box(Modifier.padding(8.dp)) {
                 ProvideTextStyle(MaterialTheme.typography.bodyMedium) {
                     content()
                 }
             }
+
+            Spacer(Modifier.height(16.dp))
+
             FlowRow(
                 horizontalArrangement = Arrangement.End,
+                itemVerticalAlignment = Alignment.Bottom,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 PtmFilledButton(
@@ -247,7 +254,7 @@ private fun ActionCancelDialogPreview() = PtmTheme {
         { Text("Принять") },
         {},
         onSecondaryAction = {},
-        secondaryActionLabel = { Text("Отклонить") },
+        secondaryActionLabel = { Text("Удалить") },
         label = { Text("Label") }
     ) {
         Text(stringResource(R.string.lipsum), maxLines = 10)

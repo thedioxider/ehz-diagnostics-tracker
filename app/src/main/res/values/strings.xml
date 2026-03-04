@@ -186,4 +186,7 @@
     <string name="section_deleted">Участок удалён</string>
     <string name="delete_photo">Удалить фото?</string>
     <string name="commit_report_unsaved_draft_message">Несохранённый черновик будет удалён после сохранения отчёта.\nХотите сохранить черновик или удалить его?</string>
+    <string name="site_draft_not_saved">Черновик не сохранён</string>
+    <string name="site_draft_not_saved_dialog">Для продолжения сохраните или удалите текущий черновик.</string>
+    <string name="site_draft_cannot_be_saved">Черновик не может быть сохранён: укажите позицию на объекте</string>
 </resources>

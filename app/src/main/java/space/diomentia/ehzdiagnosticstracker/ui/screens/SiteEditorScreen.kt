@@ -106,6 +106,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.TemplateChooserDialog
+import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -122,6 +123,7 @@ fun SiteEditorScreen(
     val snackbarHostState = LocalSnackbarHostState.current
     val reportDao = ReportDatabase.getInstance().reportDao()
     val sessionManager = LocalSessionManager.current
+    rememberSnacker()
 
     var editMode by remember { mutableStateOf(initialEditMode) }
     val currentSite = remember(siteId, editMode) { sessionManager.getSite(siteId) }
@@ -140,6 +142,37 @@ fun SiteEditorScreen(
 
     val editState = rememberSiteEditState(currentSite)
 
+    var showExitDialog by remember { mutableStateOf(false) }
+    if (showExitDialog) {
+        ActionCancelDialog(
+            label = { Text(stringResource(R.string.site_draft_not_saved)) },
+            actionLabel = { Text(stringResource(R.string.save)) },
+            onAction = {
+                onBack()
+                editState.saveAndConfirm()
+            },
+            actionEnabled = editState.canSave,
+            secondaryActionLabel = { Text(stringResource(R.string.delete)) },
+            onSecondaryAction = {
+                onBack()
+                sessionManager.removeSite(siteId)
+            },
+            onCancel = { showExitDialog = false }
+        ) {
+            Column {
+                Text(stringResource(R.string.site_draft_not_saved_dialog))
+
+                if (!editState.canSave) {
+                    Text(
+                        stringResource(R.string.site_draft_cannot_be_saved),
+                        fontStyle = FontStyle.Italic,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             PtmTopBar(title = {
@@ -152,7 +185,7 @@ fun SiteEditorScreen(
                     ActionButton(
                         icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
                         label = stringResource(R.string.back)
-                    ) { onBack() }
+                    ) { if (editMode) showExitDialog = true else onBack() }
                 }
             )
         },
@@ -343,11 +376,11 @@ private fun SiteEditContent(
         editState.location = loc
         if (editState.positionKmText.isBlank()) {
             editState.positionKmText = (
-                previousSite?.run {
-                    if (location != null && positionKm != null) {
-                        positionKm + location.distanceKmTo(loc)
-                    } else null
-                }
+                    previousSite?.run {
+                        if (location != null && positionKm != null) {
+                            positionKm + location.distanceKmTo(loc)
+                        } else null
+                    }
                     )?.let { DecimalFormat("#.##").format(it) } ?: ""
         }
     }
