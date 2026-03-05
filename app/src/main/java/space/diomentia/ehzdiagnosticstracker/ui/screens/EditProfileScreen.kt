@@ -216,11 +216,14 @@ fun EditProfileScreen(
                     PtmFilledButton(
                         onClick = {
                             val name = nameInput
-                            if (Profile.checkName(name).also { nameError = it })
+                            val surname = surnameInput
+                            if (!Profile.checkName(name).also { nameError = !it } ||
+                                !Profile.checkSurname(surname).also { surnameError = !it }
+                            )
                                 return@PtmFilledButton
                             ProfileDatabase.getInstance(context)
                                 .profileDao()
-                                .updateProfile(profile.copy(name = name))
+                                .updateProfile(profile.copy(name = name, surname = surname))
                             coroutineScope?.launch {
                                 snackbarHostState.currentSnackbarData?.dismiss()
                                 snackbarHostState.showSnackbar(context.getString(R.string.profile_saved))
