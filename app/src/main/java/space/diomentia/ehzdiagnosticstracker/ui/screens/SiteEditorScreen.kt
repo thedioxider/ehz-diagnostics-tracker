@@ -47,6 +47,7 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -124,13 +125,15 @@ fun SiteEditorScreen(
 ) {
     val snackbarHostState = LocalSnackbarHostState.current
     val reportDao = ReportDatabase.getInstance().reportDao()
-    val sessionManager = LocalSessionManager.current
     rememberSnacker()
 
     // TODO: maybe just set draft mark when a site is edited?
     var editMode by remember { mutableStateOf(initialEditMode) }
-    val currentSite = remember(siteId, editMode) { sessionManager.getSite(siteId) }
-    if (currentSite == null) return
+    val currentSite = remember(siteId, editMode) { reportDao.getSiteByIdOnce(siteId) }
+    if (currentSite == null) {
+        onBack()
+        return
+    }
 
     val reportSites = remember(currentSite) {
         currentSite.reportId.let { reportDao.getSitesForReportOnce(it) }
@@ -138,13 +141,11 @@ fun SiteEditorScreen(
     }
     val previousSite = reportSites.lastOrNull()
 
-    val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
-    val siteWithFields = remember(fullReport, siteId) {
-        fullReport?.sites?.find { it.info.id == siteId }
-    }
+    val siteWithFields by reportDao.getSiteWithFields(siteId).collectAsStateWithLifecycle(null)
 
     val editState = rememberSiteEditState(currentSite)
     var manageFields by remember { mutableStateOf(true) }
+    val editLocation = rememberSaveable(siteId) { editState.isDraft || editState.location == null }
 
     var showExitDialog by remember { mutableStateOf(false) }
     if (showExitDialog) {
@@ -176,7 +177,7 @@ fun SiteEditorScreen(
             onSecondaryAction = {
                 onBack()
                 if (currentSite.isDraft) {
-                    sessionManager.removeSite(siteId)
+                    reportDao.deleteSiteById(siteId)
                 }
             },
             onCancel = { showExitDialog = false }
@@ -241,13 +242,14 @@ fun SiteEditorScreen(
 
             if (editMode) {
                 SiteEditContent(
-                    editState,
-                    previousSite,
-                    manageFields,
+                    editState = editState,
+                    previousSite = previousSite,
+                    manageFields = manageFields,
+                    editLocation = editLocation,
                     onToggleManageFields = { manageFields = it }
                 ) { editMode = false }
-            } else if (siteWithFields != null) {
-                SitePreviewContent(siteWithFields) { editMode = true }
+            } else siteWithFields?.let { swf ->
+                SitePreviewContent(swf) { editMode = true }
             }
 
             Spacer(Modifier.height(32.dp))
@@ -398,6 +400,7 @@ private fun SiteEditContent(
     editState: SiteEditState,
     previousSite: Site?,
     manageFields: Boolean,
+    editLocation: Boolean,
     onToggleManageFields: (Boolean) -> Unit,
     onSave: () -> Unit
 ) {
@@ -421,7 +424,10 @@ private fun SiteEditContent(
         style = MaterialTheme.typography.titleSmall,
         modifier = Modifier.padding(bottom = 4.dp)
     )
-    LocationField(location = editState.location) {
+    LocationField(
+        location = editState.location,
+        modifiable = editLocation
+    ) {
         val loc = Coordinates(lat = it.latitude, lng = it.longitude)
         editState.location = loc
         if (editState.positionKmText.isBlank()) {
@@ -966,6 +972,8 @@ private class SiteEditState(
     private val sessionManager: SessionManager,
     scope: CoroutineScope
 ) {
+
+    val isDraft = site.isDraft
     val siteId = site.id
 
     var location by mutableStateOf(site.location)
@@ -1110,7 +1118,7 @@ private fun SiteEditModePreview() {
     CompositionLocalProvider(LocalSessionManager provides sessionManager) {
         PtmTheme {
             Column(Modifier.padding(16.dp)) {
-                SiteEditContent(editState, null, false, {}) {}
+                SiteEditContent(editState, null, false, true, {}) {}
             }
         }
     }

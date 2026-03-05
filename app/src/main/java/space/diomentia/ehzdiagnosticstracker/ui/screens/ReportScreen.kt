@@ -36,9 +36,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FullReport
-import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.Report
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportField
 import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.Section
@@ -62,14 +62,14 @@ fun ReportScreen(
     onSiteClicked: (siteId: String, locationOnly: Boolean) -> Unit,
     onBack: () -> Unit
 ) {
-    val sessionManager = LocalSessionManager.current
+    val reportDao = ReportDatabase.getInstance().reportDao()
 
-    val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
+    val fullReport by reportDao.getFullReport(reportId).collectAsStateWithLifecycle(null)
 
     ReportScreenContent(
         fullReport = fullReport,
         onSiteClicked = onSiteClicked,
-        onDeleteSite = { siteId -> sessionManager.removeSite(siteId) },
+        onDeleteSite = { siteId -> reportDao.deleteSiteById(siteId) },
         onBack = onBack
     )
 }

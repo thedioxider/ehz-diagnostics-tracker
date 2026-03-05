@@ -74,7 +74,7 @@ fun SessionHubScreen(
 ) {
     val sessionManager = LocalSessionManager.current
     val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
-    val reportId = sessionManager.activeReportId
+    val reportId = sessionManager.activeReportId ?: error("no active report for hub")
 
     SessionHubContent(
         fullReport = fullReport,
@@ -83,7 +83,7 @@ fun SessionHubScreen(
         onEditDraftSite = onEditDraftSite,
         onSaveDraft = { siteId -> sessionManager.confirmSite(siteId) },
         onDeleteDraft = { siteId -> sessionManager.removeSite(siteId) },
-        onViewReport = { reportId?.let { onViewReport(it) } },
+        onViewReport = { onViewReport(reportId) },
         onCompleteSession = {
             sessionManager.completeReport()
             onSessionCompleted()

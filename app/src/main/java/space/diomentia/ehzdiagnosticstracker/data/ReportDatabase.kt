@@ -316,6 +316,10 @@ interface ReportDao {
     @Query("SELECT * FROM reports WHERE id = :id")
     fun getReportByIdOnce(id: String): Report?
 
+    @Transaction
+    @Query("SELECT * FROM sites WHERE id = :id")
+    fun getSiteWithFields(id: String): Flow<SiteWithFields?>
+
     @Query("SELECT * FROM sites WHERE id = :id")
     fun getSiteByIdOnce(id: String): Site?
 
@@ -355,6 +359,9 @@ interface ReportDao {
 
     @Delete
     fun deleteSite(site: Site)
+
+    @Query("DELETE FROM sites WHERE id = :siteId")
+    fun deleteSiteById(siteId: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertField(field: ReportField)

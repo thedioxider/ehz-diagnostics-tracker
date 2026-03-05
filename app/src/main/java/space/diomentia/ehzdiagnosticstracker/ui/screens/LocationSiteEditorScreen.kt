@@ -124,7 +124,7 @@ fun LocationSiteEditorScreen(
             )
             LocationField(
                 location = editState.location,
-                modifiable = existingSite == null
+                modifiable = remember { existingSite == null }
             ) {
                 val loc = Coordinates(lat = it.latitude, lng = it.longitude)
                 editState.location = loc
