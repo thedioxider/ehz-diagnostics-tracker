@@ -34,10 +34,10 @@ android {
 
     defaultConfig {
         applicationId = "space.diomentia.ehzdiagnosticstracker"
-        minSdk = 26
+        minSdk = 23
         targetSdk = 35
-        versionCode = 14
-        versionName = "2.0.0"
+        versionCode = 15
+        versionName = "2.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
