@@ -73,22 +73,26 @@ fun PtmOutlinedButton(
     }
 }
 
-@Composable
-fun PtmFilledButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colors = ButtonColors(
+val PtmFilledButtonColors
+    @Composable
+    get() = ButtonColors(
         containerColor = MaterialTheme.colorScheme.primary,
         disabledContainerColor = blue_oxford,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         disabledContentColor = MaterialTheme.colorScheme.onPrimary
     )
+
+@Composable
+fun PtmFilledButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: ButtonColors = PtmFilledButtonColors,
+    content: @Composable () -> Unit
+) {
     FilledTonalButton(
         onClick,
-        modifier = modifier,
+        modifier = Modifier.then(modifier),
         enabled = enabled,
         shape = RectangleShape,
         colors = colors
@@ -97,22 +101,26 @@ fun PtmFilledButton(
     }
 }
 
-@Composable
-fun PtmFilledIconButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    content: @Composable () -> Unit
-) {
-    val colors = IconButtonColors(
+val PtmFilledIconButtonColors
+    @Composable
+    get() = IconButtonColors(
         containerColor = MaterialTheme.colorScheme.primary,
         disabledContainerColor = blue_oxford,
         contentColor = MaterialTheme.colorScheme.onPrimary,
         disabledContentColor = MaterialTheme.colorScheme.onPrimary
     )
+
+@Composable
+fun PtmFilledIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: IconButtonColors = PtmFilledIconButtonColors,
+    content: @Composable () -> Unit
+) {
     FilledTonalIconButton(
         onClick,
-        modifier = modifier,
+        modifier = Modifier.then(modifier),
         enabled = enabled,
         shape = RectangleShape,
         colors = colors

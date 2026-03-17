@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 private val PtmColorScheme = darkColorScheme(
     primary = blue_aquamarine,
     onPrimary = blue_zodiac,
-    secondary = green_haze,
+    secondary = blue_robins_egg,
     onSecondary = white,
     tertiary = blue_cerulean,
     onTertiary = blue_zodiac,

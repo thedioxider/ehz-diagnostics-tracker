@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,13 +10,23 @@ plugins {
     alias(libs.plugins.androidx.room)
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+val localProps = Properties().apply {
+    rootProject.file("local.properties").inputStream().use { load(it) }
+}
+
 android {
     signingConfigs {
         create("release") {
-            storeFile = file("/home/dio/Android/Keystore/diomentia.jks")
-            storePassword = "5wdm8t7s"
-            keyAlias = "diomentia"
-            keyPassword = "5wdm8t7s"
+            storeFile = file(localProps["RELEASE_STORE_FILE"] as String)
+            storePassword = localProps["RELEASE_STORE_PASSWORD"] as String
+            keyAlias = localProps["RELEASE_KEY_ALIAS"] as String
+            keyPassword = localProps["RELEASE_KEY_PASSWORD"] as String
         }
     }
     namespace = "space.diomentia.ehzdiagnosticstracker"
@@ -25,14 +36,10 @@ android {
         applicationId = "space.diomentia.ehzdiagnosticstracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "1.0.1"
+        versionCode = 14
+        versionName = "2.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    room {
-        schemaDirectory("$projectDir/schemas")
     }
 
     buildTypes {
@@ -56,12 +63,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_11
     }
 }
 
@@ -92,4 +93,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }

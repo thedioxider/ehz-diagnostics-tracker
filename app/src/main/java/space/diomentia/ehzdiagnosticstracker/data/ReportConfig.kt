@@ -22,7 +22,7 @@ sealed class ReportFieldValue {
 }
 
 @Serializable
-enum class ParameterType {
+enum class FieldType {
     @SerialName("text")
     Text,
     @SerialName("bool")
@@ -40,34 +40,43 @@ enum class ParameterType {
         get() = this.name.lowercase()
 
     companion object {
-        fun parse(s: String): ParameterType? =
+        fun parse(s: String): FieldType? =
             entries.find { it.name.equals(s, ignoreCase = true) }
     }
 }
 
 @Serializable
-data class ReportParameter(
+data class FieldSpec(
     @SerialName("id") val id: String,
     @SerialName("name") val name: String,
-    @SerialName("type") val type: ParameterType,
+    @SerialName("type") val type: FieldType,
     @SerialName("unit") val unit: String? = null
 )
 
 @Serializable
-data class ReportType(
+data class ReportTemplate(
     @SerialName("id") val id: String,
     @SerialName("name") val name: String,
-    @SerialName("parameters") val parameters: List<ReportParameter>?
+    @SerialName("spec_ids") val specIds: List<String>
 )
 
 @Serializable
 data class ReportConfig(
-    @SerialName("report_types") val reportTypes: List<ReportType>
-)
+    @SerialName("field_specs") val fieldSpecs: List<FieldSpec>,
+    @SerialName("default_specs") val defaultSpecs: List<String> = emptyList(),
+    @SerialName("templates") val templates: List<ReportTemplate> = emptyList()
+) {
+    /** Lookup a field spec by its ID */
+    fun getSpec(id: String): FieldSpec? = fieldSpecs.find { it.id == id }
 
+    /** Resolve a template's spec IDs to full FieldSpec objects */
+    fun resolveTemplate(template: ReportTemplate): List<FieldSpec> =
+        template.specIds?.mapNotNull { getSpec(it) } ?: emptyList()
+}
+
+// TODO: only for demo
 @Serializable
 data class InitialAreaEntries(
-    @SerialName("diagnostic_objects") val diagnosticObjects: List<DiagnosticObject>,
-    @SerialName("diagnostic_areas") val diagnosticAreas: List<DiagnosticArea>,
-    @SerialName("diagnostic_points") val diagnosticPoints: List<DiagnosticPoint>
+    @SerialName("diagnostic_objects") val routes: List<Route>,
+    @SerialName("diagnostic_areas") val sections: List<Section>
 )

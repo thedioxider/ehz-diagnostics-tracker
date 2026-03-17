@@ -26,7 +26,7 @@ import java.time.LocalDate
 
 @Stable
 object AppState {
-    val DUE_DATE: LocalDate = LocalDate.of(2026, 3, 15)
+    val DUE_DATE: LocalDate = LocalDate.of(2026, 4, 15)
 
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
 
@@ -48,20 +48,15 @@ object AppState {
                 resources?.openRawResource(R.raw.initial_area_entries)?.readBytes() ?: ByteArray(0)
             )
         )
-        initialAreaEntries.diagnosticObjects.forEach {
+        initialAreaEntries.routes.forEach {
             reportDb
-                .diagnosticAreaDao()
-                .insertDiagnosticObject(it)
+                .routeDao()
+                .insertRoute(it)
         }
-        initialAreaEntries.diagnosticAreas.forEach {
+        initialAreaEntries.sections.forEach {
             reportDb
-                .diagnosticAreaDao()
-                .insertDiagnosticArea(it)
-        }
-        initialAreaEntries.diagnosticPoints.forEach {
-            reportDb
-                .diagnosticAreaDao()
-                .insertDiagnosticPoint(it)
+                .routeDao()
+                .insertSection(it)
         }
     }
 

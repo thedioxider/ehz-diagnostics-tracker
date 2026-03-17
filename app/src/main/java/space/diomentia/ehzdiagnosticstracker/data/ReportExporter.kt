@@ -1,156 +1,190 @@
 package space.diomentia.ehzdiagnosticstracker.data
 
 import android.content.ContentResolver
+import android.content.Context
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+
+@Serializable
+private data class ExportedReport(
+    val version: Int = 2,
+    val id: String,
+    val inspector: String,
+    val route: ExportedRoute,
+    val section: ExportedSection,
+    val start_time: Long,
+    val end_time: Long,
+    val sites: List<ExportedSite>
+) {
+    companion object {
+        fun fromFullReport(it: FullReport) = ExportedReport(
+            id = it.info.id,
+            route = ExportedRoute.fromRoute(it.route),
+            section = ExportedSection.fromSection(it.section),
+            inspector = it.info.inspectorName,
+            start_time = it.info.startTime,
+            end_time = it.info.endTime
+                ?: throw IllegalArgumentException("Unfinished report with no end time provided"),
+            sites = it.sites.map { site -> ExportedSite.fromSiteWithFields(site) }
+        )
+    }
+}
+
+@Serializable
+private data class ExportedRoute(
+    val id: String,
+    val name: String,
+    val length_km: Int? = null
+) {
+    companion object {
+        fun fromRoute(it: Route) = ExportedRoute(it.id, it.name, it.lengthKm)
+    }
+}
+
+@Serializable
+private data class ExportedSection(
+    val id: String,
+    val begin_km: Int,
+    val end_km: Int
+) {
+    companion object {
+        fun fromSection(it: Section) = ExportedSection(it.id, it.beginKm, it.endKm)
+    }
+}
+
+@Serializable
+private data class ExportedSite(
+    val id: String,
+    val timestamp: Long,
+    val position_km: Double? = null,
+    val location: Coordinates? = null,
+    val validation_id: String? = null,
+    val fields: List<ExportedField>?
+) {
+    companion object {
+        fun fromSiteWithFields(it: SiteWithFields) = ExportedSite(
+            id = it.info.id,
+            position_km = it.info.positionKm,
+            location = it.info.location,
+            timestamp = it.info.timestamp,
+            validation_id = it.info.validationId,
+            fields = if (!it.info.locationOnly)
+                it.fields.map { field -> ExportedField.fromReportField(field) }
+            else null
+        )
+    }
+}
+
+@Serializable
+private data class ExportedField(
+    val spec_id: String,
+    val name: String,
+    val type: String,
+    val value: String,
+    val unit: String? = null
+) {
+    companion object {
+        fun fromReportField(it: ReportField) = ExportedField(
+            spec_id = it.specId,
+            name = it.name,
+            type = it.type,
+            value = it.value,
+            unit = it.unit
+        )
+    }
+}
+
 
 class ReportExporter(
-    val reportId: Long,
-    private val db: ReportDatabase,
-    val reportConfig: ReportConfig? = null
+    val context: Context,
+    val reportIds: List<String>
 ) {
-    private val report = db.diagnosticReportDao().getReportByIdOnce(reportId)
+    private val dao = ReportDatabase.getInstance(context).reportDao()
 
-    @Serializable
-    data class ExportReport(
-        @SerialName("timestamp") val timestamp: Long,
-        @SerialName("diagnostic_object") val diagnosticObject: ExportDiagnosticObject,
-        @SerialName("diagnostic_area") val diagnosticArea: ExportDiagnosticArea,
-        @SerialName("diagnostic_point") val diagnosticPoint: ExportDiagnosticPoint,
-        @SerialName("diagnostics_type") val diagnosticsType: String,
-        @SerialName("report_type") val reportType: String,
-        @SerialName("location") val location: Coordinates,
-        @SerialName("inspector") val inspector: String,
-        @SerialName("validation") val validation: String?,
-        @SerialName("data") val data: List<ExportDataEntry>,
-        @SerialName("report_type_name") val reportTypeName: String? = null
+    enum class Mime(val type: String) {
+        Plain("text/plain"),
+        Json("application/json")
+    }
+
+    companion object {
+        private val dateFormatter = DateTimeFormatter.ofPattern("yy-MM-dd_HH-mm-ss")
+
+        fun defaultFilename() = "reports_${LocalDateTime.now().format(dateFormatter)}.json"
+
+        suspend fun exportToUri(
+            content: String,
+            uri: Uri,
+            contentResolver: ContentResolver
+        ): Boolean = withContext(Dispatchers.IO) {
+            contentResolver.openOutputStream(uri)?.use {
+                it.write(content.toByteArray())
+            } ?: return@withContext false
+            return@withContext true
+        }
+    }
+
+    fun toJson(): String = Json.default.encodeToString(
+        dao.getFullReportsByIdsOnce(reportIds)
+            .map { ExportedReport.fromFullReport(it) }
+    )
+
+    @Composable
+    fun exportToFileAction(
+        content: String,
+        mime: Mime = Mime.Plain,
+        onCancel: () -> Unit,
+        onSuccess: () -> Unit = {},
+        onFailure: () -> Unit = {}
     ) {
-        val version = 1
+        val context = LocalContext.current
+        val ioCoroutineScope = rememberCoroutineScope { Dispatchers.IO }
 
-        companion object {
-            fun fromDatabaseEntity(
-                reportId: Long,
-                db: ReportDatabase,
-                reportConfig: ReportConfig? = null
-            ): ExportReport? {
-                val r = db.diagnosticReportDao()
-                    .getReportByIdOnce(reportId)
-                    ?: return null
-                val reportTypeConfig = reportConfig
-                    ?.reportTypes
-                    ?.find { it.id == r.reportType }
-                val data = db.diagnosticReportDao().getReportDataOnce(r.id)
-                    .map { ExportDataEntry(it, reportTypeConfig) }
-                val diagnosticPoint =
-                    db.diagnosticAreaDao().getPointByIdOnce(r.diagnosticPoint) ?: return null
-                val diagnosticArea =
-                    db.diagnosticAreaDao().getAreaByIdOnce(diagnosticPoint.diagnosticArea)
-                        ?: return null
-                val diagnosticObject =
-                    db.diagnosticAreaDao().getObjectByIdOnce(diagnosticArea.diagnosticObject)
-                        ?: return null
-                return ExportReport(
-                    timestamp = r.timestamp,
-                    diagnosticObject = ExportDiagnosticObject(diagnosticObject),
-                    diagnosticArea = ExportDiagnosticArea(diagnosticArea),
-                    diagnosticPoint = ExportDiagnosticPoint(diagnosticPoint),
-                    diagnosticsType = r.diagnosticsType,
-                    reportType = r.reportType,
-                    location = r.location,
-                    inspector = r.inspector,
-                    validation = r.validationId,
-                    data = data,
-                    reportTypeName = reportTypeConfig?.name
-                )
+        val exportFileLauncher = rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument(mime.type)
+        ) { uri ->
+            uri?.let {
+                ioCoroutineScope.launch {
+                    if (
+                        exportToUri(
+                            content = content,
+                            uri = uri,
+                            contentResolver = context.contentResolver
+                        )
+                    ) {
+                        onSuccess()
+                    } else {
+                        onFailure()
+                    }
+                }
             }
+            onCancel()
         }
 
-        @Serializable
-        data class ExportDiagnosticObject(
-            @SerialName("id") val id: String,
-            @SerialName("name") val name: String,
-            @SerialName("additional_info") val additionalInfo: String? = null
-        ) {
-            constructor(ref: DiagnosticObject) : this(
-                id = ref.id,
-                name = ref.name,
-                additionalInfo = ref.additionalInfo
-            )
-        }
-
-        @Serializable
-        data class ExportDiagnosticArea(
-            @SerialName("id") val id: String,
-            @SerialName("name") val name: String,
-            @SerialName("danger_class") val dangerClass: String,
-            @SerialName("additional_info") val additionalInfo: String? = null
-        ) {
-            constructor(ref: DiagnosticArea) : this(
-                id = ref.id,
-                name = ref.name,
-                dangerClass = ref.dangerClass,
-                additionalInfo = ref.additionalInfo
-            )
-        }
-
-        @Serializable
-        data class ExportDiagnosticPoint(
-            @SerialName("id") val id: String,
-            @SerialName("name") val name: String,
-            @SerialName("additional_info") val additionalInfo: String? = null
-        ) {
-            constructor(ref: DiagnosticPoint) : this(
-                id = ref.id,
-                name = ref.inventoryId,
-                additionalInfo = ref.additionalInfo
-            )
-        }
-
-        @Serializable
-        data class ExportDataEntry(
-            @SerialName("characteristic") val characteristic: String,
-            @SerialName("value") val value: String,
-            @SerialName("name") var name: String? = null,
-            @SerialName("datatype") var datatype: String? = null,
-            @SerialName("unit") var unit: String? = null
-        ) {
-            constructor(ref: ReportDataEntry, reportType: ReportType? = null) : this(
-                characteristic = ref.characteristic,
-                value = ref.value
-            ) {
-                val paramConfig = reportType
-                    ?.parameters
-                    ?.find { it.id == characteristic }
-                name = paramConfig?.name
-                datatype = paramConfig?.type?.datatype
-                unit = paramConfig?.unit
-            }
+        val filename = defaultFilename()
+        LaunchedEffect(this) {
+            exportFileLauncher.launch(filename)
         }
     }
+}
 
-    fun defaultFilename() = report?.let { "report_${report.timestamp}.json" }
-
-    private fun toJson(): String? {
-        val exportReport = ExportReport.fromDatabaseEntity(
-            reportId = reportId,
-            db = db,
-            reportConfig = reportConfig
-        ) ?: return null
-        return Json.default.encodeToString(exportReport)
-    }
-
-    suspend fun exportReportToUri(
-        uri: Uri,
-        contentResolver: ContentResolver
-    ): Boolean = withContext(Dispatchers.IO) {
-        val jsonReport = toJson() ?: return@withContext false
-        contentResolver.openOutputStream(uri)?.use {
-            it.write(jsonReport.toByteArray())
-        } ?: return@withContext false
-        return@withContext true
+@Composable
+fun rememberReportExporter(reportIds: List<String>): ReportExporter {
+    val context = LocalContext.current
+    return remember(reportIds) {
+        ReportExporter(context, reportIds)
     }
 }
