@@ -13,15 +13,18 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 private data class ExportedReport(
-    val version: Int = 2,
+    @EncodeDefault val version: Int = 2,
     val id: String,
     val inspector: String,
     val route: ExportedRoute,
