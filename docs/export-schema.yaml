@@ -1,0 +1,169 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: ehz-diagnostics-export-v2
+title: Экспорт отчётов ЭХЗ
+description: |
+  Формат экспорта отчётов диагностики из приложения.
+  Корневой элемент — массив отчётов.
+
+  Необязательные поля (не указанные в required) при значении null
+  ОТСУТСТВУЮТ в JSON, а не передаются как null.
+type: array
+items:
+  $ref: "#/$defs/Report"
+
+$defs:
+  Report:
+    type: object
+    description: Завершённая диагностическая сессия на участке трубопровода.
+    required:
+      [version, id, inspector, route, section, start_time, end_time, sites]
+    additionalProperties: false
+    properties:
+      version:
+        type: integer
+        const: 2
+        description: Версия формата экспорта. На данный момент всегда 2.
+      id:
+        type: string
+        format: uuid
+        description: Уникальный идентификатор отчёта (UUID).
+      inspector:
+        type: string
+        description: ФИО диагноста, проводившего сессию.
+      route:
+        $ref: "#/$defs/Route"
+      section:
+        $ref: "#/$defs/Section"
+      start_time:
+        type: integer
+        description: "Время начала сессии: Unix epoch в секундах."
+      end_time:
+        type: integer
+        description: "Время окончания сессии: Unix epoch в секундах."
+      sites:
+        type: array
+        description: Упорядоченный список точек диагностирования, посещённых за сессию.
+        items:
+          $ref: "#/$defs/Site"
+
+  Route:
+    type: object
+    description: Объект диагностирования (трубопровод).
+    required: [id, name]
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Уникальный идентификатор объекта (UUID).
+      name:
+        type: string
+        description: Название объекта диагностирования.
+      length_km:
+        type: [integer, "null"]
+        description: >
+          Общая протяжённость объекта в километрах.
+          Null, если не указана.
+
+  Section:
+    type: object
+    description: Участок диагностирования.
+    required: [id, begin_km, end_km]
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Уникальный идентификатор участка (UUID).
+      begin_km:
+        type: integer
+        description: Начальный километр участка вдоль объекта.
+      end_km:
+        type: integer
+        description: Конечный километр участка вдоль объекта.
+
+  Site:
+    type: object
+    description: >
+      Точка диагностирования.
+      Если fields = null — это маркер местоположения без измерений.
+    required: [id, timestamp, fields]
+    additionalProperties: false
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: Уникальный идентификатор точки (UUID).
+      timestamp:
+        type: integer
+        description: Время создания точки - Unix epoch в секундах.
+      position_km:
+        type: [number, "null"]
+        description: >
+          Позиция вдоль объекта в километрах (с дробной частью).
+          Null, если не определена.
+      location:
+        oneOf:
+          - $ref: "#/$defs/Coordinates"
+          - type: "null"
+        description: GPS-координаты. Null, если местоположение не было получено.
+      validation_id:
+        type: [string, "null"]
+        description: Идентификатор верификации (QR- или NFC-скан). Null, если точка не верифицирована.
+      fields:
+        oneOf:
+          - type: array
+            items:
+              $ref: "#/$defs/Field"
+          - type: "null"
+        description: >
+          Список полей с измерениями.
+          Null для точек-маркеров (только местоположение).
+          Может быть пустым массивом, если измерения предполагаются, но ещё не добавлены.
+
+  Coordinates:
+    type: object
+    description: GPS-координаты в формате WGS 84.
+    required: [lat, lng]
+    additionalProperties: false
+    properties:
+      lat:
+        type: number
+        description: Широта в градусах (десятичная дробь).
+      lng:
+        type: number
+        description: Долгота в градусах (десятичная дробь).
+
+  Field:
+    type: object
+    description: Одно измерение или запись данных внутри точки.
+    required: [spec_id, name, type, value]
+    additionalProperties: false
+    properties:
+      spec_id:
+        type: string
+        description: >
+          ID спецификации поля.
+          Либо осмысленное имя (например, 'kilometer_location'), либо UUID для прочих полей.
+      name:
+        type: string
+        description: Название поля для отображения.
+      type:
+        type: string
+        enum: [text, bool, integer, decimal, photo, raw]
+        description: Тип данных поля.
+      value:
+        type: string
+        description: |
+          Значение поля, всегда сериализуется как строка. Интерпретация зависит от type:
+          - text: произвольная строка
+          - bool: "true" / "false"
+          - integer: целое число в виде строки
+          - decimal: дробное число в виде строки
+          - photo: изображение WebP (quality 80) в кодировке base64
+          - raw: произвольная строка без обработки
+      unit:
+        type: [string, "null"]
+        description: >
+          Единица измерения (например, 'В', 'мА', 'Ом').
+          Null, если у поля нет единицы.
