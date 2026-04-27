@@ -2,6 +2,7 @@ package space.diomentia.ehzdiagnosticstracker.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 sealed class ReportFieldValue {
     data class Text(val value: String?) : ReportFieldValue()
@@ -62,9 +63,13 @@ data class FieldSpec(
     @SerialName("unit") val unit: String? = null,
     @SerialName("values") val values: List<EnumValue>? = null
 ) {
+    @Transient
+    private val valuesByCode: Map<String, EnumValue> =
+        values?.associateBy { it.code } ?: emptyMap()
+
     /** Look up an allowed value by its code. Returns null for non-enum specs or unknown codes. */
     fun enumValue(code: String?): EnumValue? =
-        if (type == FieldType.Enum && code != null) values?.find { it.code == code } else null
+        if (type == FieldType.Enum && code != null) valuesByCode[code] else null
 }
 
 @Serializable
@@ -80,7 +85,13 @@ data class ReportConfig(
     @SerialName("default_specs") val defaultSpecs: List<String> = emptyList(),
     @SerialName("templates") val templates: List<ReportTemplate> = emptyList()
 ) {
+    @Transient
+    private val specsById: Map<String, FieldSpec> = fieldSpecs.associateBy { it.id }
+
     init {
+        require(specsById.size == fieldSpecs.size) {
+            "Duplicate field spec IDs in config"
+        }
         for (spec in fieldSpecs) {
             if (spec.type == FieldType.Enum) {
                 val values = spec.values
@@ -100,7 +111,7 @@ data class ReportConfig(
     }
 
     /** Lookup a field spec by its ID */
-    fun getSpec(id: String): FieldSpec? = fieldSpecs.find { it.id == id }
+    fun getSpec(id: String): FieldSpec? = specsById[id]
 
     /** Resolve a template's spec IDs to full FieldSpec objects */
     fun resolveTemplate(template: ReportTemplate): List<FieldSpec> =
