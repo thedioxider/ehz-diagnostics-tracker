@@ -334,7 +334,7 @@ private fun SitePreviewContent(
                         .padding(end = 6.dp)
                 )
                 when (fieldType) {
-                    FieldType.Text, FieldType.Bool, FieldType.Integer, FieldType.Decimal, FieldType.Raw -> {
+                    FieldType.Text, FieldType.Bool, FieldType.Integer, FieldType.Decimal, FieldType.Raw, FieldType.Enum -> {
                         var displayValue = displayValue(field)
                         Text(
                             displayValue,
@@ -382,7 +382,7 @@ private fun displayValue(field: ReportField, fieldValue: String = field.value): 
     if (fieldValue.isBlank())
         "\u2014"
     else when (FieldType.parse(field.type)) {
-        null, FieldType.Raw, FieldType.Text -> fieldValue
+        null, FieldType.Raw, FieldType.Text, FieldType.Enum -> fieldValue
         FieldType.Integer -> fieldValue
         FieldType.Decimal -> DecimalFormat("#.##").format(fieldValue.toDouble())
         FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
@@ -750,6 +750,15 @@ private fun EditableField(
             }
 
             FieldType.Bool -> Unit
+
+            // TODO: dedicated picker UI; falls back to a free-text editor for now
+            FieldType.Enum -> {
+                FieldTextField(
+                    value = value,
+                    unit = field.unit,
+                    onValueChange = onValueChange
+                )
+            }
         }
     }
 }
