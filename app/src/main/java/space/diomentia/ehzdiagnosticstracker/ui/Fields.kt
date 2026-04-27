@@ -22,6 +22,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +56,7 @@ import com.google.android.gms.location.Granularity
 import com.google.android.gms.location.Priority
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
+import space.diomentia.ehzdiagnosticstracker.data.EnumValue
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
@@ -102,6 +108,72 @@ fun TextFieldWithLabel(
                 .fillMaxWidth()
                 .then(if (label != null) Modifier.padding(start = 12.dp) else Modifier)
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EnumDropdownField(
+    selectedCode: String,
+    values: List<EnumValue>,
+    onSelect: (code: String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selected = values.find { it.code == selectedCode }
+    val displayText = selected?.label ?: ""
+    val placeholder = stringResource(R.string.not_selected)
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = displayText,
+            onValueChange = {},
+            readOnly = true,
+            placeholder = {
+                Text(
+                    placeholder,
+                    fontStyle = FontStyle.Italic,
+                    maxLines = 1,
+                    modifier = Modifier.alpha(.5f)
+                )
+            },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            maxLines = 1,
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        placeholder,
+                        fontStyle = FontStyle.Italic,
+                        modifier = Modifier.alpha(.5f)
+                    )
+                },
+                onClick = {
+                    onSelect("")
+                    expanded = false
+                }
+            )
+            values.forEach { entry ->
+                DropdownMenuItem(
+                    text = { Text(entry.label) },
+                    onClick = {
+                        onSelect(entry.code)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
 
