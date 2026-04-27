@@ -126,7 +126,8 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
     fun updateFieldValue(siteId: String, specId: String, value: String) {
         val fields = dao.getFieldsForSiteOnce(siteId)
         val field = fields.find { it.specId == specId } ?: return
-        dao.insertField(field.copy(value = value))
+        val label = config?.getSpec(specId)?.enumValue(value)?.label
+        dao.insertField(field.copy(value = value, valueLabel = label))
     }
 
     fun confirmSite(siteId: String) {
