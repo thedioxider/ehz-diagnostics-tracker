@@ -108,7 +108,8 @@ private data class ExportedField(
             type = it.type,
             value = it.value,
             unit = it.unit,
-            description = config?.getSpec(it.specId)?.enumValue(it.value)?.label
+            description = it.valueLabel
+                ?: config?.getSpec(it.specId)?.enumValue(it.value)?.label
         )
     }
 }
