@@ -268,7 +268,13 @@ field_specs:
     type: text
   - id: 55fc0d00-6ef4-4f79-bdad-e5b7a67ec513
     name: Определение типа ЗП и обертки и число слоев
-    type: text
+    type: enum
+    values:
+      - { code: bitumen, label: "Битумное" }
+      - { code: polyethylene, label: "Полиэтиленовое" }
+      - { code: polyurethane, label: "Полиуретановое" }
+      - { code: tape, label: "Полимерная лента" }
+      - { code: epoxy, label: "Эпоксидное" }
   - id: eea1160d-d4d6-4040-8e3f-ffeb581614e9
     name: Измерение толщины ЗП в четырех точках поперечного сечения трубы на 3, 6, 9,
       12 ч

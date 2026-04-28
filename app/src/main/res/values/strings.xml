@@ -42,6 +42,7 @@
     <string name="create_area">Создать участок</string>
     <string name="location">Местоположение</string>
     <string name="unknown">неизвестно</string>
+    <string name="not_selected">Не выбрано</string>
     <string name="something_wrong">Что-то пошло не так</string>
     <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
     <string name="input_value">Введите значение</string>

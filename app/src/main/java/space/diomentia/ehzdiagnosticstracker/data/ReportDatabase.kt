@@ -28,7 +28,7 @@ import space.diomentia.ehzdiagnosticstracker.R
 // WARNING: fallbackToDestructiveMigration wipes all data on version bump.
 // Proper migrations MUST be written for production releases.
 @Database(
-    version = 15,
+    version = 16,
     entities = [
         Route::class,
         Section::class,
@@ -243,7 +243,9 @@ data class ReportField(
     @ColumnInfo(name = "unit")
     val unit: String? = null,
     @ColumnInfo(name = "value")
-    val value: String = ""
+    val value: String = "",
+    @ColumnInfo(name = "value_label")
+    val valueLabel: String? = null
 )
 
 data class SiteWithFields(

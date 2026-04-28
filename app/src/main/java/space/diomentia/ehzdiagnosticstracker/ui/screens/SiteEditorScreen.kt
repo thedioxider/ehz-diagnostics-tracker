@@ -98,6 +98,7 @@ import space.diomentia.ehzdiagnosticstracker.data.distanceKmTo
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
 import space.diomentia.ehzdiagnosticstracker.ui.DeleteDialog
+import space.diomentia.ehzdiagnosticstracker.ui.EnumDropdownField
 import space.diomentia.ehzdiagnosticstracker.ui.FieldSpecChooserDialog
 import space.diomentia.ehzdiagnosticstracker.ui.ImageWithFullscreenView
 import space.diomentia.ehzdiagnosticstracker.ui.LocationField
@@ -334,7 +335,7 @@ private fun SitePreviewContent(
                         .padding(end = 6.dp)
                 )
                 when (fieldType) {
-                    FieldType.Text, FieldType.Bool, FieldType.Integer, FieldType.Decimal, FieldType.Raw -> {
+                    FieldType.Text, FieldType.Bool, FieldType.Integer, FieldType.Decimal, FieldType.Raw, FieldType.Enum -> {
                         var displayValue = displayValue(field)
                         Text(
                             displayValue,
@@ -383,6 +384,9 @@ private fun displayValue(field: ReportField, fieldValue: String = field.value): 
         "\u2014"
     else when (FieldType.parse(field.type)) {
         null, FieldType.Raw, FieldType.Text -> fieldValue
+        FieldType.Enum -> field.valueLabel
+            ?: AppState.reportConfig.value?.getSpec(field.specId)?.enumValue(fieldValue)?.label
+            ?: fieldValue
         FieldType.Integer -> fieldValue
         FieldType.Decimal -> DecimalFormat("#.##").format(fieldValue.toDouble())
         FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
@@ -750,6 +754,16 @@ private fun EditableField(
             }
 
             FieldType.Bool -> Unit
+
+            FieldType.Enum -> {
+                val values = AppState.reportConfig.value
+                    ?.getSpec(field.specId)?.values.orEmpty()
+                EnumDropdownField(
+                    selectedCode = value,
+                    values = values,
+                    onSelect = onValueChange
+                )
+            }
         }
     }
 }

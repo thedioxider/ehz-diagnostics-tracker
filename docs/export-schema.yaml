@@ -150,7 +150,7 @@ $defs:
         description: Название поля для отображения.
       type:
         type: string
-        enum: [text, bool, integer, decimal, photo, raw]
+        enum: [text, bool, integer, decimal, photo, raw, enum]
         description: Тип данных поля.
       value:
         type: string
@@ -162,8 +162,14 @@ $defs:
           - decimal: дробное число в виде строки
           - photo: изображение WebP (quality 80) в кодировке base64
           - raw: произвольная строка без обработки
+          - enum: код выбранного варианта из values спецификации поля
       unit:
         type: [string, "null"]
         description: >
           Единица измерения (например, 'В', 'мА', 'Ом').
           Null, если у поля нет единицы.
+      description:
+        type: [string, "null"]
+        description: >
+          Человекочитаемое описание значения. Для type=enum — label выбранного
+          варианта из спецификации поля.

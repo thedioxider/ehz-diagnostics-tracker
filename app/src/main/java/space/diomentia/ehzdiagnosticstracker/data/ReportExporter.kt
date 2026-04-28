@@ -34,7 +34,7 @@ private data class ExportedReport(
     val sites: List<ExportedSite>
 ) {
     companion object {
-        fun fromFullReport(it: FullReport) = ExportedReport(
+        fun fromFullReport(it: FullReport, config: ReportConfig?) = ExportedReport(
             id = it.info.id,
             route = ExportedRoute.fromRoute(it.route),
             section = ExportedSection.fromSection(it.section),
@@ -42,7 +42,7 @@ private data class ExportedReport(
             start_time = it.info.startTime,
             end_time = it.info.endTime
                 ?: throw IllegalArgumentException("Unfinished report with no end time provided"),
-            sites = it.sites.map { site -> ExportedSite.fromSiteWithFields(site) }
+            sites = it.sites.map { site -> ExportedSite.fromSiteWithFields(site, config) }
         )
     }
 }
@@ -79,14 +79,14 @@ private data class ExportedSite(
     val fields: List<ExportedField>?
 ) {
     companion object {
-        fun fromSiteWithFields(it: SiteWithFields) = ExportedSite(
+        fun fromSiteWithFields(it: SiteWithFields, config: ReportConfig?) = ExportedSite(
             id = it.info.id,
             position_km = it.info.positionKm,
             location = it.info.location,
             timestamp = it.info.timestamp,
             validation_id = it.info.validationId,
             fields = if (!it.info.locationOnly)
-                it.fields.map { field -> ExportedField.fromReportField(field) }
+                it.fields.map { field -> ExportedField.fromReportField(field, config) }
             else null
         )
     }
@@ -98,15 +98,18 @@ private data class ExportedField(
     val name: String,
     val type: String,
     val value: String,
-    val unit: String? = null
+    val unit: String? = null,
+    val description: String? = null
 ) {
     companion object {
-        fun fromReportField(it: ReportField) = ExportedField(
+        fun fromReportField(it: ReportField, config: ReportConfig?) = ExportedField(
             spec_id = it.specId,
             name = it.name,
             type = it.type,
             value = it.value,
-            unit = it.unit
+            unit = it.unit,
+            description = it.valueLabel
+                ?: config?.getSpec(it.specId)?.enumValue(it.value)?.label
         )
     }
 }
@@ -140,10 +143,13 @@ class ReportExporter(
         }
     }
 
-    fun toJson(): String = Json.default.encodeToString(
-        dao.getFullReportsByIdsOnce(reportIds)
-            .map { ExportedReport.fromFullReport(it) }
-    )
+    fun toJson(): String {
+        val config = AppState.reportConfig.value
+        return Json.default.encodeToString(
+            dao.getFullReportsByIdsOnce(reportIds)
+                .map { ExportedReport.fromFullReport(it, config) }
+        )
+    }
 
     @Composable
     fun exportToFileAction(
