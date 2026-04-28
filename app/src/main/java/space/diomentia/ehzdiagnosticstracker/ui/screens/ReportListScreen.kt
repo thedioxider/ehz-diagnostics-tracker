@@ -87,6 +87,7 @@ internal fun ReportListContent(
     onDeleteReports: ((List<String>) -> Unit)?,
     onBack: () -> Unit,
     homeNav: Boolean,
+    alwaysShowCheckboxes: Boolean = false,
     topBanner: (@Composable () -> Unit)? = null,
     syncStatusContent: (@Composable (reportId: String) -> Unit)? = null,
     extraActions: (@Composable (checkedIds: Set<String>) -> Unit)? = null
@@ -153,7 +154,7 @@ internal fun ReportListContent(
                 ReportListItem(
                     fullReport = fullReport,
                     dateFormatter = dateFormatter,
-                    onClick = if (checkedReports.isEmpty() && onOpenReport != null) { ->
+                    onClick = if (checkedReports.isEmpty() && onOpenReport != null && !alwaysShowCheckboxes) { ->
                         onOpenReport(id)
                     } else { ->
                         if (checked) checkedReports.remove(id) else checkedReports.add(id)
@@ -161,7 +162,7 @@ internal fun ReportListContent(
                     onLongClick = {
                         if (checked) checkedReports.remove(id) else checkedReports.add(id)
                     },
-                    isChecked = if (checkedReports.isEmpty()) null else checked,
+                    isChecked = if (!alwaysShowCheckboxes && checkedReports.isEmpty()) null else checked,
                     trailingContent = syncStatusContent?.let { { it(id) } }
                 )
                 HorizontalDivider(modifier = Modifier.alpha(.3f))

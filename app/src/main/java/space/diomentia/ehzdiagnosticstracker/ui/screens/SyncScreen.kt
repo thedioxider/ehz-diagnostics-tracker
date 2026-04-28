@@ -127,6 +127,7 @@ fun SyncScreen(onBack: () -> Unit) {
         onDeleteReports = null,
         onBack = onBack,
         homeNav = true,
+        alwaysShowCheckboxes = true,
         topBanner = syncBanner?.let { banner -> { SyncBannerCard(banner, onBack) } },
         syncStatusContent = { id ->
             SyncStatusLabel(syncStatuses[id] ?: SyncStatus.Idle)
