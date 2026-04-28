@@ -36,10 +36,20 @@ android {
         applicationId = "space.diomentia.ehzdiagnosticstracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 16
-        versionName = "2.0.2"
+        versionCode = 17
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    applicationVariants.all {
+        outputs.all {
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+                .outputFileName = if (buildType.name == "release")
+                    "EHZTracker-v${defaultConfig.versionName}.apk"
+                else
+                    "EHZTracker-v${defaultConfig.versionName}-${buildType.name}.apk"
+        }
     }
 
     buildTypes {
@@ -75,6 +85,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.view)
@@ -85,6 +96,10 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
     ksp(libs.androidx.room.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

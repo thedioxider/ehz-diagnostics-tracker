@@ -42,6 +42,7 @@
     <string name="create_area">Создать участок</string>
     <string name="location">Местоположение</string>
     <string name="unknown">неизвестно</string>
+    <string name="not_selected">Не выбрано</string>
     <string name="something_wrong">Что-то пошло не так</string>
     <string name="no_report_configuration">Конфигурация отчётов не обнаружена</string>
     <string name="input_value">Введите значение</string>
@@ -209,4 +210,21 @@
     <string name="route_delete_reports_exist">Невозможно удалить объект.\nСначала удалите привязанные к нему отчёты.</string>
     <string name="section_delete_reports_exist">Невозможно удалить участок.\nСначала удалите привязанные к нему отчёты.</string>
     <string name="delete_reports_confirmation">Вы действительно хотите удалить все эти отчёты?</string>
+    <string name="sync">Синхронизация</string>
+    <string name="sync_selected">Синхронизировать</string>
+    <string name="sync_done">Готово</string>
+    <string name="syncing">Отправка…</string>
+    <string name="sync_auth_error">Неверный ключ авторизации</string>
+    <string name="sync_version_mismatch">Несовместимая версия сервера (ожидается %1$d, получено %2$s)</string>
+    <string name="sync_not_configured">Адрес сервера не указан</string>
+    <string name="sync_not_found">Сервер не найден по адресу %1$s — проверьте настройки</string>
+    <string name="sync_to_backend">Синхронизировать с сервером</string>
+    <string name="home">Главная</string>
+    <string name="backend_settings">Подключение к серверу</string>
+    <string name="backend_url">Резервный адрес сервера</string>
+    <string name="backend_url_placeholder">http://192.168.1.100:8080</string>
+    <string name="backend_bearer">Ключ авторизации</string>
+    <string name="backend_bearer_description">Статический ключ для доступа к серверу по LAN. Выдаётся в панели управления на компьютере оператора.</string>
+    <string name="bearer_prompt_title">Ключ авторизации</string>
+    <string name="bearer_prompt_hint">Статический ключ выдаётся в панели управления сервера (локальный доступ с компьютера оператора).</string>
 </resources>

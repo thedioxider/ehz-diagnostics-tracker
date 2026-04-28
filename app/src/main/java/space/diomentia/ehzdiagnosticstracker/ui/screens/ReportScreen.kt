@@ -175,7 +175,7 @@ private fun SiteItem(
     onLongClick: (() -> Unit)? = null
 ) {
     val site = siteWithFields.info
-    val dateTime = Instant.ofEpochSecond(site.timestamp)
+    val dateTime = site.timestamp
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
 
@@ -236,7 +236,7 @@ private val previewSites = listOf(
             reportId = "r1",
             positionKm = 0.0,
             location = Coordinates(lat = 55.75, lng = 37.62),
-            timestamp = 1700000000,
+            timestamp = Instant.ofEpochSecond(1700000000),
             locationOnly = true,
             isDraft = false
         ),
@@ -248,7 +248,7 @@ private val previewSites = listOf(
             reportId = "r1",
             positionKm = 1.234,
             location = Coordinates(lat = 55.76, lng = 37.63),
-            timestamp = 1700001000,
+            timestamp = Instant.ofEpochSecond(1700001000),
             validationId = "QR-123",
             isDraft = false
         ),
@@ -263,7 +263,7 @@ private val previewSites = listOf(
             reportId = "r1",
             positionKm = 2.567,
             location = Coordinates(lat = 55.77, lng = 37.64),
-            timestamp = 1700002000,
+            timestamp = Instant.ofEpochSecond(1700002000),
             isDraft = false
         ),
         fields = listOf(
@@ -278,7 +278,7 @@ private val previewReport = FullReport(
         routeId = "route1",
         sectionId = "section1",
         inspectorName = "Иванов И.И.",
-        startTime = 1700000000
+        startTime = Instant.ofEpochSecond(1700000000)
     ),
     route = Route("route1", "Газопровод Тест", 42),
     section = Section("section1", 0, 10, "route1"),

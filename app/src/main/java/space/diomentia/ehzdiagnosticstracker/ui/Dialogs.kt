@@ -256,6 +256,39 @@ fun EditFieldsDialog(
     }
 }
 
+@Composable
+fun BearerKeyPromptDialog(
+    onSave: (String) -> Unit,
+    onCancel: () -> Unit,
+    initialValue: String = ""
+) {
+    var value by remember { mutableStateOf(initialValue) }
+    val focusRequester = remember { FocusRequester() }
+    ActionCancelDialog(
+        onCancel = onCancel,
+        onAction = { onSave(value) },
+        actionLabel = { Text(stringResource(R.string.save)) },
+        actionEnabled = value.isNotBlank(),
+        label = { Text(stringResource(R.string.bearer_prompt_title)) }
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.bearer_prompt_hint))
+            OutlinedTextField(
+                value = value,
+                onValueChange = { value = it },
+                label = { Text(stringResource(R.string.backend_bearer)) },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                ),
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+            )
+        }
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+    }
+}
+
 @Preview
 @Composable
 private fun ActionCancelDialogPreview() = PtmTheme {

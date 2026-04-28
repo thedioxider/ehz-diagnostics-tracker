@@ -264,7 +264,7 @@ private fun SessionHubContent(
                         style = MaterialTheme.typography.titleSmall,
                         modifier = Modifier.padding(top = 4.dp)
                     )
-                    val startDateTime = Instant.ofEpochSecond(it.startTime)
+                    val startDateTime = it.startTime
                         .atZone(ZoneId.systemDefault())
                         .toLocalDateTime()
                     Text(
@@ -412,7 +412,7 @@ private val previewReport = FullReport(
         routeId = "route1",
         sectionId = "section1",
         inspectorName = "Иванов И.И.",
-        startTime = 1700000000
+        startTime = Instant.ofEpochSecond(1700000000)
     ),
     route = Route("route1", "Газопровод Тест", 42),
     section = Section("section1", 0, 10, "route1"),
@@ -423,7 +423,7 @@ private val previewReport = FullReport(
                 reportId = "r1",
                 positionKm = 0.0,
                 location = Coordinates(lat = 55.75, lng = 37.62),
-                timestamp = 1700000000,
+                timestamp = Instant.ofEpochSecond(1700000000),
                 locationOnly = true,
                 isDraft = false
             ),
@@ -435,7 +435,7 @@ private val previewReport = FullReport(
                 reportId = "r1",
                 positionKm = 1.5,
                 location = Coordinates(lat = 55.76, lng = 37.63),
-                timestamp = 1700001000,
+                timestamp = Instant.ofEpochSecond(1700001000),
                 isDraft = false
             ),
             fields = emptyList()
