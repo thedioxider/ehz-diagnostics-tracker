@@ -224,5 +224,7 @@
     <string name="backend_url">Резервный адрес сервера</string>
     <string name="backend_url_placeholder">http://192.168.1.100:8080</string>
     <string name="backend_bearer">Ключ авторизации</string>
-    <string name="bearer_prompt_title">Обновите ключ авторизации</string>
+    <string name="backend_bearer_description">Статический ключ для доступа к серверу по LAN. Выдаётся в панели управления на компьютере оператора.</string>
+    <string name="bearer_prompt_title">Ключ авторизации</string>
+    <string name="bearer_prompt_hint">Статический ключ выдаётся в панели управления сервера (локальный доступ с компьютера оператора).</string>
 </resources>

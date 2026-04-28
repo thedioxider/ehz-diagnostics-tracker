@@ -11,6 +11,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -26,6 +28,7 @@ import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportConfig
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
+import space.diomentia.ehzdiagnosticstracker.ui.BearerKeyPromptDialog
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
@@ -47,6 +50,15 @@ fun SettingsScreen(
         }
     var backendUrl by AppPreferences.rememberPreference(AppPreferences.BACKEND_URL_KEY, "")
     var backendBearer by AppPreferences.rememberPreference(AppPreferences.BACKEND_BEARER_KEY, "")
+    var showBearerDialog by remember { mutableStateOf(false) }
+
+    if (showBearerDialog) {
+        BearerKeyPromptDialog(
+            initialValue = backendBearer,
+            onSave = { backendBearer = it; showBearerDialog = false },
+            onCancel = { showBearerDialog = false }
+        )
+    }
 
     Scaffold(
         topBar = { PtmTopBar { Text(stringResource(R.string.settings)) } },
@@ -88,19 +100,14 @@ fun SettingsScreen(
                     placeholderText = stringResource(R.string.backend_url_placeholder),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Uri,
-                        imeAction = ImeAction.Next
-                    )
-                )
-                TextFieldWithLabel(
-                    label = { Text(stringResource(R.string.backend_bearer)) },
-                    value = backendBearer,
-                    onValueChange = { backendBearer = it },
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Text,
                         imeAction = ImeAction.Done
                     )
                 )
             }
+            SettingsOption(
+                label = stringResource(R.string.backend_bearer),
+                secondaryLabel = stringResource(R.string.backend_bearer_description)
+            ) { showBearerDialog = true }
         }
     }
 }
