@@ -55,7 +55,7 @@ private sealed interface SyncBanner {
 }
 
 @Composable
-fun SyncScreen(onBack: () -> Unit) {
+fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val snacker = rememberSnacker()
@@ -128,7 +128,7 @@ fun SyncScreen(onBack: () -> Unit) {
         onBack = onBack,
         homeNav = true,
         alwaysShowCheckboxes = true,
-        topBanner = syncBanner?.let { banner -> { SyncBannerCard(banner, onBack) } },
+        topBanner = syncBanner?.let { banner -> { SyncBannerCard(banner, onSettings) } },
         syncStatusContent = { id ->
             SyncStatusLabel(syncStatuses[id] ?: SyncStatus.Idle)
         },

@@ -201,7 +201,10 @@ fun AppNavigation() {
             }
 
             composable(Screen.Sync.route) {
-                SyncScreen(onBack = { navController.popBackStack() })
+                SyncScreen(
+                    onBack = { navController.popBackStack() },
+                    onSettings = { navController.navigate(Screen.Settings.route) }
+                )
             }
 
             composable(Screen.SessionHub.route) {
