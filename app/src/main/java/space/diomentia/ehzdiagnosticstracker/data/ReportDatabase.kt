@@ -19,16 +19,18 @@ import androidx.room.Relation
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
+import androidx.room.TypeConverters
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import space.diomentia.ehzdiagnosticstracker.R
+import java.time.Instant
 
 // WARNING: fallbackToDestructiveMigration wipes all data on version bump.
 // Proper migrations MUST be written for production releases.
 @Database(
-    version = 16,
+    version = 17,
     entities = [
         Route::class,
         Section::class,
@@ -37,6 +39,7 @@ import space.diomentia.ehzdiagnosticstracker.R
         ReportField::class
     ]
 )
+@TypeConverters(InstantConverter::class)
 abstract class ReportDatabase : RoomDatabase() {
     abstract fun routeDao(): RouteDao
     abstract fun reportDao(): ReportDao
@@ -72,7 +75,7 @@ data class Route(
     val lengthKm: Int
 ) {
     companion object {
-        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
+        fun checkId(id: String): Boolean = isCanonicalUuid(id)
         fun checkName(name: String): Boolean =
             name.all { c -> c.isLetterOrDigit() || c in ",.;:()-" }
     }
@@ -94,7 +97,7 @@ data class Section(
     fun displayName(): String = stringResource(R.string.section_display_name, beginKm, endKm)
 
     companion object {
-        fun checkId(id: String): Boolean = id.all { c -> c.isLetterOrDigit() }
+        fun checkId(id: String): Boolean = isCanonicalUuid(id)
         fun checkName(name: String): Boolean =
             name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
     }
@@ -178,9 +181,9 @@ data class Report(
     @ColumnInfo(name = "inspector_name")
     val inspectorName: String,
     @ColumnInfo(name = "start_time")
-    val startTime: Long,
+    val startTime: Instant,
     @ColumnInfo(name = "end_time")
-    val endTime: Long? = null,
+    val endTime: Instant? = null,
     @ColumnInfo(name = "is_complete")
     val isComplete: Boolean = false
 )
@@ -212,7 +215,7 @@ data class Site(
     @Embedded
     val location: Coordinates? = null,
     @ColumnInfo(name = "timestamp")
-    val timestamp: Long,
+    val timestamp: Instant,
     @ColumnInfo(name = "validation_id")
     val validationId: String? = null,
     @ColumnInfo(name = "location_only")

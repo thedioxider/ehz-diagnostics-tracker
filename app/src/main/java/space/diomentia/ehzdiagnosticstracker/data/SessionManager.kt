@@ -2,6 +2,7 @@ package space.diomentia.ehzdiagnosticstracker.data
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import java.time.Instant
 import java.util.UUID
 
 class SessionManager(private val dao: ReportDao, private val config: ReportConfig?) {
@@ -36,7 +37,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
                 routeId = routeId,
                 sectionId = sectionId,
                 inspectorName = profile?.fullName ?: "",
-                startTime = System.currentTimeMillis() / 1000
+                startTime = Instant.now()
             )
         )
         activeReportId = id
@@ -68,7 +69,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
             reportId = reportId,
             positionKm = positionKm,
             location = location,
-            timestamp = System.currentTimeMillis() / 1000,
+            timestamp = Instant.now(),
             locationOnly = locationOnly
         )
         dao.insertSite(site)
@@ -162,7 +163,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         dao.deleteDraftSiteForReport(reportId)
         dao.updateReport(
             report.copy(
-                endTime = System.currentTimeMillis() / 1000,
+                endTime = Instant.now(),
                 isComplete = true
             )
         )

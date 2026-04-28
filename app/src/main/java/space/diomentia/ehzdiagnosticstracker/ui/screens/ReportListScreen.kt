@@ -216,7 +216,7 @@ private fun ReportListItem(
 ) {
     val report = fullReport.info
     val siteCount = fullReport.sites.size
-    val startDateTime = Instant.ofEpochSecond(report.startTime)
+    val startDateTime = report.startTime
         .atZone(ZoneId.systemDefault())
         .toLocalDateTime()
 
@@ -282,7 +282,7 @@ private val previewReports = listOf(
             routeId = "route1",
             sectionId = "section1",
             inspectorName = "Иванов И.И.",
-            startTime = 1700000000,
+            startTime = Instant.ofEpochSecond(1700000000),
             isComplete = true
         ),
         route = Route("route1", "Газопровод Тест", 42),
@@ -294,7 +294,7 @@ private val previewReports = listOf(
                     reportId = "r1",
                     positionKm = 0.0,
                     location = Coordinates(lat = 55.75, lng = 37.62),
-                    timestamp = 1700000000,
+                    timestamp = Instant.ofEpochSecond(1700000000),
                     locationOnly = true,
                     isDraft = false
                 ),
@@ -305,7 +305,7 @@ private val previewReports = listOf(
                     id = "2",
                     reportId = "r1",
                     positionKm = 1.5,
-                    timestamp = 1700001000,
+                    timestamp = Instant.ofEpochSecond(1700001000),
                     isDraft = false
                 ),
                 fields = emptyList()
@@ -318,7 +318,7 @@ private val previewReports = listOf(
             routeId = "route1",
             sectionId = "section1",
             inspectorName = "Петров А.В.",
-            startTime = 1700100000,
+            startTime = Instant.ofEpochSecond(1700100000),
             isComplete = true
         ),
         route = Route("route1", "Газопровод Тест", 42),

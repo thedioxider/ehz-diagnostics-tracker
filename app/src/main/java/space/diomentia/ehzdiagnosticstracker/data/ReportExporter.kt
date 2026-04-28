@@ -13,24 +13,20 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.EncodeDefault
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
-@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 private data class ExportedReport(
-    @EncodeDefault val version: Int = 2,
     val id: String,
     val inspector: String,
     val route: ExportedRoute,
     val section: ExportedSection,
-    val start_time: Long,
-    val end_time: Long,
+    val start_time: String,
+    val end_time: String,
     val sites: List<ExportedSite>
 ) {
     companion object {
@@ -39,9 +35,10 @@ private data class ExportedReport(
             route = ExportedRoute.fromRoute(it.route),
             section = ExportedSection.fromSection(it.section),
             inspector = it.info.inspectorName,
-            start_time = it.info.startTime,
-            end_time = it.info.endTime
-                ?: throw IllegalArgumentException("Unfinished report with no end time provided"),
+            start_time = it.info.startTime.toString(),
+            end_time = (it.info.endTime
+                ?: throw IllegalArgumentException("Unfinished report with no end time provided"))
+                .toString(),
             sites = it.sites.map { site -> ExportedSite.fromSiteWithFields(site, config) }
         )
     }
@@ -72,7 +69,7 @@ private data class ExportedSection(
 @Serializable
 private data class ExportedSite(
     val id: String,
-    val timestamp: Long,
+    val timestamp: String,
     val position_km: Double? = null,
     val location: Coordinates? = null,
     val validation_id: String? = null,
@@ -83,7 +80,7 @@ private data class ExportedSite(
             id = it.info.id,
             position_km = it.info.positionKm,
             location = it.info.location,
-            timestamp = it.info.timestamp,
+            timestamp = it.info.timestamp.toString(),
             validation_id = it.info.validationId,
             fields = if (!it.info.locationOnly)
                 it.fields.map { field -> ExportedField.fromReportField(field, config) }
