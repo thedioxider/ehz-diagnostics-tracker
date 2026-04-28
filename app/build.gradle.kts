@@ -42,6 +42,16 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    applicationVariants.all {
+        outputs.all {
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+                .outputFileName = if (buildType.name == "release")
+                    "EHZTracker-v${defaultConfig.versionName}.apk"
+                else
+                    "EHZTracker-v${defaultConfig.versionName}-${buildType.name}.apk"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
