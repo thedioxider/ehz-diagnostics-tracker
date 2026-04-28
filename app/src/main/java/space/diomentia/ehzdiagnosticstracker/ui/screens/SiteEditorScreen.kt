@@ -1,5 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
+import java.time.Instant
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -1087,7 +1088,7 @@ private val previewSite = Site(
     reportId = "r1",
     positionKm = 12.345,
     location = Coordinates(lat = 55.751244, lng = 37.618423),
-    timestamp = 0,
+    timestamp = Instant.EPOCH,
     validationId = "QR-123",
     locationOnly = false
 )
