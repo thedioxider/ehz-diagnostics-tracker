@@ -217,6 +217,7 @@
     <string name="sync_auth_error">Неверный ключ авторизации</string>
     <string name="sync_version_mismatch">Несовместимая версия сервера (ожидается %1$d, получено %2$s)</string>
     <string name="sync_not_configured">Адрес сервера не указан</string>
+    <string name="sync_not_found">Сервер не найден по адресу %1$s — проверьте настройки</string>
     <string name="sync_to_backend">Синхронизировать с сервером</string>
     <string name="home">Главная</string>
     <string name="backend_settings">Подключение к серверу</string>

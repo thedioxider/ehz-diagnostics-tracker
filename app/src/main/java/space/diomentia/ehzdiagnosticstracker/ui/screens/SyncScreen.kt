@@ -54,6 +54,7 @@ private sealed interface SyncBanner {
     data object AuthFailed : SyncBanner
     data class VersionMismatch(val expected: Int, val got: Int?) : SyncBanner
     data object NotConfigured : SyncBanner
+    data class NotFound(val url: String) : SyncBanner
 }
 
 @Composable
@@ -116,8 +117,13 @@ fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
                         syncBanner = SyncBanner.VersionMismatch(res.expected, res.got)
                         break
                     }
-                    is IngestResult.HttpError ->
+                    is IngestResult.HttpError -> {
                         syncStatuses[report.info.id] = SyncStatus.Failed("HTTP ${res.code}")
+                        if (res.code == 404) {
+                            syncBanner = SyncBanner.NotFound(url)
+                            break
+                        }
+                    }
                     is IngestResult.NetworkError ->
                         syncStatuses[report.info.id] = SyncStatus.Failed(res.cause.message ?: "network")
                 }
@@ -177,6 +183,7 @@ private fun SyncBannerCard(banner: SyncBanner, onGoToSettings: () -> Unit) {
         is SyncBanner.VersionMismatch ->
             stringResource(R.string.sync_version_mismatch, banner.expected, banner.got?.toString() ?: "?")
         SyncBanner.NotConfigured -> stringResource(R.string.sync_not_configured)
+        is SyncBanner.NotFound -> stringResource(R.string.sync_not_found, banner.url)
     }
     Surface(color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -195,7 +202,7 @@ private fun SyncBannerCard(banner: SyncBanner, onGoToSettings: () -> Unit) {
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f)
             )
-            if (banner == SyncBanner.AuthFailed || banner == SyncBanner.NotConfigured) {
+            if (banner == SyncBanner.AuthFailed || banner == SyncBanner.NotConfigured || banner is SyncBanner.NotFound) {
                 TextButton(onClick = onGoToSettings) {
                     Text(stringResource(R.string.settings), color = MaterialTheme.colorScheme.onErrorContainer)
                 }
