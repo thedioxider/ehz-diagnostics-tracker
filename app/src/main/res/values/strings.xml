@@ -220,7 +220,7 @@
     <string name="sync_to_backend">Синхронизировать с сервером</string>
     <string name="home">Главная</string>
     <string name="backend_settings">Подключение к серверу</string>
-    <string name="backend_url">Адрес сервера</string>
+    <string name="backend_url">Резервный адрес сервера</string>
     <string name="backend_url_placeholder">http://192.168.1.100:8080</string>
     <string name="backend_bearer">Ключ авторизации</string>
 </resources>

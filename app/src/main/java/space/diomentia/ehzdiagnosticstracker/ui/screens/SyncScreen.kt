@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.api.BackendClient
 import space.diomentia.ehzdiagnosticstracker.api.IngestResult
+import space.diomentia.ehzdiagnosticstracker.api.discoverBackend
 import space.diomentia.ehzdiagnosticstracker.data.AppPreferences
 import space.diomentia.ehzdiagnosticstracker.data.AppPreferences.getPreference
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
@@ -88,8 +89,9 @@ fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
         isSyncing = true
         syncBanner = null
         coroutineScope.launch(Dispatchers.IO) {
-            val url = context.getPreference(AppPreferences.BACKEND_URL_KEY)
             val bearer = context.getPreference(AppPreferences.BACKEND_BEARER_KEY)
+            val url = discoverBackend(context)
+                ?: context.getPreference(AppPreferences.BACKEND_URL_KEY)
             if (url.isNullOrBlank()) {
                 syncBanner = SyncBanner.NotConfigured
                 isSyncing = false
