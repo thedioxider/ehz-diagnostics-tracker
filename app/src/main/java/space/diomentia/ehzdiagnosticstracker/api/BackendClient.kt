@@ -41,7 +41,7 @@ class BackendClient(private val baseUrl: String, private val bearer: String) {
 
     suspend fun ingest(report: FullReport): IngestResult = runCatching {
         val dto = report.toDto()
-        val resp = http.put("api/reports/${dto.id}") { setBody(dto) }
+        val resp = http.put("/api/reports/${dto.id}") { setBody(dto) }
         checkContractHeader(resp)?.let { return it }
         when (resp.status.value) {
             200, 201 -> IngestResult.Ok
@@ -51,7 +51,7 @@ class BackendClient(private val baseUrl: String, private val bearer: String) {
     }.getOrElse { IngestResult.NetworkError(it) }
 
     suspend fun ping(): IngestResult = runCatching {
-        val resp = http.get("api/ping")
+        val resp = http.get("/api/ping")
         checkContractHeader(resp)?.let { return it }
         when (resp.status.value) {
             200 -> IngestResult.Ok
