@@ -1,6 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +34,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
-import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.clickableWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
@@ -68,33 +65,32 @@ fun HomeScreen(
         },
         snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) }
     ) { innerPadding ->
-        ScrollableColumn(innerPadding) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 48.dp, vertical = 40.dp)
-            ) {
-                HomeActionButton(
-                    label = stringResource(R.string.start_diagnostics),
-                    icon = painterResource(R.drawable.ic_contract_edit),
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onNewReport
-                )
-                HomeActionButton(
-                    label = stringResource(R.string.diagnostics_history),
-                    icon = painterResource(R.drawable.ic_history),
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onHistory
-                )
-                HomeActionButton(
-                    label = stringResource(R.string.export_reports),
-                    icon = painterResource(R.drawable.ic_file_export),
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onExport
-                )
-            }
+        Column(
+            verticalArrangement = Arrangement.SpaceEvenly,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+                .padding(horizontal = 48.dp, vertical = 40.dp)
+        ) {
+            HomeActionButton(
+                label = stringResource(R.string.start_diagnostics),
+                icon = painterResource(R.drawable.ic_contract_edit),
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onNewReport
+            )
+            HomeActionButton(
+                label = stringResource(R.string.diagnostics_history),
+                icon = painterResource(R.drawable.ic_history),
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onHistory
+            )
+            HomeActionButton(
+                label = stringResource(R.string.export_reports),
+                icon = painterResource(R.drawable.ic_file_export),
+                modifier = Modifier.fillMaxWidth(),
+                onClick = onExport
+            )
         }
     }
 }
@@ -120,7 +116,7 @@ private fun HomeActionButton(
         PtmOutlinedButton(
             roundedCorners = true,
             modifier = Modifier
-                .height(80.dp)
+                .height(100.dp)
                 .aspectRatio(1f)
                 .indication(interactionSource, ripple())
         ) {
