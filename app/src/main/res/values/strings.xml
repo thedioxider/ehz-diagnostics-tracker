@@ -210,4 +210,12 @@
     <string name="route_delete_reports_exist">Невозможно удалить объект.\nСначала удалите привязанные к нему отчёты.</string>
     <string name="section_delete_reports_exist">Невозможно удалить участок.\nСначала удалите привязанные к нему отчёты.</string>
     <string name="delete_reports_confirmation">Вы действительно хотите удалить все эти отчёты?</string>
+    <string name="sync">Синхронизация</string>
+    <string name="sync_selected">Синхронизировать</string>
+    <string name="sync_done">Готово</string>
+    <string name="syncing">Отправка…</string>
+    <string name="sync_auth_error">Неверный ключ авторизации</string>
+    <string name="sync_version_mismatch">Несовместимая версия сервера (ожидается %1$d, получено %2$s)</string>
+    <string name="sync_not_configured">Адрес сервера не указан</string>
+    <string name="sync_to_backend">Синхронизировать с сервером</string>
 </resources>

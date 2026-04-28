@@ -18,6 +18,7 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.SessionManager
 import space.diomentia.ehzdiagnosticstracker.ui.screens.AuthorizationScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.EditProfileScreen
+import space.diomentia.ehzdiagnosticstracker.ui.screens.HomeScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.InitialScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.LocationSiteEditorScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.OutOfServiceScreen
@@ -27,6 +28,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.screens.RouteSelectionScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SessionHubScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SettingsScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SiteEditorScreen
+import space.diomentia.ehzdiagnosticstracker.ui.screens.SyncScreen
 import java.time.LocalDate
 
 sealed class Screen(val route: String) {
@@ -34,8 +36,10 @@ sealed class Screen(val route: String) {
     object OutOfService : Screen("out_of_service")
     object Authorization : Screen("authorization")
     object ProfileEdit : Screen("profile_edit")
+    object Home : Screen("home")
     object RouteSelection : Screen("route_selection")
     object Settings : Screen("settings")
+    object Sync : Screen("sync")
     object SessionHub : Screen("session_hub")
 
     object LocationSiteEditor : Screen("location_site_editor/{$ARG_SITE_ID}") {
@@ -137,7 +141,7 @@ fun AppNavigation() {
                         val destination = if (sessionManager.activeReportId != null)
                             Screen.SessionHub.route
                         else
-                            Screen.RouteSelection.route
+                            Screen.Home.route
                         navController.navigate(destination) {
                             launchSingleTop = true
                         }
@@ -149,6 +153,26 @@ fun AppNavigation() {
             composable(Screen.ProfileEdit.route) {
                 EditProfileScreen(
                     onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable(Screen.Home.route) {
+                HomeScreen(
+                    onNewReport = {
+                        navController.navigate(Screen.RouteSelection.route)
+                    },
+                    onHistory = {
+                        navController.navigate(Screen.ReportList.open())
+                    },
+                    onExport = {
+                        navController.navigate(Screen.Sync.route)
+                    },
+                    onSettings = {
+                        navController.navigate(Screen.Settings.route)
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    }
                 )
             }
 
@@ -186,6 +210,17 @@ fun AppNavigation() {
                 )
             }
 
+            composable(Screen.Sync.route) {
+                SyncScreen(
+                    onBack = { navController.popBackStack() },
+                    onGoToSettings = {
+                        navController.navigate(Screen.Settings.route) {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
             composable(Screen.SessionHub.route) {
                 SessionHubScreen(
                     onNewMeasurementSite = {
@@ -202,8 +237,8 @@ fun AppNavigation() {
                         navController.navigate(Screen.Report.open(reportId))
                     },
                     onSessionCompleted = {
-                        navController.navigate(Screen.RouteSelection.route) {
-                            popUpTo(Screen.RouteSelection.route) { inclusive = true }
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
                         }
                     },
                     onAuthorize = {
