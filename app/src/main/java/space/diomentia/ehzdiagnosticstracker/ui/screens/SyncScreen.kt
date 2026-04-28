@@ -39,6 +39,7 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportExporter
 import space.diomentia.ehzdiagnosticstracker.data.rememberReportExporter
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
+import space.diomentia.ehzdiagnosticstracker.ui.BearerKeyPromptDialog
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
@@ -68,6 +69,8 @@ fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
     val syncStatuses = remember { mutableStateMapOf<String, SyncStatus>() }
     var syncBanner by remember { mutableStateOf<SyncBanner?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
+    var bearerRetryIds by remember { mutableStateOf<List<String>?>(null) }
+    var savedBearer by AppPreferences.rememberPreference(AppPreferences.BACKEND_BEARER_KEY, "")
 
     var exportIds by remember { mutableStateOf<List<String>>(emptyList()) }
     var exportToFileRequest by remember { mutableStateOf(false) }
@@ -83,13 +86,13 @@ fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
         }
     }
 
-    fun launchSync(checkedIds: Set<String>) {
+    fun launchSync(checkedIds: Set<String>, bearerOverride: String? = null) {
         val selected = reports.filter { it.info.id in checkedIds }
         if (selected.isEmpty() || isSyncing) return
         isSyncing = true
         syncBanner = null
         coroutineScope.launch(Dispatchers.IO) {
-            val bearer = context.getPreference(AppPreferences.BACKEND_BEARER_KEY)
+            val bearer = bearerOverride ?: context.getPreference(AppPreferences.BACKEND_BEARER_KEY)
             val url = discoverBackend(context)
                 ?: context.getPreference(AppPreferences.BACKEND_URL_KEY)
             if (url.isNullOrBlank()) {
@@ -98,14 +101,15 @@ fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
                 return@launch
             }
             val client = BackendClient(url, bearer ?: "")
-            for (report in selected) {
+            for ((index, report) in selected.withIndex()) {
                 syncStatuses[report.info.id] = SyncStatus.Syncing
                 when (val res = client.ingest(report)) {
                     IngestResult.Ok -> syncStatuses[report.info.id] = SyncStatus.Synced
                     IngestResult.AuthFailed -> {
                         syncStatuses[report.info.id] = SyncStatus.Failed("401")
-                        syncBanner = SyncBanner.AuthFailed
-                        break
+                        bearerRetryIds = selected.drop(index).map { it.info.id }
+                        isSyncing = false
+                        return@launch
                     }
                     is IngestResult.VersionMismatch -> {
                         syncStatuses[report.info.id] = SyncStatus.Failed("v${res.got}")
@@ -120,6 +124,20 @@ fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
             }
             isSyncing = false
         }
+    }
+
+    bearerRetryIds?.let { retryIds ->
+        BearerKeyPromptDialog(
+            onSave = { newBearer ->
+                savedBearer = newBearer
+                bearerRetryIds = null
+                launchSync(retryIds.toSet(), bearerOverride = newBearer)
+            },
+            onCancel = {
+                bearerRetryIds = null
+                syncBanner = SyncBanner.AuthFailed
+            }
+        )
     }
 
     ReportListContent(
