@@ -218,4 +218,5 @@
     <string name="sync_version_mismatch">Несовместимая версия сервера (ожидается %1$d, получено %2$s)</string>
     <string name="sync_not_configured">Адрес сервера не указан</string>
     <string name="sync_to_backend">Синхронизировать с сервером</string>
+    <string name="home">Главная</string>
 </resources>
