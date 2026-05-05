@@ -367,15 +367,15 @@ private fun SitePreviewContent(
                     }
 
                     FieldType.Photo -> {
-                        val pic: Bitmap = remember(value) {
-                            Base64.decode(value, Base64.DEFAULT).let {
-                                BitmapFactory.decodeByteArray(it, 0, it.size)
-                            }
+                        val bytes = remember(value) { Base64.decode(value, Base64.DEFAULT) }
+                        val pic: Bitmap? = remember(value) { decodeScaledFromBytes(bytes, 512) }
+                        pic?.let {
+                            ImageWithFullscreenView(
+                                thumbnail = it.asImageBitmap(),
+                                modifier = Modifier.fillMaxWidth(.3f),
+                                loadFullRes = { decodeScaledFromBytes(bytes, 1920)?.asImageBitmap() }
+                            )
                         }
-                        ImageWithFullscreenView(
-                            pic.asImageBitmap(),
-                            modifier = Modifier.fillMaxWidth(.3f)
-                        )
                     }
                 }
             }
@@ -887,6 +887,17 @@ private fun FieldTextField(
 }
 
 
+private fun decodeScaledFromBytes(bytes: ByteArray, maxDimension: Int): Bitmap? {
+    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+    var inSampleSize = 1
+    val maxSide = maxOf(opts.outWidth, opts.outHeight)
+    while (maxSide / inSampleSize > maxDimension) inSampleSize *= 2
+    opts.inSampleSize = inSampleSize
+    opts.inJustDecodeBounds = false
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+}
+
 private fun loadScaledBitmap(context: Context, uri: Uri, maxDimension: Int = 1920): Bitmap? {
     val degrees = context.contentResolver.openInputStream(uri)?.use { stream ->
         ExifInterface(stream).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
@@ -920,12 +931,10 @@ private fun PhotoField(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
-    val pic: Bitmap? = remember(value) {
-        if (value.isBlank()) null
-        else Base64.decode(value, Base64.DEFAULT).let {
-            BitmapFactory.decodeByteArray(it, 0, it.size)
-        }
+    val bytes: ByteArray? = remember(value) {
+        if (value.isBlank()) null else Base64.decode(value, Base64.DEFAULT)
     }
+    val pic: Bitmap? = remember(value) { bytes?.let { decodeScaledFromBytes(it, 512) } }
     val picUri = remember {
         val dir = File(context.cacheDir, "images").also { if (!it.exists()) it.mkdirs() }
         FileProvider.getUriForFile(
@@ -972,8 +981,9 @@ private fun PhotoField(
             label = { Text(stringResource(R.string.delete_photo)) }
         ) {
             ImageWithFullscreenView(
-                pic.asImageBitmap(),
-                modifier = Modifier.height(150.dp)
+                thumbnail = pic.asImageBitmap(),
+                modifier = Modifier.height(150.dp),
+                loadFullRes = bytes?.let { b -> { decodeScaledFromBytes(b, 1920)?.asImageBitmap() } }
             )
         }
     }
@@ -1046,9 +1056,10 @@ private fun PhotoField(
                 @Suppress("DEPRECATION")
                 Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = "")
                 ImageWithFullscreenView(
-                    it.asImageBitmap(),
+                    thumbnail = it.asImageBitmap(),
                     onLongClick = { deletePhotoDialog = true },
-                    modifier = Modifier.height(150.dp)
+                    modifier = Modifier.height(150.dp),
+                    loadFullRes = bytes?.let { b -> { decodeScaledFromBytes(b, 1920)?.asImageBitmap() } }
                 )
             }
         }
