@@ -389,7 +389,9 @@ private fun displayValue(field: ReportField, fieldValue: String = field.value): 
             ?: AppState.reportConfig.value?.getSpec(field.specId)?.enumValue(fieldValue)?.label
             ?: fieldValue
         FieldType.Integer -> fieldValue
-        FieldType.Decimal -> DecimalFormat("#.##").format(fieldValue.toDouble())
+        FieldType.Decimal -> fieldValue.toDoubleOrNull()
+            ?.let { DecimalFormat("#.##").format(it) }
+            ?: fieldValue
         FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
             true -> stringResource(R.string.is_true)
             false -> stringResource(R.string.is_false)
@@ -744,7 +746,7 @@ private fun EditableField(
                                 it.isDigit()
                                         || it == '.' || it == ','
                                         || it == '-'
-                            }
+                            }.replace(',', '.')
                         )
                     }
                 )

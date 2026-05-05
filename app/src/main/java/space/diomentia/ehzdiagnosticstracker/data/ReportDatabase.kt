@@ -21,6 +21,7 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import androidx.room.Update
+import androidx.room.migration.Migration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -30,7 +31,7 @@ import java.time.Instant
 // WARNING: fallbackToDestructiveMigration wipes all data on version bump.
 // Proper migrations MUST be written for production releases.
 @Database(
-    version = 17,
+    version = 18,
     entities = [
         Route::class,
         Section::class,
@@ -47,6 +48,12 @@ abstract class ReportDatabase : RoomDatabase() {
     companion object {
         const val DB_NAME = "report-db"
 
+        private val MIGRATION_17_18 = Migration(17, 18) { db ->
+            db.execSQL(
+                "UPDATE report_fields SET value = REPLACE(value, ',', '.') WHERE type = 'Decimal'"
+            )
+        }
+
         @Volatile
         private var INSTANCE: ReportDatabase? = null
 
@@ -55,6 +62,7 @@ abstract class ReportDatabase : RoomDatabase() {
                 .databaseBuilder(context, ReportDatabase::class.java, DB_NAME)
                 // TODO: get rid of this crutch
                 .allowMainThreadQueries()
+                .addMigrations(MIGRATION_17_18)
                 .fallbackToDestructiveMigration(dropAllTables = true)
                 .build()
         }
