@@ -204,9 +204,15 @@ private fun SiteItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                val notSet = stringResource(R.string.not_set)
                 Text(
-                    site.positionKm?.let { "%.2f км".format(it) }
-                        ?: stringResource(R.string.not_set),
+                    when {
+                        site.name.isNotBlank() && site.positionKm != null ->
+                            "%s [%.1f км]".format(site.name, site.positionKm)
+                        site.name.isNotBlank() -> site.name
+                        site.positionKm != null -> "%.1f км".format(site.positionKm)
+                        else -> notSet
+                    },
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
