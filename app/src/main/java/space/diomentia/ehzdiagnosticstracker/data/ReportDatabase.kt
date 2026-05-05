@@ -86,7 +86,7 @@ data class Route(
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)
         fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()-" }
+            name.all { c -> c.isLetterOrDigit() || c in " ,.;:()-" }
     }
 }
 
@@ -107,8 +107,6 @@ data class Section(
 
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)
-        fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
     }
 }
 
