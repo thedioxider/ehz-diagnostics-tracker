@@ -1,6 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import java.time.Instant
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -88,6 +87,7 @@ import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.NAME_ALLOWED_SPECIAL_CHARS
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportField
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
@@ -95,7 +95,6 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportTemplate
 import space.diomentia.ehzdiagnosticstracker.data.SessionManager
 import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
-import space.diomentia.ehzdiagnosticstracker.data.NAME_ALLOWED_SPECIAL_CHARS
 import space.diomentia.ehzdiagnosticstracker.data.distanceKmTo
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
@@ -120,6 +119,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.text.DecimalFormat
+import java.time.Instant
 
 @Composable
 fun SiteEditorScreen(
@@ -399,10 +399,12 @@ private fun displayValue(field: ReportField, fieldValue: String = field.value): 
         FieldType.Enum -> field.valueLabel
             ?: AppState.reportConfig.value?.getSpec(field.specId)?.enumValue(fieldValue)?.label
             ?: fieldValue
+
         FieldType.Integer -> fieldValue
         FieldType.Decimal -> fieldValue.toBigDecimalOrNull()
             ?.let { DecimalFormat("#.##").format(it) }
             ?: fieldValue
+
         FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
             true -> stringResource(R.string.is_true)
             false -> stringResource(R.string.is_false)
@@ -425,7 +427,10 @@ private fun SiteEditContent(
     // Name (optional)
     TextFieldWithLabel(
         value = editState.name,
-        onValueChange = { editState.name = it.filter { c -> c.isLetterOrDigit() || c in NAME_ALLOWED_SPECIAL_CHARS } },
+        onValueChange = {
+            editState.name =
+                it.filter { c -> c.isLetterOrDigit() || c in NAME_ALLOWED_SPECIAL_CHARS }
+        },
         label = {
             Text("${stringResource(R.string.site_name)} (${stringResource(R.string.optional)})")
         },
@@ -753,7 +758,8 @@ private fun EditableField(
                     unit = field.unit,
                     keyboardType = KeyboardType.Number,
                     onValueChange = { input ->
-                        onValueChange(input.filterIndexed { i, c -> c.isDigit() || (c == '-' && i == 0) }.take(10))
+                        onValueChange(input.filterIndexed { i, c -> c.isDigit() || (c == '-' && i == 0) }
+                            .take(10))
                     }
                 )
             }
@@ -769,7 +775,10 @@ private fun EditableField(
                             input.forEach { c ->
                                 when {
                                     c.isDigit() -> append(c)
-                                    (c == '.' || c == ',') && !hasDot -> { append('.'); hasDot = true }
+                                    (c == '.' || c == ',') && !hasDot -> {
+                                        append('.'); hasDot = true
+                                    }
+
                                     c == '-' && isEmpty() -> append(c)
                                 }
                             }

@@ -114,7 +114,7 @@ private fun ScanIdQrScreen() {
             if (false) innerPadding
             Column {
                 BarcodeCameraPreview(
-                    modifier = Modifier.Companion.fillMaxSize()
+                    modifier = Modifier.fillMaxSize()
                 ) { data ->
                     if (data.isNotBlank() && data.all { c -> c.isLetterOrDigit() }) {
                         activity?.run {
@@ -176,7 +176,7 @@ private fun BarcodeCameraPreview(
                 .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                 .build()
             val cameraExecutor = Executors.newSingleThreadExecutor()
-            val cameraProviderFuture = ProcessCameraProvider.Companion.getInstance(context)
+            val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
 
             cameraProviderFuture.addListener({
                 preview = Preview.Builder().build().also {

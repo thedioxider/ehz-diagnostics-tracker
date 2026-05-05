@@ -23,12 +23,12 @@ import space.diomentia.ehzdiagnosticstracker.ui.screens.InitialScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.LocationSiteEditorScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.OutOfServiceScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.ReportListScreen
-import space.diomentia.ehzdiagnosticstracker.ui.screens.SyncScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.ReportScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.RouteSelectionScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SessionHubScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SettingsScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SiteEditorScreen
+import space.diomentia.ehzdiagnosticstracker.ui.screens.SyncScreen
 import java.time.LocalDate
 
 sealed class Screen(val route: String) {
@@ -333,7 +333,8 @@ fun AppNavigation() {
                     ?.takeIf { it.isNotEmpty() }
                 val sectionId = backStackEntry.arguments?.getString(Screen.ARG_SECTION_ID)
                     ?.takeIf { it.isNotEmpty() }
-                val fromHome = navController.previousBackStackEntry?.destination?.route == Screen.Home.route
+                val fromHome =
+                    navController.previousBackStackEntry?.destination?.route == Screen.Home.route
                 ReportListScreen(
                     routeId = routeId,
                     sectionId = sectionId,

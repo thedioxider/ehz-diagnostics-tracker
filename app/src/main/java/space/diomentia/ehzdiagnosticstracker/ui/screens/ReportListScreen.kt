@@ -121,7 +121,7 @@ internal fun ReportListContent(
                 navigation = {
                     ActionButton(
                         icon = if (homeNav) rememberVectorPainter(Icons.Outlined.Home)
-                               else painterResource(R.drawable.ic_list_alt),
+                        else painterResource(R.drawable.ic_list_alt),
                         label = stringResource(if (homeNav) R.string.home else R.string.back)
                     ) { onBack() }
                 },
@@ -192,14 +192,21 @@ internal fun ReportListItem(
             .padding(horizontal = 24.dp, vertical = 16.dp)
     ) {
         isChecked?.let {
-            Checkbox(checked = isChecked, onCheckedChange = null, modifier = Modifier.padding(end = 24.dp))
+            Checkbox(
+                checked = isChecked,
+                onCheckedChange = null,
+                modifier = Modifier.padding(end = 24.dp)
+            )
         }
         Column(modifier = Modifier.weight(1f)) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(startDateTime.format(dateFormatter), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    startDateTime.format(dateFormatter),
+                    style = MaterialTheme.typography.titleMedium
+                )
                 Text(
                     fullReport.section.displayName(),
                     style = MaterialTheme.typography.bodySmall,
@@ -209,12 +216,16 @@ internal fun ReportListItem(
             Text(
                 "${stringResource(R.string.inspector)}: ${report.inspectorName}",
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 4.dp).alpha(.7f)
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .alpha(.7f)
             )
             Text(
                 stringResource(R.string.site_count, fullReport.sites.size),
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 2.dp).alpha(.5f)
+                modifier = Modifier
+                    .padding(top = 2.dp)
+                    .alpha(.5f)
             )
         }
         trailingContent?.invoke()

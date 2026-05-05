@@ -27,16 +27,22 @@ sealed class ReportFieldValue {
 enum class FieldType {
     @SerialName("text")
     Text,
+
     @SerialName("bool")
     Bool,
+
     @SerialName("integer")
     Integer,
+
     @SerialName("decimal")
     Decimal,
+
     @SerialName("photo")
     Photo,
+
     @SerialName("raw")
     Raw,
+
     @SerialName("enum")
     Enum;
 

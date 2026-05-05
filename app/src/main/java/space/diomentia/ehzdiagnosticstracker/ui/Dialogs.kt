@@ -282,7 +282,9 @@ fun BearerKeyPromptDialog(
                     imeAction = ImeAction.Done
                 ),
                 maxLines = 1,
-                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester)
             )
         }
         LaunchedEffect(Unit) { focusRequester.requestFocus() }

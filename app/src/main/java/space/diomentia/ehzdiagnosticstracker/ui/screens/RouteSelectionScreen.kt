@@ -673,8 +673,8 @@ private fun DeleteSectionDialog(
         onDelete = {
             when (
                 ReportDatabase.getInstance(context)
-                .routeDao()
-                .deleteSection(section)
+                    .routeDao()
+                    .deleteSection(section)
             ) {
                 0 -> snacker.showMessage(context.getString(R.string.section_delete_reports_exist))
                 else -> snacker.showMessage(context.getString(R.string.section_deleted))

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.room.AutoMigration
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -21,7 +22,6 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import androidx.room.Update
-import androidx.room.AutoMigration
 import androidx.room.migration.Migration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
