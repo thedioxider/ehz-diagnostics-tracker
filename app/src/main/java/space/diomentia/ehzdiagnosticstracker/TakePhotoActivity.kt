@@ -1,10 +1,7 @@
 package space.diomentia.ehzdiagnosticstracker
 
 import android.app.Activity
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import androidx.exifinterface.media.ExifInterface
+import space.diomentia.ehzdiagnosticstracker.ui.decodeScaledBitmap
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.LocalActivity
@@ -225,19 +222,7 @@ private fun PhotoConfirmScreen(
     onRetake: () -> Unit
 ) {
     val bitmap = remember(file) {
-        val raw = BitmapFactory.decodeFile(file.absolutePath) ?: return@remember null
-        val degrees = ExifInterface(file.absolutePath).getAttributeInt(
-            ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL
-        ).let {
-            when (it) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-                else -> 0f
-            }
-        }
-        if (degrees == 0f) raw
-        else Bitmap.createBitmap(raw, 0, 0, raw.width, raw.height, Matrix().apply { postRotate(degrees) }, true)
+        decodeScaledBitmap(file) ?: return@remember null
     }?.asImageBitmap()
 
     Scaffold(

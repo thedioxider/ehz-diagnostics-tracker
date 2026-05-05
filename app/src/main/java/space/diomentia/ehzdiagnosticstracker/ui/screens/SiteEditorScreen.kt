@@ -1,13 +1,10 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
+import space.diomentia.ehzdiagnosticstracker.ui.decodeScaledBitmap
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -368,12 +365,12 @@ private fun SitePreviewContent(
 
                     FieldType.Photo -> {
                         val bytes = remember(value) { Base64.decode(value, Base64.DEFAULT) }
-                        val pic: Bitmap? = remember(value) { decodeScaledFromBytes(bytes, 512) }
+                        val pic: Bitmap? = remember(value) { decodeScaledBitmap(bytes, 512) }
                         pic?.let {
                             ImageWithFullscreenView(
                                 thumbnail = it.asImageBitmap(),
                                 modifier = Modifier.fillMaxWidth(.3f),
-                                loadFullRes = { decodeScaledFromBytes(bytes, 1920)?.asImageBitmap() }
+                                loadFullRes = { decodeScaledBitmap(bytes, 1920)?.asImageBitmap() }
                             )
                         }
                     }
@@ -887,40 +884,6 @@ private fun FieldTextField(
 }
 
 
-private fun decodeScaledFromBytes(bytes: ByteArray, maxDimension: Int): Bitmap? {
-    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
-    var inSampleSize = 1
-    val maxSide = maxOf(opts.outWidth, opts.outHeight)
-    while (maxSide / inSampleSize > maxDimension) inSampleSize *= 2
-    opts.inSampleSize = inSampleSize
-    opts.inJustDecodeBounds = false
-    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
-}
-
-private fun loadScaledBitmap(context: Context, uri: Uri, maxDimension: Int = 1920): Bitmap? {
-    val degrees = context.contentResolver.openInputStream(uri)?.use { stream ->
-        ExifInterface(stream).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-    }.let {
-        when (it) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
-            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
-            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
-            else -> 0f
-        }
-    }
-    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
-    var inSampleSize = 1
-    val maxSide = maxOf(opts.outWidth, opts.outHeight)
-    while (maxSide / inSampleSize > maxDimension) inSampleSize *= 2
-    opts.inSampleSize = inSampleSize
-    opts.inJustDecodeBounds = false
-    val bitmap = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
-        ?: return null
-    return if (degrees == 0f) bitmap
-    else Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, Matrix().apply { postRotate(degrees) }, true)
-}
 
 @Composable
 private fun PhotoField(
@@ -934,7 +897,7 @@ private fun PhotoField(
     val bytes: ByteArray? = remember(value) {
         if (value.isBlank()) null else Base64.decode(value, Base64.DEFAULT)
     }
-    val pic: Bitmap? = remember(value) { bytes?.let { decodeScaledFromBytes(it, 512) } }
+    val pic: Bitmap? = remember(value) { bytes?.let { decodeScaledBitmap(it, 512) } }
     val picUri = remember {
         val dir = File(context.cacheDir, "images").also { if (!it.exists()) it.mkdirs() }
         FileProvider.getUriForFile(
@@ -948,7 +911,7 @@ private fun PhotoField(
         coroutineScope?.launch {
             try {
                 val encoded = withContext(Dispatchers.IO) {
-                    val bitmap = loadScaledBitmap(context, uri)
+                    val bitmap = decodeScaledBitmap(context, uri)
                         ?: throw IOException("Failed to decode bitmap")
                     ByteArrayOutputStream().use {
                         bitmap.compress(Bitmap.CompressFormat.WEBP, 80, it)
@@ -983,7 +946,7 @@ private fun PhotoField(
             ImageWithFullscreenView(
                 thumbnail = pic.asImageBitmap(),
                 modifier = Modifier.height(150.dp),
-                loadFullRes = bytes?.let { b -> { decodeScaledFromBytes(b, 1920)?.asImageBitmap() } }
+                loadFullRes = bytes?.let { b -> { decodeScaledBitmap(b, 1920)?.asImageBitmap() } }
             )
         }
     }
@@ -1059,7 +1022,7 @@ private fun PhotoField(
                     thumbnail = it.asImageBitmap(),
                     onLongClick = { deletePhotoDialog = true },
                     modifier = Modifier.height(150.dp),
-                    loadFullRes = bytes?.let { b -> { decodeScaledFromBytes(b, 1920)?.asImageBitmap() } }
+                    loadFullRes = bytes?.let { b -> { decodeScaledBitmap(b, 1920)?.asImageBitmap() } }
                 )
             }
         }
