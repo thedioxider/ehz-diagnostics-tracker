@@ -4,12 +4,10 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
-import space.diomentia.ehzdiagnosticstracker.ui.decodeScaledBitmap
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,6 +33,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -73,16 +72,15 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import space.diomentia.ehzdiagnosticstracker.BuildConfig
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ScanIdQrActivity
-import space.diomentia.ehzdiagnosticstracker.askCameraPermissions
-import space.diomentia.ehzdiagnosticstracker.checkCameraPermissions
+import space.diomentia.ehzdiagnosticstracker.TakePhotoActivity
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FieldSpec
@@ -108,7 +106,6 @@ import space.diomentia.ehzdiagnosticstracker.ui.ImageWithFullscreenView
 import space.diomentia.ehzdiagnosticstracker.ui.LocationField
 import space.diomentia.ehzdiagnosticstracker.ui.LocationIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
-import space.diomentia.ehzdiagnosticstracker.TakePhotoActivity
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
@@ -116,11 +113,11 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.TemplateChooserDialog
 import space.diomentia.ehzdiagnosticstracker.ui.TextFieldWithLabel
+import space.diomentia.ehzdiagnosticstracker.ui.decodeScaledBitmap
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.text.DecimalFormat
 import java.time.Instant
@@ -884,7 +881,6 @@ private fun FieldTextField(
 }
 
 
-
 @Composable
 private fun PhotoField(
     value: String,
@@ -1022,7 +1018,14 @@ private fun PhotoField(
                     thumbnail = it.asImageBitmap(),
                     onLongClick = { deletePhotoDialog = true },
                     modifier = Modifier.height(150.dp),
-                    loadFullRes = bytes?.let { b -> { decodeScaledBitmap(b, 1920)?.asImageBitmap() } }
+                    loadFullRes = bytes?.let { b ->
+                        {
+                            decodeScaledBitmap(
+                                b,
+                                1920
+                            )?.asImageBitmap()
+                        }
+                    }
                 )
             }
         }

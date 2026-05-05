@@ -2,7 +2,6 @@ package space.diomentia.ehzdiagnosticstracker.ui
 
 import android.util.Log
 import android.view.ViewGroup
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.core.UseCase
@@ -34,7 +33,7 @@ fun CameraPreview(
         factory = { ctx ->
             PreviewView(ctx).apply {
                 scaleType = if (aspectRatio != null) PreviewView.ScaleType.FIT_CENTER
-                            else PreviewView.ScaleType.FILL_CENTER
+                else PreviewView.ScaleType.FILL_CENTER
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT

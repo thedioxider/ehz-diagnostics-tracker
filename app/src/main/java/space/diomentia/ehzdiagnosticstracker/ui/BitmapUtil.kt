@@ -18,7 +18,15 @@ private fun exifDegrees(exif: ExifInterface): Float =
 
 private fun rotate(bitmap: Bitmap, degrees: Float): Bitmap =
     if (degrees == 0f) bitmap
-    else Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, Matrix().apply { postRotate(degrees) }, true)
+    else Bitmap.createBitmap(
+        bitmap,
+        0,
+        0,
+        bitmap.width,
+        bitmap.height,
+        Matrix().apply { postRotate(degrees) },
+        true
+    )
 
 private fun sampleSize(width: Int, height: Int, maxDimension: Int): Int {
     var n = 1
@@ -28,12 +36,14 @@ private fun sampleSize(width: Int, height: Int, maxDimension: Int): Int {
 
 /** Decode from a content URI, applying EXIF rotation. */
 fun decodeScaledBitmap(context: Context, uri: Uri, maxDimension: Int = 1920): Bitmap? {
-    val degrees = context.contentResolver.openInputStream(uri)?.use { exifDegrees(ExifInterface(it)) } ?: 0f
+    val degrees =
+        context.contentResolver.openInputStream(uri)?.use { exifDegrees(ExifInterface(it)) } ?: 0f
     val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
     opts.inSampleSize = sampleSize(opts.outWidth, opts.outHeight, maxDimension)
     opts.inJustDecodeBounds = false
-    val bitmap = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) } ?: return null
+    val bitmap = context.contentResolver.openInputStream(uri)
+        ?.use { BitmapFactory.decodeStream(it, null, opts) } ?: return null
     return rotate(bitmap, degrees)
 }
 

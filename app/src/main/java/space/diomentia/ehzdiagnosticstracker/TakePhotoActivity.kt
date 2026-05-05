@@ -1,7 +1,6 @@
 package space.diomentia.ehzdiagnosticstracker
 
 import android.app.Activity
-import space.diomentia.ehzdiagnosticstracker.ui.decodeScaledBitmap
 import android.net.Uri
 import android.os.Build
 import androidx.activity.compose.LocalActivity
@@ -20,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -46,6 +44,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.CameraPreview
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmOutlinedButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
+import space.diomentia.ehzdiagnosticstracker.ui.decodeScaledBitmap
 import java.io.File
 import java.io.IOException
 
@@ -79,7 +78,8 @@ private fun TakePhotoScreen() {
         activity?.intent?.getParcelableExtra(TakePhotoActivity.EXTRA_OUTPUT)
 
     @Suppress("DEPRECATION")
-    val imageCapture = remember { ImageCapture.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3).build() }
+    val imageCapture =
+        remember { ImageCapture.Builder().setTargetAspectRatio(AspectRatio.RATIO_4_3).build() }
     var capturedFile by remember { mutableStateOf<File?>(null) }
 
     val onError = {

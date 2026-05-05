@@ -120,7 +120,11 @@ data class Section(
     val routeId: String
 ) {
     @Composable
-    fun displayName(): String = stringResource(R.string.section_display_name, DecimalFormat("#.##").format(beginKm), DecimalFormat("#.##").format(endKm))
+    fun displayName(): String = stringResource(
+        R.string.section_display_name,
+        DecimalFormat("#.##").format(beginKm),
+        DecimalFormat("#.##").format(endKm)
+    )
 
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)
