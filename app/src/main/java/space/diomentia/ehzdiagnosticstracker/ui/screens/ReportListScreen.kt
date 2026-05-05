@@ -11,8 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -28,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -59,8 +58,7 @@ fun ReportListScreen(
     routeId: String? = null,
     sectionId: String? = null,
     onOpenReport: (reportId: String) -> Unit,
-    onBack: () -> Unit,
-    homeNav: Boolean = false
+    onBack: () -> Unit
 ) {
     val dao = ReportDatabase.getInstance().reportDao()
     val reports by when {
@@ -74,8 +72,7 @@ fun ReportListScreen(
         title = stringResource(R.string.report_list),
         onOpenReport = onOpenReport,
         onDeleteReports = { dao.deleteReportsByIds(it) },
-        onBack = onBack,
-        homeNav = homeNav
+        onBack = onBack
     )
 }
 
@@ -86,7 +83,6 @@ internal fun ReportListContent(
     onOpenReport: ((reportId: String) -> Unit)?,
     onDeleteReports: ((List<String>) -> Unit)?,
     onBack: () -> Unit,
-    homeNav: Boolean,
     alwaysShowCheckboxes: Boolean = false,
     topBanner: (@Composable () -> Unit)? = null,
     syncStatusContent: (@Composable (reportId: String) -> Unit)? = null,
@@ -120,9 +116,8 @@ internal fun ReportListContent(
             PtmBottomBar(
                 navigation = {
                     ActionButton(
-                        icon = if (homeNav) rememberVectorPainter(Icons.Outlined.Home)
-                        else painterResource(R.drawable.ic_list_alt),
-                        label = stringResource(if (homeNav) R.string.home else R.string.back)
+                        icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                        label = stringResource(R.string.back)
                     ) { onBack() }
                 },
                 actions = if (checkedReports.isNotEmpty()) { ->
@@ -277,7 +272,6 @@ private fun ReportListPreview() {
             onOpenReport = {},
             onDeleteReports = {},
             onBack = {},
-            homeNav = true
         )
     }
 }
@@ -292,7 +286,6 @@ private fun ReportListEmptyPreview() {
             onOpenReport = {},
             onDeleteReports = {},
             onBack = {},
-            homeNav = false
         )
     }
 }

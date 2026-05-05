@@ -52,12 +52,12 @@ import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.distanceKmTo
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.LocationField
-import space.diomentia.ehzdiagnosticstracker.ui.TextFieldWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
+import space.diomentia.ehzdiagnosticstracker.ui.TextFieldWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable

@@ -156,7 +156,6 @@ fun SyncScreen(onBack: () -> Unit, onSettings: () -> Unit) {
         onOpenReport = null,
         onDeleteReports = null,
         onBack = onBack,
-        homeNav = true,
         alwaysShowCheckboxes = true,
         topBanner = syncBanner?.let { banner -> { SyncBannerCard(banner, onSettings) } },
         syncStatusContent = { id ->
@@ -247,7 +246,6 @@ private fun SyncScreenPreview() = PtmTheme {
         title = "Экспорт отчётов",
         onOpenReport = null,
         onDeleteReports = null,
-        onBack = {},
-        homeNav = true
+        onBack = {}
     )
 }

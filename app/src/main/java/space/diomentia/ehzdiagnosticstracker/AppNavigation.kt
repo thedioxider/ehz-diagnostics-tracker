@@ -320,14 +320,11 @@ fun AppNavigation() {
                     ?.takeIf { it.isNotEmpty() }
                 val sectionId = backStackEntry.arguments?.getString(Screen.ARG_SECTION_ID)
                     ?.takeIf { it.isNotEmpty() }
-                val fromHome =
-                    navController.previousBackStackEntry?.destination?.route == Screen.Home.route
                 ReportListScreen(
                     routeId = routeId,
                     sectionId = sectionId,
                     onOpenReport = { reportId -> navController.navigate(Screen.Report.open(reportId)) },
-                    onBack = { navController.popBackStack() },
-                    homeNav = fromHome
+                    onBack = { navController.popBackStack() }
                 )
             }
         }
