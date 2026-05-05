@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -68,7 +69,7 @@ import java.util.UUID
 
 @Composable
 fun RouteSelectionScreen(
-    onAuthorize: () -> Unit,
+    onBack: () -> Unit,
     onSectionChosen: (String, String) -> Unit,  // (RouteId, SectionId) -> Unit
     onHistory: (routeId: String?, sectionId: String?) -> Unit
 ) {
@@ -150,10 +151,10 @@ fun RouteSelectionScreen(
             PtmBottomBar(
                 navigation = {
                     ActionButton(
-                        painterResource(R.drawable.ic_person),
-                        label = stringResource(R.string.authorization)
+                        icon = rememberVectorPainter(Icons.AutoMirrored.Outlined.ArrowBack),
+                        label = stringResource(R.string.back)
                     ) {
-                        onAuthorize()
+                        onBack()
                     }
                 }
             )

@@ -168,11 +168,7 @@ fun AppNavigation() {
 
             composable(Screen.RouteSelection.route) {
                 RouteSelectionScreen(
-                    onAuthorize = {
-                        navController.navigate(Screen.Authorization.route) {
-                            launchSingleTop = true
-                        }
-                    },
+                    onBack = { navController.popBackStack() },
                     onSectionChosen = { routeId, sectionId ->
                         if (sessionManager.profile == null) {
                             snackbarHostState.currentSnackbarData?.dismiss()
@@ -227,19 +223,10 @@ fun AppNavigation() {
                             popUpTo(Screen.Home.route) { inclusive = true }
                         }
                     },
-                    onAuthorize = {
-                        navController.popBackStack()
-                        navController.navigate(Screen.Authorization.route) {
-                            launchSingleTop = true
+                    onHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
                         }
-                        sessionManager.leaveSession()
-                    },
-                    onChooseRoute = {
-                        navController.popBackStack()
-                        navController.navigate(Screen.RouteSelection.route) {
-                            launchSingleTop = true
-                        }
-                        sessionManager.leaveSession()
                     },
                 )
             }
