@@ -529,14 +529,14 @@ private fun RouteDialog(
                 routeDao.insertRoute(
                     Route(
                         id = v[R.string.registration_number]!!,
-                        name = v[R.string.name]!!,
+                        name = v[R.string.name]!!.trim(),
                         lengthKm = v[R.string.route_length_km]!!.toInt()
                     )
                 )
             } else {
                 routeDao.updateRoute(
                     route.copy(
-                        name = v[R.string.name]!!,
+                        name = v[R.string.name]!!.trim(),
                         lengthKm = v[R.string.route_length_km]!!.toInt()
                     )
                 )

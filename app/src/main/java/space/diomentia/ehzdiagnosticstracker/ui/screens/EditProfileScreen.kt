@@ -215,8 +215,8 @@ fun EditProfileScreen(
                 ) {
                     PtmFilledButton(
                         onClick = {
-                            val name = nameInput
-                            val surname = surnameInput
+                            val name = nameInput.trim()
+                            val surname = surnameInput.trim()
                             if (!Profile.checkName(name).also { nameError = !it } ||
                                 !Profile.checkSurname(surname).also { surnameError = !it }
                             )
