@@ -211,7 +211,7 @@ private fun SiteItem(
                 Text(
                     when {
                         site.name.isNotBlank() && site.positionKm != null ->
-                            "%s [%.1f км]".format(site.name, site.positionKm)
+                            "%.1f км: %s".format(site.positionKm, site.name)
 
                         site.name.isNotBlank() -> site.name
                         site.positionKm != null -> "%.1f км".format(site.positionKm)
