@@ -95,6 +95,7 @@ import space.diomentia.ehzdiagnosticstracker.data.ReportTemplate
 import space.diomentia.ehzdiagnosticstracker.data.SessionManager
 import space.diomentia.ehzdiagnosticstracker.data.Site
 import space.diomentia.ehzdiagnosticstracker.data.SiteWithFields
+import space.diomentia.ehzdiagnosticstracker.data.NAME_ALLOWED_SPECIAL_CHARS
 import space.diomentia.ehzdiagnosticstracker.data.distanceKmTo
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
@@ -424,7 +425,7 @@ private fun SiteEditContent(
     // Name (optional)
     TextFieldWithLabel(
         value = editState.name,
-        onValueChange = { editState.name = it },
+        onValueChange = { editState.name = it.filter { c -> c.isLetterOrDigit() || c in NAME_ALLOWED_SPECIAL_CHARS } },
         label = {
             Text("${stringResource(R.string.site_name)} (${stringResource(R.string.optional)})")
         },

@@ -75,6 +75,8 @@ abstract class ReportDatabase : RoomDatabase() {
     }
 }
 
+const val NAME_ALLOWED_SPECIAL_CHARS = " ,.;:()-/"
+
 @Serializable
 @Entity(tableName = "routes")
 data class Route(
@@ -88,7 +90,7 @@ data class Route(
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)
         fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in " ,.;:()-" }
+            name.all { c -> c.isLetterOrDigit() || c in NAME_ALLOWED_SPECIAL_CHARS }
     }
 }
 
