@@ -128,7 +128,8 @@ fun LocationSiteEditorScreen(
                     },
                     label = {
                         Text("${stringResource(R.string.site_name)} (${stringResource(R.string.optional)})")
-                    }
+                    },
+                    placeholderText = stringResource(R.string.site_name_placeholder)
                 )
                 Spacer(Modifier.height(24.dp))
             }

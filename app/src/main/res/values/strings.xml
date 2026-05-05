@@ -136,6 +136,7 @@
     <string name="zero_km">Нулевой километр</string>
     <string name="measurement_site">Точка диагностирования</string>
     <string name="site_name">Название</string>
+    <string name="site_name_placeholder">Без названия</string>
     <string name="optional">необязательно</string>
     <string name="position">Позиция</string>
     <string name="position_km">Позиция, км</string>
