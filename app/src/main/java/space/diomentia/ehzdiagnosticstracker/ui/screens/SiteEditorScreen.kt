@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
@@ -894,7 +895,9 @@ private fun PhotoField(
         if (value.isBlank()) null else Base64.decode(value, Base64.DEFAULT)
     }
     val pic: Bitmap? = remember(value) { bytes?.let { decodeScaledBitmap(it, 512) } }
+    val inPreview = LocalInspectionMode.current
     val picUri = remember {
+        if (inPreview) return@remember Uri.EMPTY
         val dir = File(context.cacheDir, "images").also { if (!it.exists()) it.mkdirs() }
         FileProvider.getUriForFile(
             context,
@@ -982,28 +985,13 @@ private fun PhotoField(
                 onClick = {
                     galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 },
-                modifier = Modifier.fillMaxHeight()
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(52.dp)
             ) {
                 Icon(
                     Icons.Outlined.PhotoLibrary,
                     contentDescription = stringResource(R.string.pick_from_gallery)
-                )
-            }
-            Surface(
-                color = if (value.isNotBlank()) MaterialTheme.colorScheme.primary
-                else Color.Gray,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(start = 8.dp)
-            ) {
-                Icon(
-                    if (value.isNotBlank()) Icons.Outlined.Check
-                    else Icons.Outlined.Close,
-                    tint = MaterialTheme.colorScheme.background,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .padding(8.dp)
                 )
             }
         }
@@ -1157,6 +1145,7 @@ private val previewSite = Site(
 private val previewFields = listOf(
     ReportField("preview", "voltage", "Напряжение", "decimal", "В", "1.25"),
     ReportField("preview", "current", "Ток", "decimal", "А", ""),
+    ReportField("preview", "photo", "Фото", "photo"),
     ReportField("preview", "corrosion", "Наличие коррозии", "bool", null, "true"),
     ReportField("preview", "note", "Примечание", "text", null, "Без замечаний")
 )
