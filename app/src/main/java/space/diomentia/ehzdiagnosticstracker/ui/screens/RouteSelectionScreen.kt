@@ -53,6 +53,7 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.Route
 import space.diomentia.ehzdiagnosticstracker.data.Section
+import java.text.DecimalFormat
 import space.diomentia.ehzdiagnosticstracker.ui.ActionButton
 import space.diomentia.ehzdiagnosticstracker.ui.ActionCancelDialog
 import space.diomentia.ehzdiagnosticstracker.ui.DeleteDialog
@@ -472,7 +473,7 @@ private fun RouteItem(
                 style = MaterialTheme.typography.titleLarge
             )
             Text(
-                "${route.lengthKm} ${stringResource(R.string.km)}",
+                "${DecimalFormat("#.##").format(route.lengthKm)} ${stringResource(R.string.km)}",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.alpha(.5f)
             )
@@ -518,10 +519,11 @@ private fun RouteDialog(
             ),
             R.string.route_length_km to DialogField(
                 stringResource(R.string.route_length_km),
-                checker = { it.isDigitsOnly() },
+                checker = { it.replace(',', '.').toDoubleOrNull() != null },
+                keyboardType = KeyboardType.Decimal,
                 allowUnchecked = false,
                 nullable = false,
-                initValue = route?.lengthKm?.toString()
+                initValue = route?.lengthKm?.let { DecimalFormat("#.##").format(it) }
             )
         ),
         onAction = { v ->
@@ -530,14 +532,14 @@ private fun RouteDialog(
                     Route(
                         id = v[R.string.registration_number]!!,
                         name = v[R.string.name]!!.trim(),
-                        lengthKm = v[R.string.route_length_km]!!.toInt()
+                        lengthKm = v[R.string.route_length_km]!!.replace(',', '.').toDouble()
                     )
                 )
             } else {
                 routeDao.updateRoute(
                     route.copy(
                         name = v[R.string.name]!!.trim(),
-                        lengthKm = v[R.string.route_length_km]!!.toInt()
+                        lengthKm = v[R.string.route_length_km]!!.replace(',', '.').toDouble()
                     )
                 )
             }
@@ -586,16 +588,16 @@ private fun SectionDialog(
             ),
             R.string.section_begin_km to DialogField(
                 stringResource(R.string.section_begin_km),
-                checker = { it.isDigitsOnly() },
+                checker = { it.replace(',', '.').toDoubleOrNull() != null },
                 keyboardType = KeyboardType.Decimal,
-                initValue = section?.beginKm?.toString(),
+                initValue = section?.beginKm?.let { DecimalFormat("#.##").format(it) },
                 allowUnchecked = false
             ),
             R.string.section_end_km to DialogField(
                 stringResource(R.string.section_end_km),
-                checker = { it.isDigitsOnly() },
+                checker = { it.replace(',', '.').toDoubleOrNull() != null },
                 keyboardType = KeyboardType.Decimal,
-                initValue = section?.endKm?.toString(),
+                initValue = section?.endKm?.let { DecimalFormat("#.##").format(it) },
                 allowUnchecked = false
             )
         ),
@@ -605,8 +607,8 @@ private fun SectionDialog(
                     .insertSection(
                         Section(
                             id = v[R.string.registration_number]!!,
-                            beginKm = v[R.string.section_begin_km]!!.toInt(),
-                            endKm = v[R.string.section_end_km]!!.toInt(),
+                            beginKm = v[R.string.section_begin_km]!!.replace(',', '.').toDouble(),
+                            endKm = v[R.string.section_end_km]!!.replace(',', '.').toDouble(),
                             routeId = routeId
                         )
                     )
@@ -614,8 +616,8 @@ private fun SectionDialog(
                 ReportDatabase.getInstance(context).routeDao()
                     .updateSection(
                         section.copy(
-                            beginKm = v[R.string.section_begin_km]!!.toInt(),
-                            endKm = v[R.string.section_end_km]!!.toInt()
+                            beginKm = v[R.string.section_begin_km]!!.replace(',', '.').toDouble(),
+                            endKm = v[R.string.section_end_km]!!.replace(',', '.').toDouble()
                         )
                     )
             }

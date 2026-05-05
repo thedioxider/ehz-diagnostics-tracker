@@ -184,7 +184,7 @@
     <string name="login_required">Необходимо авторизоваться</string>
     <string name="add_object">Добавить объект</string>
     <string name="add_section">Добавить участок</string>
-    <string name="section_display_name">%1$d - %2$d км</string>
+    <string name="section_display_name">%1$s - %2$s км</string>
     <string name="section_begin_km">Начало участка, км</string>
     <string name="section_end_km">Конец участка, км</string>
     <string name="route_length_km">Протяжённость, км</string>

@@ -27,10 +27,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import space.diomentia.ehzdiagnosticstracker.R
+import java.text.DecimalFormat
 import java.time.Instant
 
 @Database(
-    version = 19,
+    version = 20,
     entities = [
         Route::class,
         Section::class,
@@ -57,6 +58,18 @@ abstract class ReportDatabase : RoomDatabase() {
             db.execSQL("UPDATE report_fields SET type = LOWER(type)")
         }
 
+        private val MIGRATION_19_20 = Migration(19, 20) { db ->
+            db.execSQL("CREATE TABLE `routes_new` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `length_km` REAL NOT NULL, PRIMARY KEY(`id`))")
+            db.execSQL("INSERT INTO `routes_new` SELECT `id`, `name`, CAST(`length_km` AS REAL) FROM `routes`")
+            db.execSQL("DROP TABLE `routes`")
+            db.execSQL("ALTER TABLE `routes_new` RENAME TO `routes`")
+
+            db.execSQL("CREATE TABLE `sections_new` (`id` TEXT NOT NULL, `begin_km` REAL NOT NULL, `end_km` REAL NOT NULL, `route_id` TEXT NOT NULL, PRIMARY KEY(`id`))")
+            db.execSQL("INSERT INTO `sections_new` SELECT `id`, CAST(`begin_km` AS REAL), CAST(`end_km` AS REAL), `route_id` FROM `sections`")
+            db.execSQL("DROP TABLE `sections`")
+            db.execSQL("ALTER TABLE `sections_new` RENAME TO `sections`")
+        }
+
         @Volatile
         private var INSTANCE: ReportDatabase? = null
 
@@ -65,7 +78,7 @@ abstract class ReportDatabase : RoomDatabase() {
                 .databaseBuilder(context, ReportDatabase::class.java, DB_NAME)
                 // TODO: get rid of this crutch
                 .allowMainThreadQueries()
-                .addMigrations(MIGRATION_17_18)
+                .addMigrations(MIGRATION_17_18, MIGRATION_19_20)
                 .fallbackToDestructiveMigrationFrom(true, *(1..16).toList().toIntArray())
                 .build()
         }
@@ -85,7 +98,7 @@ data class Route(
     @ColumnInfo(name = "name") @SerialName("name")
     val name: String,
     @ColumnInfo(name = "length_km") @SerialName("length_km")
-    val lengthKm: Int
+    val lengthKm: Double
 ) {
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)
@@ -100,14 +113,14 @@ data class Section(
     @PrimaryKey @ColumnInfo(name = "id") @SerialName("id")
     val id: String,
     @ColumnInfo(name = "begin_km") @SerialName("begin_km")
-    val beginKm: Int,
+    val beginKm: Double,
     @ColumnInfo(name = "end_km") @SerialName("end_km")
-    val endKm: Int,
+    val endKm: Double,
     @ColumnInfo(name = "route_id") @SerialName("route_id")
     val routeId: String
 ) {
     @Composable
-    fun displayName(): String = stringResource(R.string.section_display_name, beginKm, endKm)
+    fun displayName(): String = stringResource(R.string.section_display_name, DecimalFormat("#.##").format(beginKm), DecimalFormat("#.##").format(endKm))
 
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)

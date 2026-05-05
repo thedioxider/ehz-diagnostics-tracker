@@ -18,14 +18,14 @@ data class ReportDto(
 data class RouteDto(
     val id: String,
     val name: String,
-    @SerialName("length_km") val lengthKm: Int
+    @SerialName("length_km") val lengthKm: Double
 )
 
 @Serializable
 data class SectionDto(
     val id: String,
-    @SerialName("begin_km") val beginKm: Int,
-    @SerialName("end_km") val endKm: Int
+    @SerialName("begin_km") val beginKm: Double,
+    @SerialName("end_km") val endKm: Double
 )
 
 @Serializable
