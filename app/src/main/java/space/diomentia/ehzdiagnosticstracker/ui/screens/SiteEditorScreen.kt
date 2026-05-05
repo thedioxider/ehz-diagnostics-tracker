@@ -3,10 +3,10 @@ package space.diomentia.ehzdiagnosticstracker.ui.screens
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.provider.MediaStore
+import android.net.Uri
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -75,11 +76,11 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import space.diomentia.ehzdiagnosticstracker.BuildConfig
 import space.diomentia.ehzdiagnosticstracker.R
 import space.diomentia.ehzdiagnosticstracker.ScanIdQrActivity
-import space.diomentia.ehzdiagnosticstracker.askCameraPermissions
-import space.diomentia.ehzdiagnosticstracker.checkCameraPermissions
+import space.diomentia.ehzdiagnosticstracker.TakePhotoActivity
 import space.diomentia.ehzdiagnosticstracker.data.AppState
 import space.diomentia.ehzdiagnosticstracker.data.Coordinates
 import space.diomentia.ehzdiagnosticstracker.data.FieldSpec
@@ -112,11 +113,11 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.TemplateChooserDialog
 import space.diomentia.ehzdiagnosticstracker.ui.TextFieldWithLabel
+import space.diomentia.ehzdiagnosticstracker.ui.decodeScaledBitmap
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.IOException
 import java.text.DecimalFormat
 import java.time.Instant
@@ -360,15 +361,15 @@ private fun SitePreviewContent(
                     }
 
                     FieldType.Photo -> {
-                        val pic: Bitmap = remember(value) {
-                            Base64.decode(value, Base64.DEFAULT).let {
-                                BitmapFactory.decodeByteArray(it, 0, it.size)
-                            }
+                        val bytes = remember(value) { Base64.decode(value, Base64.DEFAULT) }
+                        val pic: Bitmap? = remember(value) { decodeScaledBitmap(bytes, 512) }
+                        pic?.let {
+                            ImageWithFullscreenView(
+                                thumbnail = it.asImageBitmap(),
+                                modifier = Modifier.fillMaxWidth(.3f),
+                                loadFullRes = { decodeScaledBitmap(bytes, 1920)?.asImageBitmap() }
+                            )
                         }
-                        ImageWithFullscreenView(
-                            pic.asImageBitmap(),
-                            modifier = Modifier.fillMaxWidth(.3f)
-                        )
                     }
                 }
             }
@@ -879,6 +880,7 @@ private fun FieldTextField(
     }
 }
 
+
 @Composable
 private fun PhotoField(
     value: String,
@@ -888,53 +890,46 @@ private fun PhotoField(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
-    var cameraPermission: Boolean? by remember { mutableStateOf(context.checkCameraPermissions()) }
-    if (cameraPermission == false)
-        cameraPermission = askCameraPermissions {
-            cameraPermission = null
-            coroutineScope?.launch {
-                snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar(context.getString(R.string.unable_access_camera))
-            }
-        }
-
-    val pic: Bitmap? = remember(value) {
-        if (value.isBlank()) null
-        else Base64.decode(value, Base64.DEFAULT).let {
-            BitmapFactory.decodeByteArray(it, 0, it.size)
-        }
+    val bytes: ByteArray? = remember(value) {
+        if (value.isBlank()) null else Base64.decode(value, Base64.DEFAULT)
     }
-    val picStorage = remember {
-        File(context.cacheDir, "images").also { if (!it.exists()) it.mkdirs() }
-    }
+    val pic: Bitmap? = remember(value) { bytes?.let { decodeScaledBitmap(it, 512) } }
     val picUri = remember {
+        val dir = File(context.cacheDir, "images").also { if (!it.exists()) it.mkdirs() }
         FileProvider.getUriForFile(
             context,
             BuildConfig.APPLICATION_ID,
-            File.createTempFile("FIELD_PHOTO", ".png", picStorage)
+            File.createTempFile("FIELD_PHOTO", ".png", dir)
         )
     }
-    val photoLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (!success) return@rememberLauncherForActivityResult
-        try {
-            @Suppress("DEPRECATION")
-            val bitmap = MediaStore.Images.Media
-                .getBitmap(context.contentResolver, picUri)
-            ByteArrayOutputStream().use {
-                bitmap.compress(Bitmap.CompressFormat.WEBP, 80, it)
-                onValueChange(Base64.encodeToString(it.toByteArray(), Base64.DEFAULT))
-            }
-        } catch (e: Exception) {
-            when (e) {
-                is FileNotFoundException, is IOException -> coroutineScope?.launch {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(context.getString(R.string.something_wrong))
+
+    val processUri: (Uri) -> Unit = { uri ->
+        coroutineScope?.launch {
+            try {
+                val encoded = withContext(Dispatchers.IO) {
+                    val bitmap = decodeScaledBitmap(context, uri)
+                        ?: throw IOException("Failed to decode bitmap")
+                    ByteArrayOutputStream().use {
+                        bitmap.compress(Bitmap.CompressFormat.WEBP, 80, it)
+                        Base64.encodeToString(it.toByteArray(), Base64.DEFAULT)
+                    }
                 }
+                onValueChange(encoded)
+            } catch (e: IOException) {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(context.getString(R.string.something_wrong))
             }
         }
     }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) processUri(picUri)
+    }
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri -> if (uri != null) processUri(uri) }
 
     var deletePhotoDialog by remember(pic) { mutableStateOf(false) }
     if (deletePhotoDialog && pic != null) {
@@ -945,8 +940,9 @@ private fun PhotoField(
             label = { Text(stringResource(R.string.delete_photo)) }
         ) {
             ImageWithFullscreenView(
-                pic.asImageBitmap(),
-                modifier = Modifier.height(150.dp)
+                thumbnail = pic.asImageBitmap(),
+                modifier = Modifier.height(150.dp),
+                loadFullRes = bytes?.let { b -> { decodeScaledBitmap(b, 1920)?.asImageBitmap() } }
             )
         }
     }
@@ -962,10 +958,12 @@ private fun PhotoField(
                 .height(IntrinsicSize.Min)
         ) {
             PtmFilledButton(
-                onClick = if (cameraPermission == true)
-                    { -> photoLauncher.launch(picUri) }
-                else
-                    { -> cameraPermission = context.checkCameraPermissions() },
+                onClick = {
+                    cameraLauncher.launch(
+                        Intent(context, TakePhotoActivity::class.java)
+                            .putExtra(TakePhotoActivity.EXTRA_OUTPUT, picUri)
+                    )
+                },
                 modifier = Modifier
                     .weight(1f, fill = true)
                     .fillMaxHeight()
@@ -979,6 +977,17 @@ private fun PhotoField(
                     modifier = Modifier.padding(end = 4.dp)
                 )
                 Text(label)
+            }
+            PtmFilledIconButton(
+                onClick = {
+                    galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                modifier = Modifier.fillMaxHeight()
+            ) {
+                Icon(
+                    Icons.Outlined.PhotoLibrary,
+                    contentDescription = stringResource(R.string.pick_from_gallery)
+                )
             }
             Surface(
                 color = if (value.isNotBlank()) MaterialTheme.colorScheme.primary
@@ -1006,10 +1015,17 @@ private fun PhotoField(
                 @Suppress("DEPRECATION")
                 Icon(Icons.Outlined.KeyboardArrowRight, contentDescription = "")
                 ImageWithFullscreenView(
-                    it.asImageBitmap(),
+                    thumbnail = it.asImageBitmap(),
                     onLongClick = { deletePhotoDialog = true },
-                    modifier = Modifier
-                        .height(150.dp)
+                    modifier = Modifier.height(150.dp),
+                    loadFullRes = bytes?.let { b ->
+                        {
+                            decodeScaledBitmap(
+                                b,
+                                1920
+                            )?.asImageBitmap()
+                        }
+                    }
                 )
             }
         }

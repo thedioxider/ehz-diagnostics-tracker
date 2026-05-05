@@ -39,8 +39,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -164,16 +166,25 @@ private fun coerceOffset(
 
 @Composable
 fun ImageWithFullscreenView(
-    bitmap: ImageBitmap,
+    thumbnail: ImageBitmap,
     modifier: Modifier = Modifier,
-    onLongClick: (() -> Unit)? = null
+    onLongClick: (() -> Unit)? = null,
+    loadFullRes: (suspend () -> ImageBitmap?)? = null
 ) {
     var fullView by remember { mutableStateOf(false) }
-    if (fullView) FullScreenImageDialog(bitmap) { fullView = false }
+    var fullResState by remember(thumbnail) { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(fullView) {
+        if (fullView && loadFullRes != null && fullResState == null) {
+            fullResState = withContext(Dispatchers.IO) { loadFullRes() } ?: thumbnail
+        }
+    }
+
+    if (fullView) FullScreenImageDialog(fullResState ?: thumbnail) { fullView = false }
 
     @OptIn(ExperimentalFoundationApi::class)
     Image(
-        bitmap,
+        thumbnail,
         contentDescription = "",
         modifier = Modifier
             .combinedClickable(

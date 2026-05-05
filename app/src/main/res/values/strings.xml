@@ -130,8 +130,11 @@
     <string name="export">Экспортировать</string>
     <string name="make_photo">Сделать снимок</string>
     <string name="change_photo">Заменить снимок</string>
+    <string name="use_photo">Использовать фото</string>
+    <string name="retake">Переснять</string>
     <string name="image">Изображение</string>
     <string name="unable_access_camera">Не удалось получить доступ к камере</string>
+    <string name="pick_from_gallery">Из галереи</string>
     <string name="location_site">Точка местоположения</string>
     <string name="zero_km">Нулевой километр</string>
     <string name="measurement_site">Точка диагностирования</string>
@@ -184,7 +187,7 @@
     <string name="login_required">Необходимо авторизоваться</string>
     <string name="add_object">Добавить объект</string>
     <string name="add_section">Добавить участок</string>
-    <string name="section_display_name">%1$d - %2$d км</string>
+    <string name="section_display_name">%1$s - %2$s км</string>
     <string name="section_begin_km">Начало участка, км</string>
     <string name="section_end_km">Конец участка, км</string>
     <string name="route_length_km">Протяжённость, км</string>

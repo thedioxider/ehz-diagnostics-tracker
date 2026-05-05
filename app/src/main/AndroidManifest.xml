@@ -38,6 +38,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ScanIdQrActivity" />
+        <activity android:name=".TakePhotoActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -407,8 +407,8 @@ private val previewReport = FullReport(
         inspectorName = "Иванов И.И.",
         startTime = Instant.ofEpochSecond(1700000000)
     ),
-    route = Route("route1", "Газопровод Тест", 42),
-    section = Section("section1", 0, 10, "route1"),
+    route = Route("route1", "Газопровод Тест", 42.0),
+    section = Section("section1", 0.0, 10.0, "route1"),
     sites = listOf(
         SiteWithFields(
             info = Site(
