@@ -1,13 +1,18 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.provider.MediaStore
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
+import android.net.Uri
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -71,6 +76,7 @@ import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -105,6 +111,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.ImageWithFullscreenView
 import space.diomentia.ehzdiagnosticstracker.ui.LocationField
 import space.diomentia.ehzdiagnosticstracker.ui.LocationIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmBottomBar
+import space.diomentia.ehzdiagnosticstracker.TakePhotoActivity
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledIconButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
@@ -879,6 +886,31 @@ private fun FieldTextField(
     }
 }
 
+
+private fun loadScaledBitmap(context: Context, uri: Uri, maxDimension: Int = 1920): Bitmap? {
+    val degrees = context.contentResolver.openInputStream(uri)?.use { stream ->
+        ExifInterface(stream).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+    }.let {
+        when (it) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+    }
+    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+    var inSampleSize = 1
+    val maxSide = maxOf(opts.outWidth, opts.outHeight)
+    while (maxSide / inSampleSize > maxDimension) inSampleSize *= 2
+    opts.inSampleSize = inSampleSize
+    opts.inJustDecodeBounds = false
+    val bitmap = context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+        ?: return null
+    return if (degrees == 0f) bitmap
+    else Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, Matrix().apply { postRotate(degrees) }, true)
+}
+
 @Composable
 private fun PhotoField(
     value: String,
@@ -888,53 +920,48 @@ private fun PhotoField(
     val coroutineScope = LocalCoroutineScope.current
     val snackbarHostState = LocalSnackbarHostState.current
 
-    var cameraPermission: Boolean? by remember { mutableStateOf(context.checkCameraPermissions()) }
-    if (cameraPermission == false)
-        cameraPermission = askCameraPermissions {
-            cameraPermission = null
-            coroutineScope?.launch {
-                snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar(context.getString(R.string.unable_access_camera))
-            }
-        }
-
     val pic: Bitmap? = remember(value) {
         if (value.isBlank()) null
         else Base64.decode(value, Base64.DEFAULT).let {
             BitmapFactory.decodeByteArray(it, 0, it.size)
         }
     }
-    val picStorage = remember {
-        File(context.cacheDir, "images").also { if (!it.exists()) it.mkdirs() }
-    }
     val picUri = remember {
+        val dir = File(context.cacheDir, "images").also { if (!it.exists()) it.mkdirs() }
         FileProvider.getUriForFile(
             context,
             BuildConfig.APPLICATION_ID,
-            File.createTempFile("FIELD_PHOTO", ".png", picStorage)
+            File.createTempFile("FIELD_PHOTO", ".png", dir)
         )
     }
-    val photoLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (!success) return@rememberLauncherForActivityResult
-        try {
-            @Suppress("DEPRECATION")
-            val bitmap = MediaStore.Images.Media
-                .getBitmap(context.contentResolver, picUri)
-            ByteArrayOutputStream().use {
-                bitmap.compress(Bitmap.CompressFormat.WEBP, 80, it)
-                onValueChange(Base64.encodeToString(it.toByteArray(), Base64.DEFAULT))
-            }
-        } catch (e: Exception) {
-            when (e) {
-                is FileNotFoundException, is IOException -> coroutineScope?.launch {
-                    snackbarHostState.currentSnackbarData?.dismiss()
-                    snackbarHostState.showSnackbar(context.getString(R.string.something_wrong))
+
+    val processUri: (Uri) -> Unit = { uri ->
+        coroutineScope?.launch {
+            try {
+                val encoded = withContext(Dispatchers.IO) {
+                    val bitmap = loadScaledBitmap(context, uri)
+                        ?: throw IOException("Failed to decode bitmap")
+                    ByteArrayOutputStream().use {
+                        bitmap.compress(Bitmap.CompressFormat.WEBP, 80, it)
+                        Base64.encodeToString(it.toByteArray(), Base64.DEFAULT)
+                    }
                 }
+                onValueChange(encoded)
+            } catch (e: IOException) {
+                snackbarHostState.currentSnackbarData?.dismiss()
+                snackbarHostState.showSnackbar(context.getString(R.string.something_wrong))
             }
         }
     }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) processUri(picUri)
+    }
+    val galleryLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { uri -> if (uri != null) processUri(uri) }
 
     var deletePhotoDialog by remember(pic) { mutableStateOf(false) }
     if (deletePhotoDialog && pic != null) {
@@ -962,10 +989,12 @@ private fun PhotoField(
                 .height(IntrinsicSize.Min)
         ) {
             PtmFilledButton(
-                onClick = if (cameraPermission == true)
-                    { -> photoLauncher.launch(picUri) }
-                else
-                    { -> cameraPermission = context.checkCameraPermissions() },
+                onClick = {
+                    cameraLauncher.launch(
+                        Intent(context, TakePhotoActivity::class.java)
+                            .putExtra(TakePhotoActivity.EXTRA_OUTPUT, picUri)
+                    )
+                },
                 modifier = Modifier
                     .weight(1f, fill = true)
                     .fillMaxHeight()
@@ -979,6 +1008,17 @@ private fun PhotoField(
                     modifier = Modifier.padding(end = 4.dp)
                 )
                 Text(label)
+            }
+            PtmFilledIconButton(
+                onClick = {
+                    galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                },
+                modifier = Modifier.fillMaxHeight()
+            ) {
+                Icon(
+                    Icons.Outlined.PhotoLibrary,
+                    contentDescription = stringResource(R.string.pick_from_gallery)
+                )
             }
             Surface(
                 color = if (value.isNotBlank()) MaterialTheme.colorScheme.primary
@@ -1008,8 +1048,7 @@ private fun PhotoField(
                 ImageWithFullscreenView(
                     it.asImageBitmap(),
                     onLongClick = { deletePhotoDialog = true },
-                    modifier = Modifier
-                        .height(150.dp)
+                    modifier = Modifier.height(150.dp)
                 )
             }
         }
