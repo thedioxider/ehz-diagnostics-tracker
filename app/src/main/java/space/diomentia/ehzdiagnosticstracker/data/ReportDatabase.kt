@@ -50,8 +50,9 @@ abstract class ReportDatabase : RoomDatabase() {
 
         private val MIGRATION_17_18 = Migration(17, 18) { db ->
             db.execSQL(
-                "UPDATE report_fields SET value = REPLACE(value, ',', '.') WHERE type = 'Decimal'"
+                "UPDATE report_fields SET value = REPLACE(value, ',', '.') WHERE LOWER(type) = 'decimal'"
             )
+            db.execSQL("UPDATE report_fields SET type = LOWER(type)")
         }
 
         @Volatile
@@ -386,7 +387,7 @@ interface ReportDao {
                 siteId = siteId,
                 specId = specId,
                 name = spec.name,
-                type = spec.type.name,
+                type = spec.type.datatype,
                 unit = spec.unit
             )
         )

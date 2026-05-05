@@ -389,7 +389,7 @@ private fun displayValue(field: ReportField, fieldValue: String = field.value): 
             ?: AppState.reportConfig.value?.getSpec(field.specId)?.enumValue(fieldValue)?.label
             ?: fieldValue
         FieldType.Integer -> fieldValue
-        FieldType.Decimal -> fieldValue.toDoubleOrNull()
+        FieldType.Decimal -> fieldValue.toBigDecimalOrNull()
             ?.let { DecimalFormat("#.##").format(it) }
             ?: fieldValue
         FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
@@ -720,7 +720,7 @@ private fun EditableField(
                 FieldTextField(
                     value = value,
                     unit = field.unit,
-                    onValueChange = onValueChange
+                    onValueChange = { onValueChange(it.take(500)) }
                 )
             }
 
@@ -730,7 +730,7 @@ private fun EditableField(
                     unit = field.unit,
                     keyboardType = KeyboardType.Number,
                     onValueChange = { input ->
-                        onValueChange(input.filter { it.isDigit() || it == '-' })
+                        onValueChange(input.filterIndexed { i, c -> c.isDigit() || (c == '-' && i == 0) }.take(10))
                     }
                 )
             }
@@ -741,13 +741,16 @@ private fun EditableField(
                     unit = field.unit,
                     keyboardType = KeyboardType.Decimal,
                     onValueChange = { input ->
-                        onValueChange(
-                            input.filter {
-                                it.isDigit()
-                                        || it == '.' || it == ','
-                                        || it == '-'
-                            }.replace(',', '.')
-                        )
+                        onValueChange(buildString {
+                            var hasDot = false
+                            input.forEach { c ->
+                                when {
+                                    c.isDigit() -> append(c)
+                                    (c == '.' || c == ',') && !hasDot -> { append('.'); hasDot = true }
+                                    c == '-' && isEmpty() -> append(c)
+                                }
+                            }
+                        }.take(12))
                     }
                 )
             }

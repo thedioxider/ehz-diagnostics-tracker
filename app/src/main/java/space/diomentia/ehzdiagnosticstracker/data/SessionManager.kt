@@ -128,7 +128,12 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         val fields = dao.getFieldsForSiteOnce(siteId)
         val field = fields.find { it.specId == specId } ?: return
         val label = config?.getSpec(specId)?.enumValue(value)?.label
-        dao.insertField(field.copy(value = value, valueLabel = label))
+        val normalizedValue = when (FieldType.parse(field.type)) {
+            FieldType.Decimal -> value.replace(',', '.').toBigDecimalOrNull()?.toPlainString() ?: ""
+            FieldType.Integer -> value.toLongOrNull()?.toString() ?: ""
+            else -> value
+        }
+        dao.insertField(field.copy(value = normalizedValue, valueLabel = label))
     }
 
     fun confirmSite(siteId: String) {
