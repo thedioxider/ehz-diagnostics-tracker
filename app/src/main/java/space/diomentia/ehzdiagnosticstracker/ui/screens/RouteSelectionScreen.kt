@@ -164,20 +164,6 @@ fun RouteSelectionScreen(
             .getAllRoutes()
             .collectAsStateWithLifecycle(emptyList())
 
-        if (diagnosticObjects.isEmpty()) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text(
-                    stringResource(R.string.entries_not_found),
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.alpha(.3f)
-                )
-            }
-            return@Scaffold
-        }
-
         val selectedRouteSections by selectedRouteId?.let {
             ReportDatabase.getInstance()
                 .routeDao()
@@ -187,6 +173,20 @@ fun RouteSelectionScreen(
 
         // TODO: maybe there is a better solution than just AnimatedVisibility slop
         FullscreenLazyColumn(innerPadding) {
+            if (diagnosticObjects.isEmpty() && !AppState.adminSession) {
+                item {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillParentMaxSize()
+                    ) {
+                        Text(
+                            stringResource(R.string.entries_not_found),
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.alpha(.3f)
+                        )
+                    }
+                }
+            }
             items(diagnosticObjects) { routeWithSections ->
                 AnimatedVisibility(
                     selectedRouteId == null || selectedRouteId == routeWithSections.info.id
