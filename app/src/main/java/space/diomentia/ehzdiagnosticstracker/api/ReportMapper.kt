@@ -28,6 +28,7 @@ fun FullReport.toDto(): ReportDto = ReportDto(
 private fun SiteWithFields.toDto(): SiteDto = SiteDto(
     id = info.id,
     timestamp = info.timestamp.toString(),
+    name = info.name,
     positionKm = info.positionKm,
     location = info.location?.toDto(),
     validationId = info.validationId,

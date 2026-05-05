@@ -83,6 +83,11 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         return site
     }
 
+    fun updateSiteName(siteId: String, name: String) {
+        val site = dao.getSiteByIdOnce(siteId) ?: return
+        dao.updateSite(site.copy(name = name))
+    }
+
     fun updateSitePosition(siteId: String, positionKm: Double) {
         val sites = dao.getSiteByIdOnce(siteId) ?: return
         dao.updateSite(sites.copy(positionKm = positionKm))

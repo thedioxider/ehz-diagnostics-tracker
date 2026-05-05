@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 import java.time.Instant
 
 val Json.Default.default: Json
-    get() = Json { prettyPrint = true }
+    get() = Json { prettyPrint = true; encodeDefaults = false }
 
 val Yaml.Companion.appConf: Yaml
     get() = Yaml(configuration = YamlConfiguration(decodeEnumCaseInsensitive = true))

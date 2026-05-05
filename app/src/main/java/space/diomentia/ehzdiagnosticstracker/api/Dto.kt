@@ -32,6 +32,7 @@ data class SectionDto(
 data class SiteDto(
     val id: String,
     val timestamp: String,
+    val name: String = "",
     @SerialName("position_km") val positionKm: Double? = null,
     val location: CoordinatesDto? = null,
     @SerialName("validation_id") val validationId: String? = null,

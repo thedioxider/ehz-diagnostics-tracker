@@ -21,6 +21,7 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import androidx.room.Update
+import androidx.room.AutoMigration
 import androidx.room.migration.Migration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
@@ -28,16 +29,17 @@ import kotlinx.serialization.Serializable
 import space.diomentia.ehzdiagnosticstracker.R
 import java.time.Instant
 
-// WARNING: fallbackToDestructiveMigration wipes all data on version bump.
-// Proper migrations MUST be written for production releases.
 @Database(
-    version = 18,
+    version = 19,
     entities = [
         Route::class,
         Section::class,
         Report::class,
         Site::class,
         ReportField::class
+    ],
+    autoMigrations = [
+        AutoMigration(from = 18, to = 19)
     ]
 )
 @TypeConverters(InstantConverter::class)
@@ -64,7 +66,7 @@ abstract class ReportDatabase : RoomDatabase() {
                 // TODO: get rid of this crutch
                 .allowMainThreadQueries()
                 .addMigrations(MIGRATION_17_18)
-                .fallbackToDestructiveMigration(dropAllTables = true)
+                .fallbackToDestructiveMigrationFrom(true, *(1..16).toList().toIntArray())
                 .build()
         }
 
@@ -228,7 +230,9 @@ data class Site(
     @ColumnInfo(name = "location_only")
     val locationOnly: Boolean = false,
     @ColumnInfo(name = "is_draft")
-    val isDraft: Boolean = true
+    val isDraft: Boolean = true,
+    @ColumnInfo(name = "name", defaultValue = "")
+    val name: String = ""
 )
 
 @Entity(

@@ -111,6 +111,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.TemplateChooserDialog
+import space.diomentia.ehzdiagnosticstracker.ui.TextFieldWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.io.ByteArrayOutputStream
@@ -268,6 +269,15 @@ private fun SitePreviewContent(
 ) {
     val site = siteWithFields.info
 
+    // Name
+    if (site.name.isNotBlank()) {
+        Text(
+            site.name,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+    }
+
     // Position
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -411,6 +421,18 @@ private fun SiteEditContent(
     onToggleManageFields: (Boolean) -> Unit,
     onSave: () -> Unit
 ) {
+    // Name (optional)
+    TextFieldWithLabel(
+        value = editState.name,
+        onValueChange = { editState.name = it },
+        label = {
+            Text("${stringResource(R.string.site_name)} (${stringResource(R.string.optional)})")
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(Modifier.height(16.dp))
+
     // Position (editable)
     Text(
         stringResource(R.string.position),
@@ -996,6 +1018,7 @@ private class SiteEditState(
     val isDraft = site.isDraft
     val siteId = site.id
 
+    var name by mutableStateOf(site.name)
     var location by mutableStateOf(site.location)
     var validationId by mutableStateOf(site.validationId)
 
@@ -1031,6 +1054,11 @@ private class SiteEditState(
                     }
             }
             scope.launch(Dispatchers.IO) {
+                snapshotFlow { name }
+                    .debounce(500)
+                    .collectLatest { sessionManager.updateSiteName(siteId, it) }
+            }
+            scope.launch(Dispatchers.IO) {
                 snapshotFlow { fieldValues.toMap() }
                     .debounce(500)
                     .collectLatest { values ->
@@ -1064,6 +1092,7 @@ private class SiteEditState(
     }
 
     fun saveAndConfirm() {
+        sessionManager.updateSiteName(siteId, name)
         positionKm?.let { sessionManager.updateSitePosition(siteId, it) }
         location?.let { loc ->
             sessionManager.updateSiteLocation(siteId, loc)
