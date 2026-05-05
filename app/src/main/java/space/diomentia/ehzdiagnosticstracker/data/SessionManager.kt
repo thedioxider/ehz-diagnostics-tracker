@@ -85,7 +85,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
 
     fun updateSiteName(siteId: String, name: String) {
         val site = dao.getSiteByIdOnce(siteId) ?: return
-        dao.updateSite(site.copy(name = name))
+        dao.updateSite(site.copy(name = name.trim()))
     }
 
     fun updateSitePosition(siteId: String, positionKm: Double) {
@@ -136,7 +136,7 @@ class SessionManager(private val dao: ReportDao, private val config: ReportConfi
         val normalizedValue = when (FieldType.parse(field.type)) {
             FieldType.Decimal -> value.replace(',', '.').toBigDecimalOrNull()?.toPlainString() ?: ""
             FieldType.Integer -> value.toLongOrNull()?.toString() ?: ""
-            else -> value
+            else -> value.trim()
         }
         dao.insertField(field.copy(value = normalizedValue, valueLabel = label))
     }
