@@ -294,6 +294,9 @@ interface ReportDao {
     @Query("SELECT * FROM reports WHERE id IN (:reportIds)")
     fun getFullReportsByIdsOnce(reportIds: List<String>): List<FullReport>
 
+    @Query("SELECT COUNT(*) > 0 FROM reports WHERE is_complete = 0")
+    fun hasAnyActiveReport(): Flow<Boolean>
+
     @Transaction
     @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 0 LIMIT 1")
     fun getActiveReportForSection(sectionId: String): Flow<FullReport?>

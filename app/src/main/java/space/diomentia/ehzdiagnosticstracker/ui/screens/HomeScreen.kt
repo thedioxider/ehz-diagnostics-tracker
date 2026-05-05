@@ -17,7 +17,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -65,6 +68,11 @@ fun HomeScreen(
         },
         snackbarHost = { PtmSnackbarHost(LocalSnackbarHostState.current) }
     ) { innerPadding ->
+        val hasActiveReport by ReportDatabase.getInstance()
+            .reportDao()
+            .hasAnyActiveReport()
+            .collectAsStateWithLifecycle(false)
+
         Column(
             verticalArrangement = Arrangement.SpaceEvenly,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -74,8 +82,14 @@ fun HomeScreen(
                 .padding(horizontal = 48.dp, vertical = 40.dp)
         ) {
             HomeActionButton(
-                label = stringResource(R.string.start_diagnostics),
-                icon = painterResource(R.drawable.ic_contract_edit),
+                label = stringResource(
+                    if (hasActiveReport) R.string.continue_editing_short
+                    else R.string.start_diagnostics
+                ),
+                icon = painterResource(
+                    if (hasActiveReport) R.drawable.ic_edit_square
+                    else R.drawable.ic_contract_edit
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onNewReport
             )
