@@ -8,13 +8,13 @@ import kotlinx.serialization.json.Json
 import java.time.Instant
 
 val Json.Default.default: Json
-    get() = Json { prettyPrint = true }
+    get() = Json { prettyPrint = true; encodeDefaults = false }
 
 val Yaml.Companion.appConf: Yaml
     get() = Yaml(configuration = YamlConfiguration(decodeEnumCaseInsensitive = true))
 
 private val UUID_REGEX =
-    Regex("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+    Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
 
 fun isCanonicalUuid(s: String): Boolean = UUID_REGEX.matches(s)
 

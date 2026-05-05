@@ -97,7 +97,7 @@ private fun ReportScreenContent(
             onCancel = { siteToDelete = null },
             name = position,
             details = if (swf.info.locationOnly) stringResource(R.string.location_only)
-                else stringResource(R.string.field_count, swf.fields.size)
+            else stringResource(R.string.field_count, swf.fields.size)
         )
     }
 
@@ -157,8 +157,11 @@ private fun ReportScreenContent(
                             siteWithFields.info.locationOnly
                         )
                     },
-                    onLongClick = if (isDeletable) {{ siteToDelete = siteWithFields }}
-                        else {{ snacker.showMessage(context.getString(R.string.cannot_delete_zero_km)) }}
+                    onLongClick = if (isDeletable) {
+                        { siteToDelete = siteWithFields }
+                    } else {
+                        { snacker.showMessage(context.getString(R.string.cannot_delete_zero_km)) }
+                    }
                 )
                 HorizontalDivider(modifier = Modifier.alpha(.3f))
             }
@@ -204,9 +207,16 @@ private fun SiteItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
+                val notSet = stringResource(R.string.not_set)
                 Text(
-                    site.positionKm?.let { "%.2f км".format(it) }
-                        ?: stringResource(R.string.not_set),
+                    when {
+                        site.name.isNotBlank() && site.positionKm != null ->
+                            "%.1f км: %s".format(site.positionKm, site.name)
+
+                        site.name.isNotBlank() -> site.name
+                        site.positionKm != null -> "%.1f км".format(site.positionKm)
+                        else -> notSet
+                    },
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(

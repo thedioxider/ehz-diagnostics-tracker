@@ -36,8 +36,8 @@ android {
         applicationId = "space.diomentia.ehzdiagnosticstracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 17
-        versionName = "3.0.0"
+        versionCode = 18
+        versionName = "3.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -46,9 +46,9 @@ android {
         outputs.all {
             (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
                 .outputFileName = if (buildType.name == "release")
-                    "EHZTracker-v${defaultConfig.versionName}.apk"
-                else
-                    "EHZTracker-v${defaultConfig.versionName}-${buildType.name}.apk"
+                "EHZTracker-v${defaultConfig.versionName}.apk"
+            else
+                "EHZTracker-v${defaultConfig.versionName}-${buildType.name}.apk"
         }
     }
 

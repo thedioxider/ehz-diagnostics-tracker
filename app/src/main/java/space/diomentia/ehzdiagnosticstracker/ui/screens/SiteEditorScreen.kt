@@ -1,6 +1,5 @@
 package space.diomentia.ehzdiagnosticstracker.ui.screens
 
-import java.time.Instant
 import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
@@ -88,6 +87,7 @@ import space.diomentia.ehzdiagnosticstracker.data.FieldType
 import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.NAME_ALLOWED_SPECIAL_CHARS
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.ReportField
 import space.diomentia.ehzdiagnosticstracker.data.ReportFieldValue
@@ -111,6 +111,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
 import space.diomentia.ehzdiagnosticstracker.ui.TemplateChooserDialog
+import space.diomentia.ehzdiagnosticstracker.ui.TextFieldWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.rememberSnacker
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 import java.io.ByteArrayOutputStream
@@ -118,6 +119,7 @@ import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.text.DecimalFormat
+import java.time.Instant
 
 @Composable
 fun SiteEditorScreen(
@@ -268,6 +270,15 @@ private fun SitePreviewContent(
 ) {
     val site = siteWithFields.info
 
+    // Name
+    if (site.name.isNotBlank()) {
+        Text(
+            site.name,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+    }
+
     // Position
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -388,8 +399,12 @@ private fun displayValue(field: ReportField, fieldValue: String = field.value): 
         FieldType.Enum -> field.valueLabel
             ?: AppState.reportConfig.value?.getSpec(field.specId)?.enumValue(fieldValue)?.label
             ?: fieldValue
+
         FieldType.Integer -> fieldValue
-        FieldType.Decimal -> DecimalFormat("#.##").format(fieldValue.toDouble())
+        FieldType.Decimal -> fieldValue.toBigDecimalOrNull()
+            ?.let { DecimalFormat("#.##").format(it) }
+            ?: fieldValue
+
         FieldType.Bool -> when (ReportFieldValue.Bool.fromString(fieldValue)) {
             true -> stringResource(R.string.is_true)
             false -> stringResource(R.string.is_false)
@@ -409,6 +424,22 @@ private fun SiteEditContent(
     onToggleManageFields: (Boolean) -> Unit,
     onSave: () -> Unit
 ) {
+    // Name (optional)
+    TextFieldWithLabel(
+        value = editState.name,
+        onValueChange = {
+            editState.name =
+                it.filter { c -> c.isLetterOrDigit() || c in NAME_ALLOWED_SPECIAL_CHARS }
+        },
+        label = {
+            Text("${stringResource(R.string.site_name)} (${stringResource(R.string.optional)})")
+        },
+        placeholderText = stringResource(R.string.site_name_placeholder),
+        modifier = Modifier.fillMaxWidth()
+    )
+
+    Spacer(Modifier.height(16.dp))
+
     // Position (editable)
     Text(
         stringResource(R.string.position),
@@ -718,7 +749,7 @@ private fun EditableField(
                 FieldTextField(
                     value = value,
                     unit = field.unit,
-                    onValueChange = onValueChange
+                    onValueChange = { onValueChange(it.take(500)) }
                 )
             }
 
@@ -728,7 +759,8 @@ private fun EditableField(
                     unit = field.unit,
                     keyboardType = KeyboardType.Number,
                     onValueChange = { input ->
-                        onValueChange(input.filter { it.isDigit() || it == '-' })
+                        onValueChange(input.filterIndexed { i, c -> c.isDigit() || (c == '-' && i == 0) }
+                            .take(10))
                     }
                 )
             }
@@ -739,13 +771,19 @@ private fun EditableField(
                     unit = field.unit,
                     keyboardType = KeyboardType.Decimal,
                     onValueChange = { input ->
-                        onValueChange(
-                            input.filter {
-                                it.isDigit()
-                                        || it == '.' || it == ','
-                                        || it == '-'
+                        onValueChange(buildString {
+                            var hasDot = false
+                            input.forEach { c ->
+                                when {
+                                    c.isDigit() -> append(c)
+                                    (c == '.' || c == ',') && !hasDot -> {
+                                        append('.'); hasDot = true
+                                    }
+
+                                    c == '-' && isEmpty() -> append(c)
+                                }
                             }
-                        )
+                        }.take(12))
                     }
                 )
             }
@@ -991,6 +1029,7 @@ private class SiteEditState(
     val isDraft = site.isDraft
     val siteId = site.id
 
+    var name by mutableStateOf(site.name)
     var location by mutableStateOf(site.location)
     var validationId by mutableStateOf(site.validationId)
 
@@ -1026,6 +1065,11 @@ private class SiteEditState(
                     }
             }
             scope.launch(Dispatchers.IO) {
+                snapshotFlow { name }
+                    .debounce(500)
+                    .collectLatest { sessionManager.updateSiteName(siteId, it) }
+            }
+            scope.launch(Dispatchers.IO) {
                 snapshotFlow { fieldValues.toMap() }
                     .debounce(500)
                     .collectLatest { values ->
@@ -1059,6 +1103,7 @@ private class SiteEditState(
     }
 
     fun saveAndConfirm() {
+        sessionManager.updateSiteName(siteId, name)
         positionKm?.let { sessionManager.updateSitePosition(siteId, it) }
         location?.let { loc ->
             sessionManager.updateSiteLocation(siteId, loc)

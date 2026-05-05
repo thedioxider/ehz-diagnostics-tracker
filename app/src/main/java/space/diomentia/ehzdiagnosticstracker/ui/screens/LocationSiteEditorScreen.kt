@@ -45,6 +45,7 @@ import space.diomentia.ehzdiagnosticstracker.data.LocalCoroutineScope
 import space.diomentia.ehzdiagnosticstracker.data.LocalLocationProvider
 import space.diomentia.ehzdiagnosticstracker.data.LocalSessionManager
 import space.diomentia.ehzdiagnosticstracker.data.LocalSnackbarHostState
+import space.diomentia.ehzdiagnosticstracker.data.NAME_ALLOWED_SPECIAL_CHARS
 import space.diomentia.ehzdiagnosticstracker.data.ReportDatabase
 import space.diomentia.ehzdiagnosticstracker.data.SessionManager
 import space.diomentia.ehzdiagnosticstracker.data.Site
@@ -56,6 +57,7 @@ import space.diomentia.ehzdiagnosticstracker.ui.PtmFilledButton
 import space.diomentia.ehzdiagnosticstracker.ui.PtmSnackbarHost
 import space.diomentia.ehzdiagnosticstracker.ui.PtmTopBar
 import space.diomentia.ehzdiagnosticstracker.ui.ScrollableColumn
+import space.diomentia.ehzdiagnosticstracker.ui.TextFieldWithLabel
 import space.diomentia.ehzdiagnosticstracker.ui.theme.PtmTheme
 
 @Composable
@@ -115,6 +117,22 @@ fun LocationSiteEditorScreen(
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
             Spacer(Modifier.height(24.dp))
+
+            // Name (optional, hidden for zero-km point)
+            if (!isZeroKm) {
+                TextFieldWithLabel(
+                    value = editState.name,
+                    onValueChange = {
+                        editState.name =
+                            it.filter { c -> c.isLetterOrDigit() || c in NAME_ALLOWED_SPECIAL_CHARS }
+                    },
+                    label = {
+                        Text("${stringResource(R.string.site_name)} (${stringResource(R.string.optional)})")
+                    },
+                    placeholderText = stringResource(R.string.site_name_placeholder)
+                )
+                Spacer(Modifier.height(24.dp))
+            }
 
             // GPS Coordinates
             Text(
@@ -204,6 +222,7 @@ private class LocationSiteEditState(
 ) {
     private val existingSiteId = existingSite?.id
 
+    var name by mutableStateOf(existingSite?.name ?: "")
     var location by mutableStateOf(existingSite?.location)
 
     private var _positionKmText = mutableStateOf(existingSite?.positionKm?.toString() ?: "")
@@ -229,6 +248,11 @@ private class LocationSiteEditState(
                         if (loc != null) sessionManager.updateSiteLocation(existingSiteId, loc)
                     }
             }
+            scope.launch(Dispatchers.IO) {
+                snapshotFlow { name }
+                    .debounce(500)
+                    .collectLatest { sessionManager.updateSiteName(existingSiteId, it) }
+            }
         }
     }
 
@@ -239,6 +263,7 @@ private class LocationSiteEditState(
             location?.let { loc ->
                 sessionManager.updateSiteLocation(existingSiteId, loc)
             }
+            sessionManager.updateSiteName(existingSiteId, name)
             sessionManager.confirmSite(existingSiteId)
             return existingSiteId
         } else {
@@ -247,6 +272,7 @@ private class LocationSiteEditState(
                 location = location,
                 locationOnly = true
             )
+            sessionManager.updateSiteName(site.id, name)
             sessionManager.confirmSite(site.id)
             return site.id
         }

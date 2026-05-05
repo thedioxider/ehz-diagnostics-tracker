@@ -40,6 +40,7 @@ private suspend fun discoverViaMdns(context: Context, timeoutMs: Long): String? 
                 override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {
                     if (cont.isActive) cont.resume(null)
                 }
+
                 override fun onServiceResolved(info: NsdServiceInfo) {
                     if (cont.isActive) cont.resume("http://${info.host.hostAddress}:${info.port}")
                 }
@@ -49,17 +50,25 @@ private suspend fun discoverViaMdns(context: Context, timeoutMs: Long): String? 
                 override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
                     if (cont.isActive) cont.resume(null)
                 }
+
                 override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
                 override fun onDiscoveryStarted(serviceType: String) {}
                 override fun onDiscoveryStopped(serviceType: String) {}
                 override fun onServiceFound(info: NsdServiceInfo) {
-                    try { nsdManager.stopServiceDiscovery(this) } catch (_: Exception) {}
+                    try {
+                        nsdManager.stopServiceDiscovery(this)
+                    } catch (_: Exception) {
+                    }
                     nsdManager.resolveService(info, resolveListener)
                 }
+
                 override fun onServiceLost(info: NsdServiceInfo) {}
             }.also { listener ->
                 cont.invokeOnCancellation {
-                    try { nsdManager.stopServiceDiscovery(listener) } catch (_: Exception) {}
+                    try {
+                        nsdManager.stopServiceDiscovery(listener)
+                    } catch (_: Exception) {
+                    }
                 }
                 nsdManager.discoverServices(MDNS_SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, listener)
             }
@@ -73,7 +82,14 @@ private suspend fun discoverViaUdpBroadcast(timeoutMs: Long): String? =
                 socket.broadcast = true
                 socket.soTimeout = timeoutMs.toInt()
                 val magic = UDP_MAGIC.toByteArray(Charsets.US_ASCII)
-                socket.send(DatagramPacket(magic, magic.size, InetAddress.getByName("255.255.255.255"), UDP_PORT))
+                socket.send(
+                    DatagramPacket(
+                        magic,
+                        magic.size,
+                        InetAddress.getByName("255.255.255.255"),
+                        UDP_PORT
+                    )
+                )
                 val buf = ByteArray(1024)
                 val packet = DatagramPacket(buf, buf.size)
                 socket.receive(packet)

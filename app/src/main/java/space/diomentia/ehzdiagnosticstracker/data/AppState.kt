@@ -39,25 +39,7 @@ object AppState {
         inspectionMode = false
         dataDir = context.dataDir
         resources = context.resources
-        val reportDb = ReportDatabase.getInstance(context)
-
         packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-
-        val initialAreaEntries = Yaml.appConf.decodeFromString<InitialAreaEntries>(
-            String(
-                resources?.openRawResource(R.raw.initial_area_entries)?.readBytes() ?: ByteArray(0)
-            )
-        )
-        initialAreaEntries.routes.forEach {
-            reportDb
-                .routeDao()
-                .insertRoute(it)
-        }
-        initialAreaEntries.sections.forEach {
-            reportDb
-                .routeDao()
-                .insertSection(it)
-        }
     }
 
     var adminSession by mutableStateOf(false)

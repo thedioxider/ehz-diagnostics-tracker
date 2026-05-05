@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.room.AutoMigration
 import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
@@ -21,22 +22,24 @@ import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.TypeConverters
 import androidx.room.Update
+import androidx.room.migration.Migration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import space.diomentia.ehzdiagnosticstracker.R
 import java.time.Instant
 
-// WARNING: fallbackToDestructiveMigration wipes all data on version bump.
-// Proper migrations MUST be written for production releases.
 @Database(
-    version = 17,
+    version = 19,
     entities = [
         Route::class,
         Section::class,
         Report::class,
         Site::class,
         ReportField::class
+    ],
+    autoMigrations = [
+        AutoMigration(from = 18, to = 19)
     ]
 )
 @TypeConverters(InstantConverter::class)
@@ -47,6 +50,13 @@ abstract class ReportDatabase : RoomDatabase() {
     companion object {
         const val DB_NAME = "report-db"
 
+        private val MIGRATION_17_18 = Migration(17, 18) { db ->
+            db.execSQL(
+                "UPDATE report_fields SET value = REPLACE(value, ',', '.') WHERE LOWER(type) = 'decimal'"
+            )
+            db.execSQL("UPDATE report_fields SET type = LOWER(type)")
+        }
+
         @Volatile
         private var INSTANCE: ReportDatabase? = null
 
@@ -55,7 +65,8 @@ abstract class ReportDatabase : RoomDatabase() {
                 .databaseBuilder(context, ReportDatabase::class.java, DB_NAME)
                 // TODO: get rid of this crutch
                 .allowMainThreadQueries()
-                .fallbackToDestructiveMigration(dropAllTables = true)
+                .addMigrations(MIGRATION_17_18)
+                .fallbackToDestructiveMigrationFrom(true, *(1..16).toList().toIntArray())
                 .build()
         }
 
@@ -63,6 +74,8 @@ abstract class ReportDatabase : RoomDatabase() {
         fun getInstance() = getInstance(LocalContext.current)
     }
 }
+
+const val NAME_ALLOWED_SPECIAL_CHARS = " ,.;:()-/"
 
 @Serializable
 @Entity(tableName = "routes")
@@ -77,7 +90,7 @@ data class Route(
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)
         fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()-" }
+            name.all { c -> c.isLetterOrDigit() || c in NAME_ALLOWED_SPECIAL_CHARS }
     }
 }
 
@@ -98,8 +111,6 @@ data class Section(
 
     companion object {
         fun checkId(id: String): Boolean = isCanonicalUuid(id)
-        fun checkName(name: String): Boolean =
-            name.all { c -> c.isLetterOrDigit() || c in ",.;:()" }
     }
 }
 
@@ -221,7 +232,9 @@ data class Site(
     @ColumnInfo(name = "location_only")
     val locationOnly: Boolean = false,
     @ColumnInfo(name = "is_draft")
-    val isDraft: Boolean = true
+    val isDraft: Boolean = true,
+    @ColumnInfo(name = "name", defaultValue = "")
+    val name: String = ""
 )
 
 @Entity(
@@ -286,6 +299,9 @@ interface ReportDao {
     @Transaction
     @Query("SELECT * FROM reports WHERE id IN (:reportIds)")
     fun getFullReportsByIdsOnce(reportIds: List<String>): List<FullReport>
+
+    @Query("SELECT COUNT(*) > 0 FROM reports WHERE is_complete = 0")
+    fun hasAnyActiveReport(): Flow<Boolean>
 
     @Transaction
     @Query("SELECT * FROM reports WHERE section_id = :sectionId AND is_complete = 0 LIMIT 1")
@@ -378,7 +394,7 @@ interface ReportDao {
                 siteId = siteId,
                 specId = specId,
                 name = spec.name,
-                type = spec.type.name,
+                type = spec.type.datatype,
                 unit = spec.unit
             )
         )

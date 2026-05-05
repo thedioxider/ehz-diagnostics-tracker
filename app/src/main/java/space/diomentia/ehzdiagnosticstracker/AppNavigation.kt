@@ -23,12 +23,12 @@ import space.diomentia.ehzdiagnosticstracker.ui.screens.InitialScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.LocationSiteEditorScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.OutOfServiceScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.ReportListScreen
-import space.diomentia.ehzdiagnosticstracker.ui.screens.SyncScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.ReportScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.RouteSelectionScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SessionHubScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SettingsScreen
 import space.diomentia.ehzdiagnosticstracker.ui.screens.SiteEditorScreen
+import space.diomentia.ehzdiagnosticstracker.ui.screens.SyncScreen
 import java.time.LocalDate
 
 sealed class Screen(val route: String) {
@@ -157,6 +157,13 @@ fun AppNavigation() {
             }
 
             composable(Screen.Home.route) {
+                if (AppState.profileSession == null) {
+                    navController.navigate(Screen.Authorization.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                    return@composable
+                }
                 HomeScreen(
                     onNewReport = { navController.navigate(Screen.RouteSelection.route) },
                     onHistory = { navController.navigate(Screen.ReportList.open()) },
@@ -168,11 +175,7 @@ fun AppNavigation() {
 
             composable(Screen.RouteSelection.route) {
                 RouteSelectionScreen(
-                    onAuthorize = {
-                        navController.navigate(Screen.Authorization.route) {
-                            launchSingleTop = true
-                        }
-                    },
+                    onBack = { navController.popBackStack() },
                     onSectionChosen = { routeId, sectionId ->
                         if (sessionManager.profile == null) {
                             snackbarHostState.currentSnackbarData?.dismiss()
@@ -227,19 +230,10 @@ fun AppNavigation() {
                             popUpTo(Screen.Home.route) { inclusive = true }
                         }
                     },
-                    onAuthorize = {
-                        navController.popBackStack()
-                        navController.navigate(Screen.Authorization.route) {
-                            launchSingleTop = true
+                    onHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = true }
                         }
-                        sessionManager.leaveSession()
-                    },
-                    onChooseRoute = {
-                        navController.popBackStack()
-                        navController.navigate(Screen.RouteSelection.route) {
-                            launchSingleTop = true
-                        }
-                        sessionManager.leaveSession()
                     },
                 )
             }
@@ -333,13 +327,11 @@ fun AppNavigation() {
                     ?.takeIf { it.isNotEmpty() }
                 val sectionId = backStackEntry.arguments?.getString(Screen.ARG_SECTION_ID)
                     ?.takeIf { it.isNotEmpty() }
-                val fromHome = navController.previousBackStackEntry?.destination?.route == Screen.Home.route
                 ReportListScreen(
                     routeId = routeId,
                     sectionId = sectionId,
                     onOpenReport = { reportId -> navController.navigate(Screen.Report.open(reportId)) },
-                    onBack = { navController.popBackStack() },
-                    homeNav = fromHome
+                    onBack = { navController.popBackStack() }
                 )
             }
         }

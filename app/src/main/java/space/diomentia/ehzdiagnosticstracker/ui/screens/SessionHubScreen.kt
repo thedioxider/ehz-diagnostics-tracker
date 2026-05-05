@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -69,8 +70,7 @@ fun SessionHubScreen(
     onEditDraftSite: (siteId: String) -> Unit,
     onViewReport: (reportId: String) -> Unit,
     onSessionCompleted: () -> Unit,
-    onAuthorize: () -> Unit,
-    onChooseRoute: () -> Unit
+    onHome: () -> Unit
 ) {
     val sessionManager = LocalSessionManager.current
     val fullReport by sessionManager.fullReport.collectAsStateWithLifecycle(null)
@@ -90,10 +90,9 @@ fun SessionHubScreen(
         },
         onSessionDeleted = {
             sessionManager.deleteSession()
-            onChooseRoute()
+            onHome()
         },
-        onAuthorize = onAuthorize,
-        onChooseArea = onChooseRoute
+        onHome = onHome
     )
 }
 
@@ -108,8 +107,7 @@ private fun SessionHubContent(
     onViewReport: () -> Unit,
     onCompleteSession: () -> Unit,
     onSessionDeleted: () -> Unit,
-    onAuthorize: () -> Unit,
-    onChooseArea: () -> Unit
+    onHome: () -> Unit
 ) {
     val context = LocalContext.current
     LocalSessionManager.current
@@ -204,15 +202,10 @@ private fun SessionHubContent(
             PtmBottomBar(
                 navigation = {
                     ActionButton(
-                        icon = painterResource(R.drawable.ic_person),
-                        label = stringResource(R.string.change_account)
+                        icon = rememberVectorPainter(Icons.Outlined.Home),
+                        label = stringResource(R.string.home)
                     ) {
-                        onAuthorize()
-                    }
-                    ActionButton(
-                        icon = rememberVectorPainter(Icons.Outlined.LocationOn)
-                    ) {
-                        onChooseArea()
+                        onHome()
                     }
                 },
                 actions = {
@@ -455,8 +448,7 @@ private fun SessionHubPreview() {
             onDeleteDraft = {},
             onViewReport = {},
             onCompleteSession = {},
-            onAuthorize = {},
-            onChooseArea = {},
+            onHome = {},
             onSessionDeleted = {},
             onSaveDraft = {}
         )

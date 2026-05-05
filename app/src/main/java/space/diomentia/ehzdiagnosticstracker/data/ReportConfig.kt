@@ -27,16 +27,22 @@ sealed class ReportFieldValue {
 enum class FieldType {
     @SerialName("text")
     Text,
+
     @SerialName("bool")
     Bool,
+
     @SerialName("integer")
     Integer,
+
     @SerialName("decimal")
     Decimal,
+
     @SerialName("photo")
     Photo,
+
     @SerialName("raw")
     Raw,
+
     @SerialName("enum")
     Enum;
 
@@ -117,10 +123,3 @@ data class ReportConfig(
     fun resolveTemplate(template: ReportTemplate): List<FieldSpec> =
         template.specIds?.mapNotNull { getSpec(it) } ?: emptyList()
 }
-
-// TODO: only for demo
-@Serializable
-data class InitialAreaEntries(
-    @SerialName("diagnostic_objects") val routes: List<Route>,
-    @SerialName("diagnostic_areas") val sections: List<Section>
-)
