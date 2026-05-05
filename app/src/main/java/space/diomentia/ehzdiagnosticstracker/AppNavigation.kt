@@ -157,6 +157,13 @@ fun AppNavigation() {
             }
 
             composable(Screen.Home.route) {
+                if (AppState.profileSession == null) {
+                    navController.navigate(Screen.Authorization.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                    return@composable
+                }
                 HomeScreen(
                     onNewReport = { navController.navigate(Screen.RouteSelection.route) },
                     onHistory = { navController.navigate(Screen.ReportList.open()) },
