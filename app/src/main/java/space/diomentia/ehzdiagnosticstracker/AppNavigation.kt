@@ -86,7 +86,7 @@ fun AppNavigation() {
         NavHost(
             navController,
             startDestination = when {
-                LocalDate.now() < AppState.DUE_DATE -> Screen.Initial.route
+                true -> Screen.Initial.route
                 else -> Screen.OutOfService.route
             },
             enterTransition = {

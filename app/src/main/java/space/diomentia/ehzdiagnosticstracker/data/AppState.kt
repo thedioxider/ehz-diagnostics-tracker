@@ -26,8 +26,6 @@ import java.time.LocalDate
 
 @Stable
 object AppState {
-    val DUE_DATE: LocalDate = LocalDate.of(2026, 11, 1)
-
     const val REPORT_CONFIG_FILENAME = "report.conf.yaml"
 
     var inspectionMode = true
