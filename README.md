@@ -86,7 +86,7 @@ The export screen can upload selected reports to `ehz-backend`:
 2. **Upload**: `PUT /api/reports/{id}` with `Authorization: Bearer <key>`, one report at a time. Every response must carry `X-Contract-Version: 1`, otherwise sync stops with a version-mismatch message.
 3. **Errors**:
    - 401: the app asks for a new bearer key, then resumes from the report that failed.
-   - 404: sync stops with a "server not found" message. The backend also returns 404 for a wrong or missing key, so check the key too.
+   - 404: sync stops with a "server not found" message. On its LAN port the backend returns 404 for every path outside its allowlist (e.g. a report id that isn't a UUID).
    - Other HTTP and network errors mark that report as failed and sync moves on to the next one.
 
 The bearer key and the fallback URL are set in **Настройки** (Settings).
