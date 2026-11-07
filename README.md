@@ -1,6 +1,14 @@
 # EHZ Diagnostics Tracker
 
-Android app for field diagnostics of gas pipeline electrochemical protection. A technician walks a pipeline section, records measurements at diagnostic sites (GPS position, kilometer mark, photos, typed fields), and exports the finished report as JSON or syncs it to [`ehz-backend`](#backend-sync) over the LAN.
+Android app for field diagnostics of gas pipeline electrochemical protection. A technician walks a pipeline section, records measurements at diagnostic sites (GPS position, kilometer mark, photos, typed fields), and exports the finished report as JSON or syncs it to [`ehz-backend`](https://github.com/thedioxider/ehz-backend/tree/dev#network) over the LAN.
+
+<p align="center">
+  <img src="docs/assets/session-hub.jpg" alt="Active session: route, section, technician and site count, with actions to add a measurement site or a marker" width="30%">
+  &nbsp;
+  <img src="docs/assets/site-setup.jpg" alt="Site setup: name, km position, GPS coordinates, QR verification and the list of fields" width="30%">
+  &nbsp;
+  <img src="docs/assets/site-measurements.jpg" alt="Measurement entry: typed fields with units, a comment and a site photo" width="30%">
+</p>
 
 ## Features
 
